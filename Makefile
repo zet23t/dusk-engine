@@ -2,7 +2,7 @@
 
 # Compiler and flags
 CC := gcc
-CFLAGS := -Wall -Werror -Isubmodules/raylib/src -DPLATFORM_DESKTOP
+CFLAGS := -Wall -Isubmodules/raylib/src -DPLATFORM_DESKTOP
 
 # Directories
 SRCDIR := src
@@ -28,6 +28,9 @@ OBJS := $(patsubst $(SRCDIR)/%.c,$(OBJDIR)/%.o,$(SRCS))
 
 # Default target
 all: $(TARGET)
+
+run: $(TARGET)
+	./$(TARGET)
 
 # Rule to build the target
 $(TARGET): $(OBJS)
