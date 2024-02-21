@@ -20,7 +20,7 @@ ifeq ($(BUILD),debug)
 	CFLAGS += -g -DDEBUG
 	OBJDIR := $(BUILDDIR)/debug
 else
-	CFLAGS += -O2
+	CFLAGS += -O2 -DNDEBUG
 	OBJDIR := $(BUILDDIR)/release
 endif
 
