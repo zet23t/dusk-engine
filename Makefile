@@ -7,7 +7,7 @@ CFLAGS := -Wall -Isubmodules/raylib/src -DPLATFORM_DESKTOP
 # Directories
 SRCDIR := src
 BUILDDIR := _build
-LIBDIR := submodules/raylib/src
+LIBDIR := submodules/raylib/release/desktop
 
 # Source files
 SRCS := $(shell find $(SRCDIR) -name '*.c')

@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <memory.h>
 
 #include "shared/scene_graph/scene_graph.h"
 #include <raylib.h>
@@ -18,10 +19,10 @@ typedef struct WaveComponent {
     float speed;
 } WaveComponent;
 
-#define TEST_SCENE_GRAPH 0
+#define TEST_SCENE_GRAPH 1
 
 #if TEST_SCENE_GRAPH
-
+const char *systemTest = "sceneGraph";
 SceneGraph* sceneGraph;
 
 void Cube_draw(Camera3D camera, SceneObject* sceneObject, SceneComponentId sceneComponent,
@@ -82,7 +83,7 @@ void draw(Camera3D camera)
     SceneGraph_draw(sceneGraph, camera, NULL);
 }
 #else
-
+const char *systemTest = "ecs";
 // test pico_ecs
 
 #include "shared/ecs/pico_ecs.h"
@@ -199,17 +200,32 @@ void draw(Camera3D camera)
 
 #endif
 
+/*
+
+
+INFO: ecs: FPS: 37
+update: 1.03 / 1.58 / 3.64ms
+draw: 19.68 / 28.74 / 65.37ms
+
+INFO: sceneGraph: FPS: 37
+update: 1.06 / 1.51 / 2.40ms
+draw: 21.24 / 26.21 / 44.61ms
+
+*/
+
+#include "plane_sim.h"
+
 int main(void)
 {
     // Initialization
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    SetConfigFlags(FLAG_VSYNC_HINT);
+    SetConfigFlags(FLAG_VSYNC_HINT | FLAG_WINDOW_RESIZABLE);
     InitWindow(screenWidth, screenHeight, "Hello Raylib");
     SetTargetFPS(1000);
 
-    init();
+    // init();
 
     Camera3D camera = { 0 };
     camera.position = (Vector3) { 30.0f, 30.0f, 10.0f };
@@ -221,30 +237,74 @@ int main(void)
 
     TraceLog(LOG_INFO, "Loop start\n");
 
+    const int trackCount = 300;
+    float drawTimes[trackCount];
+    float updateTimes[trackCount];
+    unsigned int trackIndex = 0;
+    memset(drawTimes, 0, sizeof(drawTimes));
+    memset(updateTimes, 0, sizeof(updateTimes));
+
+    if (plane_sim_init())
+    {
+        return 1;
+    }
+
     // Main game loop
     while (!WindowShouldClose()) {
         // Update
 
+        plane_sim_update(GetFrameTime());
+
         // Draw
         BeginDrawing();
+        ClearBackground((Color) { 120, 140, 160, 255 });
+        plane_sim_draw();
 
-        ClearBackground(RAYWHITE);
+        // float t = GetTime();
+        // update();
+        // float updateDt = GetTime() - t;
+        // updateTimes[trackIndex % trackCount] = updateDt;
 
-        float t = GetTime();
-        update();
-        float updateDt = GetTime() - t;
+        // BeginMode3D(camera);
 
-        BeginMode3D(camera);
+        // t = GetTime();
+        // draw(camera);
+        // float drawDt = GetTime() - t;
+        // drawTimes[trackIndex % trackCount] = drawDt;
+        // EndMode3D();
 
-        t = GetTime();
-        draw(camera);
-        float drawDt = GetTime() - t;
-        EndMode3D();
+        // trackIndex++;
+        // float minUpdate = updateTimes[0];
+        // float maxUpdate = updateTimes[0];
+        // float avgUpdate = updateTimes[0];
+        // for (int i = 1; i < trackCount; i++) {
+        //     if (updateTimes[i] < minUpdate) minUpdate = updateTimes[i];
+        //     if (updateTimes[i] > maxUpdate) maxUpdate = updateTimes[i];
+        //     avgUpdate += updateTimes[i];
+        // }
+        // avgUpdate /= trackCount;
 
-        char buffer[200];
-        sprintf(buffer, "FPS: %d - update: %.1fms - draw: %.1fms", GetFPS(),
-            updateDt * 1000, drawDt * 1000);
-        DrawText(buffer, 10, 10, 20, DARKGRAY);
+        // float minDraw = drawTimes[0];
+        // float maxDraw = drawTimes[0];
+        // float avgDraw = drawTimes[0];
+        // for (int i = 1; i < trackCount; i++) {
+        //     if (drawTimes[i] < minDraw) minDraw = drawTimes[i];
+        //     if (drawTimes[i] > maxDraw) maxDraw = drawTimes[i];
+        //     avgDraw += drawTimes[i];
+        // }
+        // avgDraw /= trackCount;
+
+        // char buffer[200];
+        // sprintf(buffer, "%s: FPS: %d\nupdate: %.2f / %.2f / %.2fms\ndraw: %.2f / %.2f / %.2fms", 
+        //     systemTest, GetFPS(),
+        //     minUpdate * 1000.0f, avgUpdate * 1000.0f, maxUpdate * 1000.0f, 
+        //     minDraw * 1000.0f, avgDraw * 1000.0f, maxDraw * 1000.0f);
+        
+        // if (trackIndex % trackCount == 0 && trackIndex > trackCount * 2)
+        // {
+        //     TraceLog(LOG_INFO, "%s\n", buffer);
+        // }
+        // DrawText(buffer, 10, 10, 20, DARKGRAY);
 
         EndDrawing();
     }

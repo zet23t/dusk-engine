@@ -54,6 +54,7 @@ typedef struct SceneObjectTransform {
     Vector3 scale;
     Matrix localMatrix;
     Matrix worldMatrix;
+    int32_t worldMatrixVersion;
 } SceneObjectTransform;
 
 typedef struct SceneComponentTypeMethods {
@@ -85,6 +86,7 @@ typedef struct SceneObject {
     SceneGraph* graph;
     char* name;
     int32_t flags;
+    int32_t parentWorldMatrixVersion;
     SceneObjectId parent;
     SceneObjectTransform transform;
 

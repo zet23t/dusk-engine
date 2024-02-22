@@ -25,6 +25,7 @@ STRUCT_LIST_ACQUIRE_FN(SceneGraph, SceneObject, objects)
 STRUCT_LIST_ACQUIRE_FN(SceneGraph, SceneComponentType, componentTypes)
 STRUCT_LIST_ACQUIRE_FN(SceneComponentType, SceneComponent, components)
 STRUCT_LIST_ACQUIRE_FN(SceneObject, SceneComponentId, components)
+STRUCT_LIST_ACQUIRE_FN(SceneObject, SceneObjectId, children)
 
 SceneComponentTypeId SceneGraph_registerComponentType(SceneGraph* graph, const char* name,
     size_t dataSize, SceneComponentTypeMethods methods)
@@ -63,6 +64,7 @@ Matrix SceneObject_getLocalMatrix(SceneObject* object)
         object->transform.localMatrix = MatrixMultiply(object->transform.localMatrix, MatrixTranslate(object->transform.position.x, object->transform.position.y, object->transform.position.z));
         object->flags &= ~SCENE_OBJECT_FLAG_LOCAL_MATRIX_DIRTY;
         object->flags |= SCENE_OBJECT_FLAG_WORLD_MATRIX_DIRTY;
+        object->transform.worldMatrixVersion++;
     }
 
     return object->transform.localMatrix;
@@ -70,14 +72,16 @@ Matrix SceneObject_getLocalMatrix(SceneObject* object)
 
 Matrix SceneObject_getWorldMatrix(SceneObject* object)
 {
-    if (object->flags & SCENE_OBJECT_FLAG_WORLD_MATRIX_DIRTY) {
-        SceneObject* parent = SceneGraph_getObject(object->graph, object->parent);
+    SceneObject* parent = SceneGraph_getObject(object->graph, object->parent);
+    if (object->flags & SCENE_OBJECT_FLAG_WORLD_MATRIX_DIRTY || (parent != NULL && parent->transform.worldMatrixVersion != object->parentWorldMatrixVersion)) {
         if (parent != NULL) {
-            object->transform.worldMatrix = MatrixMultiply(SceneObject_getWorldMatrix(parent), SceneObject_getLocalMatrix(object));
+            object->transform.worldMatrix = MatrixMultiply(SceneObject_getLocalMatrix(object), SceneObject_getWorldMatrix(parent));
         } else {
             object->transform.worldMatrix = SceneObject_getLocalMatrix(object);
         }
         object->flags &= ~SCENE_OBJECT_FLAG_WORLD_MATRIX_DIRTY;
+        object->transform.worldMatrixVersion++;
+        object->parentWorldMatrixVersion = parent != NULL ? parent->transform.worldMatrixVersion : 0;
     }
 
     return object->transform.worldMatrix;
@@ -91,6 +95,57 @@ void SceneGraph_setLocalPosition(SceneGraph* graph, SceneObjectId id, Vector3 po
     }
     object->transform.position = position;
     object->flags |= SCENE_OBJECT_FLAG_LOCAL_MATRIX_DIRTY | SCENE_OBJECT_FLAG_WORLD_MATRIX_DIRTY;
+}
+
+void SceneGraph_setLocalRotation(SceneGraph* graph, SceneObjectId id, Vector3 rotation)
+{
+    SceneObject* object = SceneGraph_getObject(graph, id);
+    if (object == NULL) {
+        return;
+    }
+    object->transform.eulerRotationDegrees = rotation;
+    object->flags |= SCENE_OBJECT_FLAG_LOCAL_MATRIX_DIRTY | SCENE_OBJECT_FLAG_WORLD_MATRIX_DIRTY;
+}
+
+void SceneGraph_setLocalScale(SceneGraph* graph, SceneObjectId id, Vector3 scale)
+{
+    SceneObject* object = SceneGraph_getObject(graph, id);
+    if (object == NULL) {
+        return;
+    }
+    object->transform.scale = scale;
+    object->flags |= SCENE_OBJECT_FLAG_LOCAL_MATRIX_DIRTY | SCENE_OBJECT_FLAG_WORLD_MATRIX_DIRTY;
+}
+
+void SceneGraph_setParent(SceneGraph* graph, SceneObjectId id, SceneObjectId parentId)
+{
+    SceneObject* object = SceneGraph_getObject(graph, id);
+    if (object == NULL) {
+        return;
+    }
+
+    SceneObject* oldParent = SceneGraph_getObject(graph, object->parent);
+    if (oldParent != NULL) {
+        for (int i = 0; i < oldParent->children_count; i++) {
+            if (oldParent->children[i].id == id.id) {
+                for (int j=i; j<oldParent->children_count-1; j++) {
+                    oldParent->children[j] = oldParent->children[j+1];
+                }
+                oldParent->children_count--;
+                break;
+            }
+        }
+    }
+
+    object->parent = parentId;
+    object->flags |= SCENE_OBJECT_FLAG_WORLD_MATRIX_DIRTY;
+    SceneObject* parent = SceneGraph_getObject(graph, parentId);
+    if (parent == NULL) {
+        return;
+    }
+
+    SceneObjectId* childEntry = SceneObject_acquire_children(parent);
+    *childEntry = id;
 }
 
 void SceneGraph_updateTick(SceneGraph* graph, float delta)
