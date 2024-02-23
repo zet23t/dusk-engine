@@ -87,6 +87,47 @@ Matrix SceneObject_getWorldMatrix(SceneObject* object)
     return object->transform.worldMatrix;
 }
 
+Vector3 SceneGraph_getWorldPosition(SceneGraph* graph, SceneObjectId id)
+{
+    SceneObject* object = SceneGraph_getObject(graph, id);
+    if (object == NULL) {
+        return (Vector3) { 0, 0, 0 };
+    }
+    Matrix m = SceneObject_getWorldMatrix(object);
+    return (Vector3) {
+        m.m12,
+        m.m13,
+        m.m14,
+    };
+}
+
+Vector3 SceneGraph_getLocalPosition(SceneGraph* graph, SceneObjectId id)
+{
+    SceneObject* object = SceneGraph_getObject(graph, id);
+    if (object == NULL) {
+        return (Vector3) { 0, 0, 0 };
+    }
+    return object->transform.position;
+}
+
+Vector3 SceneGraph_getLocalRotation(SceneGraph* graph, SceneObjectId id)
+{
+    SceneObject* object = SceneGraph_getObject(graph, id);
+    if (object == NULL) {
+        return (Vector3) { 0, 0, 0 };
+    }
+    return object->transform.eulerRotationDegrees;
+}
+
+Vector3 SceneGraph_getLocalScale(SceneGraph* graph, SceneObjectId id)
+{
+    SceneObject* object = SceneGraph_getObject(graph, id);
+    if (object == NULL) {
+        return (Vector3) { 1, 1, 1 };
+    }
+    return object->transform.scale;
+}
+
 void SceneGraph_setLocalPosition(SceneGraph* graph, SceneObjectId id, Vector3 position)
 {
     SceneObject* object = SceneGraph_getObject(graph, id);
@@ -128,8 +169,8 @@ void SceneGraph_setParent(SceneGraph* graph, SceneObjectId id, SceneObjectId par
     if (oldParent != NULL) {
         for (int i = 0; i < oldParent->children_count; i++) {
             if (oldParent->children[i].id == id.id) {
-                for (int j=i; j<oldParent->children_count-1; j++) {
-                    oldParent->children[j] = oldParent->children[j+1];
+                for (int j = i; j < oldParent->children_count - 1; j++) {
+                    oldParent->children[j] = oldParent->children[j + 1];
                 }
                 oldParent->children_count--;
                 break;
@@ -270,12 +311,12 @@ SceneComponentId SceneGraph_addComponent(SceneGraph* graph, SceneObjectId id, Sc
 {
     SceneObject* object = SceneGraph_getObject(graph, id);
     if (object == NULL) {
-        return (SceneComponentId) { 0, 0 };
+        return (SceneComponentId) { 0 };
     }
 
     SceneComponentType* type = SceneGraph_getComponentType(graph, componentType);
     if (type == NULL) {
-        return (SceneComponentId) { 0, 0 };
+        return (SceneComponentId) { 0 };
     }
 
     SceneComponent* component = NULL;
@@ -291,6 +332,7 @@ SceneComponentId SceneGraph_addComponent(SceneGraph* graph, SceneObjectId id, Sc
         component->id.id = type->components_count - 1;
     }
     component->id.version = ++graph->versionCounter;
+    component->id.typeId = componentType;
     component->objectId = id;
     component->typeId = componentType;
 
@@ -310,27 +352,58 @@ SceneComponentId SceneGraph_addComponent(SceneGraph* graph, SceneObjectId id, Sc
         }
     }
 
-    SceneComponentId *componentIdRef = SceneObject_acquire_components(object);
+    SceneComponentId* componentIdRef = SceneObject_acquire_components(object);
     *componentIdRef = component->id;
 
     return component->id;
 }
 
-SceneComponent* SceneGraph_getComponent(SceneGraph* graph, SceneComponentId id)
+SceneComponent* SceneGraph_getComponent(SceneGraph* graph, SceneComponentId id, void **componentData)
 {
-    if (id.id < 0 || id.id >= graph->components_count) {
+    SceneComponentTypeId typeId = id.typeId;
+    SceneComponentType* type = SceneGraph_getComponentType(graph, typeId);
+    if (type == NULL) {
+        if (componentData != NULL)
+            *componentData = NULL;
         return NULL;
     }
-    SceneComponent* component = &graph->components[id.id];
+    SceneComponent* component = &type->components[id.id];
     if (component->id.version != id.version) {
+        if (componentData != NULL)
+            componentData = NULL;
         return NULL;
     }
+    if (componentData != NULL)
+        *componentData = &type->componentData[id.id * type->dataSize];
     return component;
+}
+
+SceneComponent* SceneGraph_getComponentByType(SceneGraph* graph, SceneObjectId id, SceneComponentTypeId typeId, void **componentData)
+{
+    SceneObject* object = SceneGraph_getObject(graph, id);
+    if (object == NULL) {
+        return NULL;
+    }
+
+    for (int i = 0; i < object->components_count; i++) {
+        SceneComponent* component = SceneGraph_getComponent(graph, object->components[i], componentData);
+        if (component == NULL) {
+            continue;
+        }
+        if (component->typeId.id == typeId.id && component->typeId.version == typeId.version) {
+            return component;
+        }
+    }
+
+    if (componentData != NULL)
+        *componentData = NULL;
+
+    return NULL;
 }
 
 void SceneGraph_destroyComponent(SceneGraph* graph, SceneComponentId id)
 {
-    SceneComponent* component = SceneGraph_getComponent(graph, id);
+    SceneComponent* component = SceneGraph_getComponent(graph, id, NULL);
     if (component == NULL) {
         return;
     }

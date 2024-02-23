@@ -295,14 +295,15 @@ int main(void)
         avgDraw /= trackCount;
 
         char buffer[200];
-        sprintf(buffer, "%s: FPS: %d\nupdate: %.2f / %.2f / %.2fms\ndraw: %.2f / %.2f / %.2fms", 
+        sprintf(buffer, "%s: FPS: %d\nupdate: %.2f / %.2f / %.2fms\ndraw: %.2f / %.2f / %.2fms\n\nUse Arrow keys to move the plane", 
             systemTest, GetFPS(),
             minUpdate * 1000.0f, avgUpdate * 1000.0f, maxUpdate * 1000.0f, 
             minDraw * 1000.0f, avgDraw * 1000.0f, maxDraw * 1000.0f);
+
         
         if (trackIndex % trackCount == 0 && trackIndex > trackCount * 2)
         {
-            TraceLog(LOG_INFO, "%s\n", buffer);
+            // TraceLog(LOG_INFO, "%s\n", buffer);
         }
         DrawText(buffer, 12, 12, 20, BLACK);
         DrawText(buffer, 10, 10, 20, WHITE);

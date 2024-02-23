@@ -35,15 +35,17 @@ typedef struct SceneObjectId {
     uint32_t version;
 } SceneObjectId;
 
-typedef struct SceneComponentId {
-    uint32_t id;
-    uint32_t version;
-} SceneComponentId;
-
 typedef struct SceneComponentTypeId {
     uint32_t id;
     uint32_t version;
 } SceneComponentTypeId;
+
+typedef struct SceneComponentId {
+    uint32_t id;
+    uint32_t version;
+    SceneComponentTypeId typeId;
+} SceneComponentId;
+
 
 typedef struct SceneGraph SceneGraph;
 typedef struct SceneObject SceneObject;
@@ -100,7 +102,6 @@ typedef struct SceneGraph {
 
     STRUCT_LIST_ELEMENT(SceneObject, objects)
     STRUCT_LIST_ELEMENT(SceneObjectId, rootElements)
-    STRUCT_LIST_ELEMENT(SceneComponent, components)
     STRUCT_LIST_ELEMENT(SceneComponentType, componentTypes)
 } SceneGraph;
 
@@ -113,6 +114,13 @@ SceneObjectId SceneGraph_createObject(SceneGraph* graph, const char* name);
 void SceneGraph_destroyObject(SceneGraph* graph, SceneObjectId id);
 SceneComponentId SceneGraph_addComponent(SceneGraph* graph, SceneObjectId id, SceneComponentTypeId componentType,
     void* componentData);
+SceneComponent* SceneGraph_getComponent(SceneGraph* graph, SceneComponentId id, void **componentData);
+SceneComponent* SceneGraph_getComponentByType(SceneGraph* graph, SceneObjectId id, SceneComponentTypeId typeId, void **componentData);
+
+Vector3 SceneGraph_getWorldPosition(SceneGraph* graph, SceneObjectId id);
+Vector3 SceneGraph_getLocalPosition(SceneGraph* graph, SceneObjectId id);
+Vector3 SceneGraph_getLocalRotation(SceneGraph* graph, SceneObjectId id);
+Vector3 SceneGraph_getLocalScale(SceneGraph* graph, SceneObjectId id);
 void SceneGraph_setLocalPosition(SceneGraph* graph, SceneObjectId id, Vector3 position);
 void SceneGraph_setLocalRotation(SceneGraph* graph, SceneObjectId id, Vector3 rotation);
 void SceneGraph_setLocalScale(SceneGraph* graph, SceneObjectId id, Vector3 scale);
