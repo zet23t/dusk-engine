@@ -1,6 +1,9 @@
 #include "shared/scene_graph/scene_graph.h"
 #include "config.h"
 #include "math.h"
+
+#include <string.h>
+
 static SceneGraph* sceneGraph;
 static Model model;
 static Mesh* meshPlane;
@@ -72,7 +75,7 @@ void PlaneBehaviorComponentUpdateTick(SceneObject* sceneObject, SceneComponentId
     
     float yaw = sinf(planeBehavior->time * 3 + planeBehavior->phase * .5f);
     float roll = sinf(planeBehavior->time * 2.3f + planeBehavior->phase) + yaw * .25f;
-    float pitch = sinf(planeBehavior->time * 2.7f + planeBehavior->phase * .7f) + pitch * .5f;
+    float pitch = sinf(planeBehavior->time * 2.7f + planeBehavior->phase * .7f) + yaw * .5f;
     SceneGraph_setLocalRotation(sceneObject->graph, sceneObject->id, (Vector3) { pitch * 3, yaw * 2, roll * 5 });
     SceneGraph_setLocalRotation(sceneGraph, planeBehavior->propeller, (Vector3) { 0, 0, -planeBehavior->time * 360 * 4});
 }

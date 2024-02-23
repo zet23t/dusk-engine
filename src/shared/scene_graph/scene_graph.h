@@ -1,6 +1,7 @@
 #ifndef __SCENE_GRAPH_H__
 #define __SCENE_GRAPH_H__
 
+#include <stddef.h>
 #include <inttypes.h>
 #include <raylib.h>
 
