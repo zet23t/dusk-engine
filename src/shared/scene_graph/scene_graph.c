@@ -54,18 +54,6 @@ SceneComponentTypeId SceneGraph_registerComponentType(SceneGraph* graph, const c
     return type->id;
 }
 
-SceneComponentType* SceneGraph_getComponentType(SceneGraph* graph, SceneComponentTypeId componentType)
-{
-    if (componentType.id < 0 || componentType.id >= graph->componentTypes_count) {
-        return NULL;
-    }
-    SceneComponentType* type = &graph->componentTypes[componentType.id];
-    if (type->id.version != componentType.version) {
-        return NULL;
-    }
-    return type;
-}
-
 Matrix SceneObject_getLocalMatrix(SceneObject* object)
 {
     if (object->flags & SCENE_OBJECT_FLAG_LOCAL_MATRIX_DIRTY) {
@@ -363,12 +351,12 @@ SceneComponentId SceneGraph_addComponent(SceneGraph* graph, SceneObjectId id, Sc
     component->typeId = componentType;
 
     int dataIndex = component->id.id;
-    if (dataIndex >= type->componentData_capacity) {
+    if (dataIndex >= type->componentData_capacity && type->dataSize > 0) {
         type->componentData_capacity = type->componentData_capacity == 0 ? 1 : type->componentData_capacity * 2;
         type->componentData = realloc(type->componentData, type->componentData_capacity * type->dataSize);
     }
 
-    if (componentData != NULL)
+    if (componentData != NULL && type->dataSize > 0)
         memcpy(&type->componentData[dataIndex * type->dataSize], componentData, type->dataSize);
     
 
@@ -383,6 +371,18 @@ SceneComponentId SceneGraph_addComponent(SceneGraph* graph, SceneObjectId id, Sc
     *componentIdRef = component->id;
 
     return component->id;
+}
+
+SceneComponentType* SceneGraph_getComponentType(SceneGraph* graph, SceneComponentTypeId componentType)
+{
+    if (componentType.id < 0 || componentType.id >= graph->componentTypes_count) {
+        return NULL;
+    }
+    SceneComponentType* type = &graph->componentTypes[componentType.id];
+    if (type->id.version != componentType.version) {
+        return NULL;
+    }
+    return type;
 }
 
 SceneComponent* SceneGraph_getComponent(SceneGraph* graph, SceneComponentId id, void** componentData)

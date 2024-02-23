@@ -1,9 +1,9 @@
 #ifndef __SCENE_GRAPH_H__
 #define __SCENE_GRAPH_H__
 
-#include <stddef.h>
 #include <inttypes.h>
 #include <raylib.h>
+#include <stddef.h>
 
 #define STRUCT_LIST_ELEMENT(type, name) \
     type* name;                         \
@@ -46,7 +46,6 @@ typedef struct SceneComponentId {
     SceneComponentTypeId typeId;
 } SceneComponentId;
 
-
 typedef struct SceneGraph SceneGraph;
 typedef struct SceneObject SceneObject;
 typedef struct SceneComponent SceneComponent;
@@ -64,8 +63,8 @@ typedef struct SceneComponentTypeMethods {
     void (*initialize)(SceneObject* sceneObject, SceneComponentId SceneComponent, void* componentData);
     void (*updateTick)(SceneObject* sceneObject, SceneComponentId SceneComponent,
         float delta, void* componentData);
-    void (*draw)(Camera3D camera, SceneObject *sceneObject, SceneComponentId sceneComponent,
-        void *componentData, void *userdata);
+    void (*draw)(Camera3D camera, SceneObject* sceneObject, SceneComponentId sceneComponent,
+        void* componentData, void* userdata);
 } SceneComponentTypeMethods;
 
 typedef struct SceneComponent {
@@ -82,7 +81,6 @@ typedef struct SceneComponentType {
     STRUCT_LIST_ELEMENT(uint8_t, componentData)
     SceneComponentTypeMethods methods;
 } SceneComponentType;
-
 
 typedef struct SceneObject {
     SceneObjectId id;
@@ -109,14 +107,15 @@ SceneGraph* SceneGraph_create();
 void SceneGraph_destroy(SceneGraph* graph);
 SceneComponentTypeId SceneGraph_registerComponentType(SceneGraph* graph, const char* name,
     size_t dataSize, SceneComponentTypeMethods methods);
+SceneComponentType* SceneGraph_getComponentType(SceneGraph* graph, SceneComponentTypeId componentType);
 int SceneGraph_countLiveObjects(SceneGraph* graph);
 
 SceneObjectId SceneGraph_createObject(SceneGraph* graph, const char* name);
 void SceneGraph_destroyObject(SceneGraph* graph, SceneObjectId id);
 SceneComponentId SceneGraph_addComponent(SceneGraph* graph, SceneObjectId id, SceneComponentTypeId componentType,
     void* componentData);
-SceneComponent* SceneGraph_getComponent(SceneGraph* graph, SceneComponentId id, void **componentData);
-SceneComponent* SceneGraph_getComponentByType(SceneGraph* graph, SceneObjectId id, SceneComponentTypeId typeId, void **componentData, int atIndex);
+SceneComponent* SceneGraph_getComponent(SceneGraph* graph, SceneComponentId id, void** componentData);
+SceneComponent* SceneGraph_getComponentByType(SceneGraph* graph, SceneObjectId id, SceneComponentTypeId typeId, void** componentData, int atIndex);
 SceneComponent* SceneGraph_getComponentOrFindByType(SceneGraph* graph, SceneObjectId id, SceneComponentId* componentId, SceneComponentTypeId typeId, void** componentData);
 
 Vector3 SceneGraph_getWorldPosition(SceneGraph* graph, SceneObjectId id);

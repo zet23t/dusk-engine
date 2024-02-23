@@ -22,6 +22,7 @@ int load_meshes()
         { "propeller", &psg.meshPropellerPin },
         { "propeller-blade-1", &psg.meshPropellerBlade },
         { "player-bullet-1", &psg.meshPlayerBullet },
+        { "target-1", &psg.meshTarget},
         { NULL, NULL }
     };
 
@@ -77,6 +78,38 @@ static void onShoot(SceneGraph* graph, SceneComponentId shooter, ShootingCompone
     SceneGraph_addComponent(graph, bullet, psg.autoDestroyComponentId,
         &(AutoDestroyComponent) {
             .lifeTimeLeft = shootingConfig->bulletLifetime });
+    SceneGraph_addComponent(graph, bullet, psg.bulletComponentId,
+        &(BulletComponent) {
+            .radius = 0.01f,
+            .colliderFlags = 1,
+        });
+}
+
+static int onTargetHit(SceneGraph* graph, SceneObjectId target, SceneObjectId bullet)
+{
+    SceneGraph_destroyObject(graph, target);
+    SceneGraph_destroyObject(graph, bullet);
+    return 1;
+}
+
+SceneObjectId instantiate_target(Vector3 position)
+{
+    SceneObjectId target = SceneGraph_createObject(psg.sceneGraph, "target");
+    SceneGraph_setLocalPosition(psg.sceneGraph, target, position);
+    SceneGraph_addComponent(psg.sceneGraph, target, psg.meshRendererComponentId,
+        &(MeshRendererComponent) {
+            .material = psg.model.materials[1],
+            .mesh = psg.meshTarget,
+        });
+    SceneGraph_addComponent(psg.sceneGraph, target, psg.targetComponentId,
+        &(TargetComponent) {
+            .radius = 0.8f,
+            .colliderMask = 1,
+            .onHit = onTargetHit,
+        });
+
+    return target;
+
 }
 
 SceneObjectId plane_instantiate(Vector3 position)
@@ -126,10 +159,10 @@ SceneObjectId plane_instantiate(Vector3 position)
             .drag = (Vector3) { drag, drag, drag } });
 
     ShootingConfig shootingConfig = {
-        .shotInterval = 0.1f,
-        .bulletSpeed = 20.0f,
-        .bulletLifetime = 1.0f,
-        .onShoot = onShoot,
+        .shotInterval = 0.05f,
+        .bulletSpeed = 40.0f,
+        .bulletLifetime = 2.0f,
+        .onShoot = (OnShootFn) onShoot,
     };
 
     SceneObjectId spawnPoint1 = SceneGraph_createObject(psg.sceneGraph, "spawn-point-1");
@@ -160,6 +193,8 @@ void PlaneBehaviorComponentRegister();
 void LinearVelocityComponentRegister();
 void ShootingComponentRegister();
 void AutoDestroyComponentRegister();
+void BulletComponentRegister();
+void TargetComponentRegister();
 
 int plane_sim_init()
 {
@@ -174,6 +209,8 @@ int plane_sim_init()
     LinearVelocityComponentRegister();
     ShootingComponentRegister();
     AutoDestroyComponentRegister();
+    BulletComponentRegister();
+    TargetComponentRegister();
 
     // for (int i = 0; i < 1000; i += 1) {
     //     plane_instantiate((Vector3) {
@@ -184,6 +221,8 @@ int plane_sim_init()
     psg.playerPlane = plane_instantiate((Vector3) { 0, 0, 0 });
     // plane_instantiate((Vector3) { 0, 0, 1.5f });
     // plane_instantiate((Vector3) { 2.5f, 0, 0 });
+
+    instantiate_target((Vector3) { 0, 0, 10 });
 
     return 0;
 }
