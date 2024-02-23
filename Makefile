@@ -13,7 +13,7 @@ BUILD                ?= release
 
 # Compiler and flags
 CC := gcc
-CFLAGS := -Wall -Isubmodules/raylib/src -D$(PLATFORM) -Isrc
+CFLAGS := -Wall -Isubmodules/raylib/src -D$(PLATFORM) -Isrc -MMD -MP
 
 # Directories
 SRCDIR := src
@@ -130,6 +130,7 @@ ifeq ($(BUILD),release)
 endif
 
 OBJS := $(patsubst $(SRCDIR)/%.c,$(OBJDIR)/%.o,$(SRCS))
+DEPS := $(OBJS:.o=.d)
 
 $(info $(SRCS))
 $(info $(OBJS))
@@ -148,6 +149,8 @@ run-node: $(OUTPUT)
 # Rule to build the target
 $(TARGET): $(OBJS)
 	$(CC) $(CFLAGS) -o $@ $^ -L$(LIBDIR) -lraylib $(LDLIBS)
+
+-include $(DEPS)
 
 # Rule to build object files
 $(OBJDIR)/%.o: $(SRCDIR)/%.c
