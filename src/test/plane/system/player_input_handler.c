@@ -5,7 +5,7 @@ void HandlePlayerInputUpdate()
     if (psg.deltaTime == 0) return;
     Vector3 position = SceneGraph_getLocalPosition(psg.sceneGraph, psg.playerPlane);
     LinearVelocityComponent *velocity;
-    SceneGraph_getComponentByType(psg.sceneGraph, psg.playerPlane, psg.linearVelocityComponentId, (void**)&velocity);
+    SceneGraph_getComponentByType(psg.sceneGraph, psg.playerPlane, psg.linearVelocityComponentId, (void**)&velocity, 0);
     if (velocity == NULL) return;
 
     if (IsKeyDown(KEY_LEFT)) {
@@ -19,6 +19,15 @@ void HandlePlayerInputUpdate()
     }
     if (IsKeyDown(KEY_DOWN)) {
         velocity->velocity.z -= psg.deltaTime * 50.0f;
+    }
+    if (IsKeyDown(KEY_SPACE) || IsKeyDown(KEY_LEFT_CONTROL) || IsKeyDown(KEY_RIGHT_CONTROL)) {
+        for (int i=0;1;i++)
+        {
+            ShootingComponent *shooting;
+            SceneGraph_getComponentByType(psg.sceneGraph, psg.playerPlane, psg.shootingComponentId, (void**)&shooting, i);
+            if (shooting == NULL) break;
+            shooting->shooting = true;
+        }
     }
 
     const float movementRangeX = 5.0f;

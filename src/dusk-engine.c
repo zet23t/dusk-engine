@@ -230,14 +230,14 @@ int main(void)
         "    }"
         "}, false);"
     );
-    
+
     #endif
     // Initialization
-    const int screenWidth = 800;
-    const int screenHeight = 450;
+    const int screenWidth = 640;
+    const int screenHeight = 480;
 
     SetConfigFlags(FLAG_VSYNC_HINT | FLAG_WINDOW_RESIZABLE);
-    InitWindow(screenWidth, screenHeight, "Hello Raylib");
+    InitWindow(screenWidth, screenHeight, "Scene graph testing");
     SetTargetFPS(1000);
 
     // init();
@@ -264,7 +264,9 @@ int main(void)
         return 1;
     }
 
+#if PLATFORM_WEB
     DisableCursor();
+#endif
 
     // Main game loop
     while (!WindowShouldClose()) {
@@ -312,7 +314,7 @@ int main(void)
         avgDraw /= trackCount;
 
         char buffer[200];
-        sprintf(buffer, "%s: FPS: %d\nupdate: %.2f / %.2f / %.2fms\ndraw: %.2f / %.2f / %.2fms\n\nUse Arrow keys to move the plane", 
+        sprintf(buffer, "%s: FPS: %d\n\nupdate: %.2f / %.2f / %.2fms\n\ndraw: %.2f / %.2f / %.2fms\n\n\nUse Arrow keys to move the plane", 
             systemTest, GetFPS(),
             minUpdate * 1000.0f, avgUpdate * 1000.0f, maxUpdate * 1000.0f, 
             minDraw * 1000.0f, avgDraw * 1000.0f, maxDraw * 1000.0f);
@@ -322,8 +324,8 @@ int main(void)
         {
             // TraceLog(LOG_INFO, "%s\n", buffer);
         }
-        DrawText(buffer, 12, 12, 20, BLACK);
-        DrawText(buffer, 10, 10, 20, WHITE);
+        DrawText(buffer, 12, 12, 30, BLACK);
+        DrawText(buffer, 10, 10, 30, WHITE);
 
         EndDrawing();
     }

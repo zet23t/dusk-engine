@@ -10,13 +10,9 @@ static void PlaneBehaviorComponentUpdateTick(SceneObject* sceneObject, SceneComp
     PlaneBehaviorComponent* planeBehavior = (PlaneBehaviorComponent*)componentData;
 
     LinearVelocityComponent* velocity;
-    SceneGraph_getComponent(psg.sceneGraph, planeBehavior->velocityComponentId, (void**)&velocity);
+    SceneGraph_getComponentOrFindByType(psg.sceneGraph, sceneObject->id, &planeBehavior->velocityComponentId, psg.linearVelocityComponentId, (void**)&velocity);
     if (velocity == NULL) {
-        SceneComponent* comp = SceneGraph_getComponentByType(psg.sceneGraph, sceneObject->id, psg.linearVelocityComponentId, (void**)&velocity);
-        if (velocity == NULL) {
-            return;
-        }
-        planeBehavior->velocityComponentId = comp->id;
+        return;
     }
     planeBehavior->time += delta;
 

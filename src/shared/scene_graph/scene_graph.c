@@ -87,6 +87,20 @@ Matrix SceneObject_getWorldMatrix(SceneObject* object)
     return object->transform.worldMatrix;
 }
 
+Vector3 SceneGraph_getWorldForward(SceneGraph* graph, SceneObjectId id)
+{
+    SceneObject* object = SceneGraph_getObject(graph, id);
+    if (object == NULL) {
+        return (Vector3) { 0, 0, 0 };
+    }
+    Matrix m = SceneObject_getWorldMatrix(object);
+    return (Vector3) {
+        m.m8,
+        m.m9,
+        m.m10,
+    };
+}
+
 Vector3 SceneGraph_getWorldPosition(SceneGraph* graph, SceneObjectId id)
 {
     SceneObject* object = SceneGraph_getObject(graph, id);
@@ -358,7 +372,7 @@ SceneComponentId SceneGraph_addComponent(SceneGraph* graph, SceneObjectId id, Sc
     return component->id;
 }
 
-SceneComponent* SceneGraph_getComponent(SceneGraph* graph, SceneComponentId id, void **componentData)
+SceneComponent* SceneGraph_getComponent(SceneGraph* graph, SceneComponentId id, void** componentData)
 {
     SceneComponentTypeId typeId = id.typeId;
     SceneComponentType* type = SceneGraph_getComponentType(graph, typeId);
@@ -378,10 +392,12 @@ SceneComponent* SceneGraph_getComponent(SceneGraph* graph, SceneComponentId id, 
     return component;
 }
 
-SceneComponent* SceneGraph_getComponentByType(SceneGraph* graph, SceneObjectId id, SceneComponentTypeId typeId, void **componentData)
+SceneComponent* SceneGraph_getComponentByType(SceneGraph* graph, SceneObjectId id, SceneComponentTypeId typeId, void** componentData, int atIndex)
 {
     SceneObject* object = SceneGraph_getObject(graph, id);
     if (object == NULL) {
+        if (componentData != NULL)
+            *componentData = NULL;
         return NULL;
     }
 
@@ -390,7 +406,7 @@ SceneComponent* SceneGraph_getComponentByType(SceneGraph* graph, SceneObjectId i
         if (component == NULL) {
             continue;
         }
-        if (component->typeId.id == typeId.id && component->typeId.version == typeId.version) {
+        if (component->typeId.id == typeId.id && component->typeId.version == typeId.version && --atIndex < 0) {
             return component;
         }
     }
@@ -399,6 +415,21 @@ SceneComponent* SceneGraph_getComponentByType(SceneGraph* graph, SceneObjectId i
         *componentData = NULL;
 
     return NULL;
+}
+
+SceneComponent* SceneGraph_getComponentOrFindByType(SceneGraph* graph, SceneObjectId id, SceneComponentId* componentId, SceneComponentTypeId typeId, void** componentData)
+{
+    SceneComponent* result = SceneGraph_getComponent(graph, *componentId, componentData);
+    if (result != NULL) {
+        return result;
+    }
+
+    result = SceneGraph_getComponentByType(graph, id, typeId, componentData, 0);
+    if (result != NULL) {
+        *componentId = result->id;
+    }
+
+    return result;
 }
 
 void SceneGraph_destroyComponent(SceneGraph* graph, SceneComponentId id)

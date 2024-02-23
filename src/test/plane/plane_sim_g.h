@@ -5,21 +5,36 @@
 
 typedef struct PSG {
     float time;
-    float deltaTime; 
+    float deltaTime;
 
     SceneGraph* sceneGraph;
-    
+
     SceneComponentTypeId meshRendererComponentId;
     SceneComponentTypeId planeBehaviorComponentId;
     SceneComponentTypeId linearVelocityComponentId;
+    SceneComponentTypeId shootingComponentId;
 
     Model model;
     Mesh* meshPlane;
     Mesh* meshPropellerPin;
     Mesh* meshPropellerBlade;
+    Mesh* meshPlayerBullet;
 
     SceneObjectId playerPlane;
 } PSG;
+
+typedef struct ShootingConfig {
+    float shotInterval;
+    float bulletSpeed;
+    void (*onShoot)(SceneGraph*, SceneComponentId shooter, struct ShootingComponent*, struct ShootingConfig* shootingComponent);
+} ShootingConfig;
+
+typedef struct ShootingComponent {
+    float cooldown;
+    int32_t shooting;
+    ShootingConfig config;
+    SceneObjectId spawnPoint;
+} ShootingComponent;
 
 typedef struct MeshRendererComponent {
     Material material;

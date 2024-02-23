@@ -115,9 +115,11 @@ void SceneGraph_destroyObject(SceneGraph* graph, SceneObjectId id);
 SceneComponentId SceneGraph_addComponent(SceneGraph* graph, SceneObjectId id, SceneComponentTypeId componentType,
     void* componentData);
 SceneComponent* SceneGraph_getComponent(SceneGraph* graph, SceneComponentId id, void **componentData);
-SceneComponent* SceneGraph_getComponentByType(SceneGraph* graph, SceneObjectId id, SceneComponentTypeId typeId, void **componentData);
+SceneComponent* SceneGraph_getComponentByType(SceneGraph* graph, SceneObjectId id, SceneComponentTypeId typeId, void **componentData, int atIndex);
+SceneComponent* SceneGraph_getComponentOrFindByType(SceneGraph* graph, SceneObjectId id, SceneComponentId* componentId, SceneComponentTypeId typeId, void** componentData);
 
 Vector3 SceneGraph_getWorldPosition(SceneGraph* graph, SceneObjectId id);
+Vector3 SceneGraph_getWorldForward(SceneGraph* graph, SceneObjectId id);
 Vector3 SceneGraph_getLocalPosition(SceneGraph* graph, SceneObjectId id);
 Vector3 SceneGraph_getLocalRotation(SceneGraph* graph, SceneObjectId id);
 Vector3 SceneGraph_getLocalScale(SceneGraph* graph, SceneObjectId id);

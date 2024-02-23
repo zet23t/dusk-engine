@@ -1,10 +1,15 @@
 #include "config.h"
 #include "math.h"
 #include "shared/scene_graph/scene_graph.h"
-
+#include <raymath.h>
 #include "plane_sim_g.h"
 
 #include <string.h>
+
+struct MeshMapping {
+    const char* name;
+    Mesh** mesh;
+};
 
 int load_meshes()
 {
@@ -13,21 +18,27 @@ int load_meshes()
     psg.model = LoadModel(gltfMeshFile);
     const char* meshNamePlane = "fighter-plane-1";
     psg.meshPlane = NULL;
+    struct MeshMapping meshMappings[] = {
+        { "fighter-plane-1", &psg.meshPlane },
+        { "propeller", &psg.meshPropellerPin },
+        { "propeller-blade-1", &psg.meshPropellerBlade },
+        { "player-bullet-1", &psg.meshPlayerBullet },
+        { NULL, NULL }
+    };
+
     for (int i = 0; i < psg.model.meshCount; i++) {
-        if (strcmp(psg.model.meshes[i].name, meshNamePlane) == 0) {
-            psg.meshPlane = &psg.model.meshes[i];
-        }
-        if (strcmp(psg.model.meshes[i].name, "propeller") == 0) {
-            psg.meshPropellerPin = &psg.model.meshes[i];
-        }
-        if (strcmp(psg.model.meshes[i].name, "propeller-blade-1") == 0) {
-            psg.meshPropellerBlade = &psg.model.meshes[i];
+        for (int j = 0; meshMappings[j].name != NULL; j++) {
+            if (strcmp(psg.model.meshes[i].name, meshMappings[j].name) == 0) {
+                *meshMappings[j].mesh = &psg.model.meshes[i];
+            }
         }
     }
 
-    if (psg.meshPlane == NULL || psg.meshPropellerPin == NULL || psg.meshPropellerBlade == NULL) {
-        TraceLog(LOG_ERROR, "Mesh not found: %s\n", meshNamePlane);
-        return 1;
+    for (int i = 0; meshMappings[i].name != NULL; i++) {
+        if (*meshMappings[i].mesh == NULL) {
+            TraceLog(LOG_ERROR, "Mesh not found: %s\n", meshMappings[i].name);
+            return 1;
+        }
     }
 
     for (int i = 0; i < psg.model.materialCount; i++) {
@@ -42,9 +53,31 @@ int load_meshes()
     return 0;
 }
 
+static void onShoot(SceneGraph* graph, SceneComponentId shooter, ShootingComponent *shootingComponent, ShootingConfig* shootingConfig)
+{
+    SceneComponent* shooting;
+    shooting = SceneGraph_getComponent(graph, shooter, NULL);
+    if (shooting == NULL) {
+        return;
+    }
+    SceneObjectId bullet = SceneGraph_createObject(graph, "bullet");
+    SceneGraph_setLocalPosition(psg.sceneGraph, bullet, SceneGraph_getWorldPosition(psg.sceneGraph, shootingComponent->spawnPoint));
+    SceneGraph_addComponent(psg.sceneGraph, bullet, psg.meshRendererComponentId,
+        &(MeshRendererComponent) {
+            .material = psg.model.materials[1],
+            .mesh = psg.meshPlayerBullet,
+        });
+
+    Vector3 forward = SceneGraph_getWorldForward(psg.sceneGraph, shootingComponent->spawnPoint);
+    forward = Vector3Scale(forward, shootingConfig->bulletSpeed);
+    SceneGraph_addComponent(graph, bullet, psg.linearVelocityComponentId,
+        &(LinearVelocityComponent) {
+            .velocity = forward,
+            .drag = (Vector3) { 0, 0, 0 } });
+}
+
 SceneObjectId plane_instantiate(Vector3 position)
 {
-
     SceneObjectId plane = SceneGraph_createObject(psg.sceneGraph, "plane");
     SceneGraph_setLocalPosition(psg.sceneGraph, plane, position);
     SceneGraph_addComponent(psg.sceneGraph, plane, psg.meshRendererComponentId,
@@ -89,12 +122,37 @@ SceneObjectId plane_instantiate(Vector3 position)
             .velocity = (Vector3) { 1, 0, 0 },
             .drag = (Vector3) { drag, drag, drag } });
 
+    ShootingConfig shootingConfig = {
+        .shotInterval = 0.1f,
+        .bulletSpeed = 20.0f,
+        .onShoot = onShoot,
+    };
+
+    SceneObjectId spawnPoint1 = SceneGraph_createObject(psg.sceneGraph, "spawn-point-1");
+    SceneGraph_setParent(psg.sceneGraph, spawnPoint1, plane);
+    SceneGraph_setLocalPosition(psg.sceneGraph, spawnPoint1, (Vector3) { 0.566518f, -0.018f, 0.617959f });
+
+    SceneGraph_addComponent(psg.sceneGraph, plane, psg.shootingComponentId,
+        &(ShootingComponent) {
+            .spawnPoint = spawnPoint1,
+            .config = shootingConfig, });
+    
+    SceneObjectId spawnPoint2 = SceneGraph_createObject(psg.sceneGraph, "spawn-point-2");
+    SceneGraph_setParent(psg.sceneGraph, spawnPoint2, plane);
+    SceneGraph_setLocalPosition(psg.sceneGraph, spawnPoint2, (Vector3) { -0.566518f, -0.018f, 0.617959f });
+
+    SceneGraph_addComponent(psg.sceneGraph, plane, psg.shootingComponentId,
+        &(ShootingComponent) {
+            .spawnPoint = spawnPoint2,
+            .config = shootingConfig, });
+
     return plane;
 }
 
-extern void MeshRendererComponentRegister();
-extern void PlaneBehaviorComponentRegister();
-extern void LinearVelocityComponentRegister();
+void MeshRendererComponentRegister();
+void PlaneBehaviorComponentRegister();
+void LinearVelocityComponentRegister();
+void ShootingComponentRegister();
 
 int plane_sim_init()
 {
@@ -107,6 +165,7 @@ int plane_sim_init()
     MeshRendererComponentRegister();
     PlaneBehaviorComponentRegister();
     LinearVelocityComponentRegister();
+    ShootingComponentRegister();
 
     // for (int i = 0; i < 1000; i += 1) {
     //     plane_instantiate((Vector3) {
@@ -139,24 +198,22 @@ void plane_sim_draw()
     if (IsKeyDown(KEY_SPACE) || IsKeyDown(KEY_LEFT_CONTROL) || IsKeyDown(KEY_RIGHT_CONTROL)) {
         int width = GetScreenWidth();
         int height = GetScreenHeight();
-        const char *texts[] = {
+        const char* texts[] = {
             "Ratatatta",
             "Pew pew",
             "Bang bang",
         };
-        const char *buffer = texts[textIndex % 3];
-        if (GetRandomValue(0,5) == 0)
-        {
+        const char* buffer = texts[textIndex % 3];
+        if (GetRandomValue(0, 5) == 0) {
             textIndex++;
         }
-        int textWidth = MeasureText(buffer, 20);
+        int textWidth = MeasureText(buffer, 40);
         int offsetX = GetRandomValue(-3, 3);
         int offsetY = GetRandomValue(-3, 3);
         int x = (width - textWidth) / 2 + offsetX;
         int y = height - 40 + offsetY;
-        DrawText(buffer, x+2, y+2, 20, BLACK);
-        DrawText(buffer, x, y, 20, WHITE);
-        
+        DrawText(buffer, x + 2, y + 2, 40, BLACK);
+        DrawText(buffer, x, y, 40, WHITE);
     }
 }
 
