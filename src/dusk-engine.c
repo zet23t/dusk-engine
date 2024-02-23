@@ -213,10 +213,25 @@ draw: 21.24 / 26.21 / 44.61ms
 
 */
 
+#if PLATFORM_WEB
+#include <emscripten.h>
+#endif
+
 #include "test/plane/plane_sim.h"
 
 int main(void)
 {
+    #if PLATFORM_WEB
+    
+    emscripten_run_script(
+        "window.addEventListener('keydown', function(e) {"
+        "    if([32, 37, 38, 39, 40].indexOf(e.keyCode) > -1) {"
+        "        e.preventDefault();"
+        "    }"
+        "}, false);"
+    );
+    
+    #endif
     // Initialization
     const int screenWidth = 800;
     const int screenHeight = 450;
@@ -248,6 +263,8 @@ int main(void)
     {
         return 1;
     }
+
+    DisableCursor();
 
     // Main game loop
     while (!WindowShouldClose()) {

@@ -121,6 +121,7 @@ int plane_sim_init()
     return 0;
 }
 
+static int textIndex = 0;
 void plane_sim_draw()
 {
     Camera3D camera = { 0 };
@@ -134,6 +135,29 @@ void plane_sim_draw()
     BeginMode3D(camera);
     SceneGraph_draw(psg.sceneGraph, camera, NULL);
     EndMode3D();
+
+    if (IsKeyDown(KEY_SPACE) || IsKeyDown(KEY_LEFT_CONTROL) || IsKeyDown(KEY_RIGHT_CONTROL)) {
+        int width = GetScreenWidth();
+        int height = GetScreenHeight();
+        const char *texts[] = {
+            "Ratatatta",
+            "Pew pew",
+            "Bang bang",
+        };
+        const char *buffer = texts[textIndex % 3];
+        if (GetRandomValue(0,5) == 0)
+        {
+            textIndex++;
+        }
+        int textWidth = MeasureText(buffer, 20);
+        int offsetX = GetRandomValue(-3, 3);
+        int offsetY = GetRandomValue(-3, 3);
+        int x = (width - textWidth) / 2 + offsetX;
+        int y = height - 40 + offsetY;
+        DrawText(buffer, x+2, y+2, 20, BLACK);
+        DrawText(buffer, x, y, 20, WHITE);
+        
+    }
 }
 
 void HandlePlayerInputUpdate();
