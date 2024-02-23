@@ -109,6 +109,7 @@ SceneGraph* SceneGraph_create();
 void SceneGraph_destroy(SceneGraph* graph);
 SceneComponentTypeId SceneGraph_registerComponentType(SceneGraph* graph, const char* name,
     size_t dataSize, SceneComponentTypeMethods methods);
+int SceneGraph_countLiveObjects(SceneGraph* graph);
 
 SceneObjectId SceneGraph_createObject(SceneGraph* graph, const char* name);
 void SceneGraph_destroyObject(SceneGraph* graph, SceneObjectId id);

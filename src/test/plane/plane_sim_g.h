@@ -13,6 +13,7 @@ typedef struct PSG {
     SceneComponentTypeId planeBehaviorComponentId;
     SceneComponentTypeId linearVelocityComponentId;
     SceneComponentTypeId shootingComponentId;
+    SceneComponentTypeId autoDestroyComponentId;
 
     Model model;
     Mesh* meshPlane;
@@ -26,8 +27,14 @@ typedef struct PSG {
 typedef struct ShootingConfig {
     float shotInterval;
     float bulletSpeed;
+    float bulletLifetime;
     void (*onShoot)(SceneGraph*, SceneComponentId shooter, struct ShootingComponent*, struct ShootingConfig* shootingComponent);
 } ShootingConfig;
+
+typedef struct AutoDestroyComponent
+{
+    float lifeTimeLeft;
+} AutoDestroyComponent;
 
 typedef struct ShootingComponent {
     float cooldown;

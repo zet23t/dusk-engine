@@ -1,8 +1,8 @@
 #include "config.h"
 #include "math.h"
+#include "plane_sim_g.h"
 #include "shared/scene_graph/scene_graph.h"
 #include <raymath.h>
-#include "plane_sim_g.h"
 
 #include <string.h>
 
@@ -16,7 +16,6 @@ int load_meshes()
     const char* gltfMeshFile = "assets/meshes.glb";
 
     psg.model = LoadModel(gltfMeshFile);
-    const char* meshNamePlane = "fighter-plane-1";
     psg.meshPlane = NULL;
     struct MeshMapping meshMappings[] = {
         { "fighter-plane-1", &psg.meshPlane },
@@ -53,7 +52,7 @@ int load_meshes()
     return 0;
 }
 
-static void onShoot(SceneGraph* graph, SceneComponentId shooter, ShootingComponent *shootingComponent, ShootingConfig* shootingConfig)
+static void onShoot(SceneGraph* graph, SceneComponentId shooter, ShootingComponent* shootingComponent, ShootingConfig* shootingConfig)
 {
     SceneComponent* shooting;
     shooting = SceneGraph_getComponent(graph, shooter, NULL);
@@ -74,6 +73,10 @@ static void onShoot(SceneGraph* graph, SceneComponentId shooter, ShootingCompone
         &(LinearVelocityComponent) {
             .velocity = forward,
             .drag = (Vector3) { 0, 0, 0 } });
+
+    SceneGraph_addComponent(graph, bullet, psg.autoDestroyComponentId,
+        &(AutoDestroyComponent) {
+            .lifeTimeLeft = shootingConfig->bulletLifetime });
 }
 
 SceneObjectId plane_instantiate(Vector3 position)
@@ -125,6 +128,7 @@ SceneObjectId plane_instantiate(Vector3 position)
     ShootingConfig shootingConfig = {
         .shotInterval = 0.1f,
         .bulletSpeed = 20.0f,
+        .bulletLifetime = 1.0f,
         .onShoot = onShoot,
     };
 
@@ -135,8 +139,9 @@ SceneObjectId plane_instantiate(Vector3 position)
     SceneGraph_addComponent(psg.sceneGraph, plane, psg.shootingComponentId,
         &(ShootingComponent) {
             .spawnPoint = spawnPoint1,
-            .config = shootingConfig, });
-    
+            .config = shootingConfig,
+        });
+
     SceneObjectId spawnPoint2 = SceneGraph_createObject(psg.sceneGraph, "spawn-point-2");
     SceneGraph_setParent(psg.sceneGraph, spawnPoint2, plane);
     SceneGraph_setLocalPosition(psg.sceneGraph, spawnPoint2, (Vector3) { -0.566518f, -0.018f, 0.617959f });
@@ -144,7 +149,8 @@ SceneObjectId plane_instantiate(Vector3 position)
     SceneGraph_addComponent(psg.sceneGraph, plane, psg.shootingComponentId,
         &(ShootingComponent) {
             .spawnPoint = spawnPoint2,
-            .config = shootingConfig, });
+            .config = shootingConfig,
+        });
 
     return plane;
 }
@@ -153,6 +159,7 @@ void MeshRendererComponentRegister();
 void PlaneBehaviorComponentRegister();
 void LinearVelocityComponentRegister();
 void ShootingComponentRegister();
+void AutoDestroyComponentRegister();
 
 int plane_sim_init()
 {
@@ -166,6 +173,7 @@ int plane_sim_init()
     PlaneBehaviorComponentRegister();
     LinearVelocityComponentRegister();
     ShootingComponentRegister();
+    AutoDestroyComponentRegister();
 
     // for (int i = 0; i < 1000; i += 1) {
     //     plane_instantiate((Vector3) {

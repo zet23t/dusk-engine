@@ -1,6 +1,6 @@
+#include <memory.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <memory.h>
 
 #include "shared/scene_graph/scene_graph.h"
 #include <raylib.h>
@@ -22,7 +22,7 @@ typedef struct WaveComponent {
 #define TEST_SCENE_GRAPH 1
 
 #if TEST_SCENE_GRAPH
-const char *systemTest = "sceneGraph";
+const char* systemTest = "sceneGraph";
 SceneGraph* sceneGraph;
 
 void Cube_draw(Camera3D camera, SceneObject* sceneObject, SceneComponentId sceneComponent,
@@ -42,8 +42,7 @@ void Wave_updateTick(SceneObject* sceneObject, SceneComponentId sceneComponent,
 {
     WaveComponent* wave = (WaveComponent*)componentData;
     wave->phase += delta * wave->speed;
-    SceneGraph_setLocalPosition(sceneObject->graph, sceneObject->id, (Vector3) { 
-        sceneObject->transform.position.x, sinf(wave->phase * wave->frequency) * wave->amplitude, sceneObject->transform.position.z });
+    SceneGraph_setLocalPosition(sceneObject->graph, sceneObject->id, (Vector3) { sceneObject->transform.position.x, sinf(wave->phase * wave->frequency) * wave->amplitude, sceneObject->transform.position.z });
 }
 
 void init()
@@ -83,7 +82,7 @@ void draw(Camera3D camera)
     SceneGraph_draw(sceneGraph, camera, NULL);
 }
 #else
-const char *systemTest = "ecs";
+const char* systemTest = "ecs";
 // test pico_ecs
 
 #include "shared/ecs/pico_ecs.h"
@@ -179,13 +178,12 @@ void init()
             ecs_add(ecs, obj, cubeComponent, &(Cube) { .size = (Vector3) { .1f, .1f, .1f }, .color = (Color) { i, j, 0, 255 } });
             float x = (i / (float)count - .5f) * 100.0f;
             float y = (j / (float)count - .5f) * 100.0f;
-            ecs_add(ecs, obj, transformComponent, &(SceneObjectTransform) { 
-                .position = (Vector3) { x * .25f, 0, y * .25f },
-                .scale = (Vector3) { 1, 1, 1 },
-            });
+            ecs_add(ecs, obj, transformComponent, &(SceneObjectTransform) {
+                                                      .position = (Vector3) { x * .25f, 0, y * .25f },
+                                                      .scale = (Vector3) { 1, 1, 1 },
+                                                  });
             ecs_add(ecs, obj, waveComponent, &(WaveComponent) { .amplitude = .5f, .frequency = 2.0f, .phase = n++ * .1f, .speed = 2.0f });
         }
-
 }
 
 void update()
@@ -218,20 +216,20 @@ draw: 21.24 / 26.21 / 44.61ms
 #endif
 
 #include "test/plane/plane_sim.h"
+#include "test/plane/plane_sim_g.h"
 
 int main(void)
 {
-    #if PLATFORM_WEB
-    
+#if PLATFORM_WEB
+
     emscripten_run_script(
         "window.addEventListener('keydown', function(e) {"
         "    if([32, 37, 38, 39, 40].indexOf(e.keyCode) > -1) {"
         "        e.preventDefault();"
         "    }"
-        "}, false);"
-    );
+        "}, false);");
 
-    #endif
+#endif
     // Initialization
     const int screenWidth = 640;
     const int screenHeight = 480;
@@ -259,8 +257,7 @@ int main(void)
     memset(drawTimes, 0, sizeof(drawTimes));
     memset(updateTimes, 0, sizeof(updateTimes));
 
-    if (plane_sim_init())
-    {
+    if (plane_sim_init()) {
         return 1;
     }
 
@@ -268,6 +265,7 @@ int main(void)
     DisableCursor();
 #endif
 
+    int showInfo = 0;
     // Main game loop
     while (!WindowShouldClose()) {
         // Update
@@ -297,8 +295,10 @@ int main(void)
         float maxUpdate = updateTimes[0];
         float avgUpdate = updateTimes[0];
         for (int i = 1; i < trackCount; i++) {
-            if (updateTimes[i] < minUpdate) minUpdate = updateTimes[i];
-            if (updateTimes[i] > maxUpdate) maxUpdate = updateTimes[i];
+            if (updateTimes[i] < minUpdate)
+                minUpdate = updateTimes[i];
+            if (updateTimes[i] > maxUpdate)
+                maxUpdate = updateTimes[i];
             avgUpdate += updateTimes[i];
         }
         avgUpdate /= trackCount;
@@ -307,25 +307,31 @@ int main(void)
         float maxDraw = drawTimes[0];
         float avgDraw = drawTimes[0];
         for (int i = 1; i < trackCount; i++) {
-            if (drawTimes[i] < minDraw) minDraw = drawTimes[i];
-            if (drawTimes[i] > maxDraw) maxDraw = drawTimes[i];
+            if (drawTimes[i] < minDraw)
+                minDraw = drawTimes[i];
+            if (drawTimes[i] > maxDraw)
+                maxDraw = drawTimes[i];
             avgDraw += drawTimes[i];
         }
         avgDraw /= trackCount;
 
         char buffer[200];
-        sprintf(buffer, "%s: FPS: %d\n\nupdate: %.2f / %.2f / %.2fms\n\ndraw: %.2f / %.2f / %.2fms\n\n\nUse Arrow keys to move the plane", 
+        sprintf(buffer, "%s: FPS: %d\n\nupdate: %.2f / %.2f / %.2fms\n\ndraw: %.2f / %.2f / %.2fms\n\n\nScene object count: %d / %d\n",
             systemTest, GetFPS(),
-            minUpdate * 1000.0f, avgUpdate * 1000.0f, maxUpdate * 1000.0f, 
-            minDraw * 1000.0f, avgDraw * 1000.0f, maxDraw * 1000.0f);
+            minUpdate * 1000.0f, avgUpdate * 1000.0f, maxUpdate * 1000.0f,
+            minDraw * 1000.0f, avgDraw * 1000.0f, maxDraw * 1000.0f,
+            SceneGraph_countLiveObjects(psg.sceneGraph), psg.sceneGraph->objects_capacity);
 
-        
-        if (trackIndex % trackCount == 0 && trackIndex > trackCount * 2)
-        {
+        if (trackIndex % trackCount == 0 && trackIndex > trackCount * 2) {
             // TraceLog(LOG_INFO, "%s\n", buffer);
         }
-        DrawText(buffer, 12, 12, 30, BLACK);
-        DrawText(buffer, 10, 10, 30, WHITE);
+        if (IsKeyPressed(KEY_I)) {
+            showInfo = !showInfo;
+        }
+        if (showInfo) {
+            DrawText(buffer, 12, 12, 30, BLACK);
+            DrawText(buffer, 10, 10, 30, WHITE);
+        }
 
         EndDrawing();
     }

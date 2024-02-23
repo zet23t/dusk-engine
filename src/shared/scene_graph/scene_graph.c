@@ -13,6 +13,18 @@ SceneGraph* SceneGraph_create()
     return graph;
 }
 
+int SceneGraph_countLiveObjects(SceneGraph* graph)
+{
+    int count = 0;
+    for (int i = 0; i < graph->objects_count; i++) {
+        if (graph->objects[i].id.version != 0) {
+            count++;
+        }
+    }
+    return count;
+
+}
+
 void SceneGraph_destroy(SceneGraph* graph)
 {
     for (int i = 0; i < graph->objects_count; i++) {
@@ -350,14 +362,15 @@ SceneComponentId SceneGraph_addComponent(SceneGraph* graph, SceneObjectId id, Sc
     component->objectId = id;
     component->typeId = componentType;
 
-    if (type->componentData_count >= type->componentData_capacity) {
+    int dataIndex = component->id.id;
+    if (dataIndex >= type->componentData_capacity) {
         type->componentData_capacity = type->componentData_capacity == 0 ? 1 : type->componentData_capacity * 2;
         type->componentData = realloc(type->componentData, type->componentData_capacity * type->dataSize);
     }
 
     if (componentData != NULL)
-        memcpy(&type->componentData[type->componentData_count * type->dataSize], componentData, type->dataSize);
-    type->componentData_count++;
+        memcpy(&type->componentData[dataIndex * type->dataSize], componentData, type->dataSize);
+    
 
     for (int i = 0; i < object->components_count; i++) {
         if (object->components[i].version == 0) {
