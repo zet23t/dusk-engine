@@ -13,7 +13,7 @@ BUILD                ?= release
 
 # Compiler and flags
 CC := gcc
-CFLAGS := -Wall -Isubmodules/raylib/src -D$(PLATFORM)
+CFLAGS := -Wall -Isubmodules/raylib/src -D$(PLATFORM) -Isrc
 
 # Directories
 SRCDIR := src
@@ -22,7 +22,6 @@ LIBDIR := submodules/raylib/$(BUILD)/$(PLATFORM)
 
 LIBDIR := $(shell echo $(LIBDIR) | tr A-Z a-z)
 BUILDDIR := $(shell echo $(BUILDDIR) | tr A-Z a-z)
-
 
 # Source files
 SRCS := $(shell find $(SRCDIR) -name '*.c')

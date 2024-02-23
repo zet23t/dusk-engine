@@ -213,7 +213,7 @@ draw: 21.24 / 26.21 / 44.61ms
 
 */
 
-#include "plane_sim.h"
+#include "test/plane/plane_sim.h"
 
 int main(void)
 {
@@ -253,58 +253,59 @@ int main(void)
     while (!WindowShouldClose()) {
         // Update
 
+        float t = GetTime();
         plane_sim_update(GetFrameTime());
+        float updateDt = GetTime() - t;
+        updateTimes[trackIndex % trackCount] = updateDt;
 
         // Draw
         BeginDrawing();
         ClearBackground((Color) { 120, 140, 160, 255 });
+        t = GetTime();
         plane_sim_draw();
+        float drawDt = GetTime() - t;
+        drawTimes[trackIndex % trackCount] = drawDt;
 
-        // float t = GetTime();
         // update();
-        // float updateDt = GetTime() - t;
-        // updateTimes[trackIndex % trackCount] = updateDt;
 
         // BeginMode3D(camera);
 
-        // t = GetTime();
         // draw(camera);
-        // float drawDt = GetTime() - t;
-        // drawTimes[trackIndex % trackCount] = drawDt;
         // EndMode3D();
 
-        // trackIndex++;
-        // float minUpdate = updateTimes[0];
-        // float maxUpdate = updateTimes[0];
-        // float avgUpdate = updateTimes[0];
-        // for (int i = 1; i < trackCount; i++) {
-        //     if (updateTimes[i] < minUpdate) minUpdate = updateTimes[i];
-        //     if (updateTimes[i] > maxUpdate) maxUpdate = updateTimes[i];
-        //     avgUpdate += updateTimes[i];
-        // }
-        // avgUpdate /= trackCount;
+        trackIndex++;
+        float minUpdate = updateTimes[0];
+        float maxUpdate = updateTimes[0];
+        float avgUpdate = updateTimes[0];
+        for (int i = 1; i < trackCount; i++) {
+            if (updateTimes[i] < minUpdate) minUpdate = updateTimes[i];
+            if (updateTimes[i] > maxUpdate) maxUpdate = updateTimes[i];
+            avgUpdate += updateTimes[i];
+        }
+        avgUpdate /= trackCount;
 
-        // float minDraw = drawTimes[0];
-        // float maxDraw = drawTimes[0];
-        // float avgDraw = drawTimes[0];
-        // for (int i = 1; i < trackCount; i++) {
-        //     if (drawTimes[i] < minDraw) minDraw = drawTimes[i];
-        //     if (drawTimes[i] > maxDraw) maxDraw = drawTimes[i];
-        //     avgDraw += drawTimes[i];
-        // }
-        // avgDraw /= trackCount;
+        float minDraw = drawTimes[0];
+        float maxDraw = drawTimes[0];
+        float avgDraw = drawTimes[0];
+        for (int i = 1; i < trackCount; i++) {
+            if (drawTimes[i] < minDraw) minDraw = drawTimes[i];
+            if (drawTimes[i] > maxDraw) maxDraw = drawTimes[i];
+            avgDraw += drawTimes[i];
+        }
+        avgDraw /= trackCount;
 
-        // char buffer[200];
-        // sprintf(buffer, "%s: FPS: %d\nupdate: %.2f / %.2f / %.2fms\ndraw: %.2f / %.2f / %.2fms", 
-        //     systemTest, GetFPS(),
-        //     minUpdate * 1000.0f, avgUpdate * 1000.0f, maxUpdate * 1000.0f, 
-        //     minDraw * 1000.0f, avgDraw * 1000.0f, maxDraw * 1000.0f);
+        char buffer[200];
+        sprintf(buffer, "%s: FPS: %d\nupdate: %.2f / %.2f / %.2fms\ndraw: %.2f / %.2f / %.2fms", 
+            systemTest, GetFPS(),
+            minUpdate * 1000.0f, avgUpdate * 1000.0f, maxUpdate * 1000.0f, 
+            minDraw * 1000.0f, avgDraw * 1000.0f, maxDraw * 1000.0f);
         
-        // if (trackIndex % trackCount == 0 && trackIndex > trackCount * 2)
-        // {
-        //     TraceLog(LOG_INFO, "%s\n", buffer);
-        // }
-        // DrawText(buffer, 10, 10, 20, DARKGRAY);
+        if (trackIndex % trackCount == 0 && trackIndex > trackCount * 2)
+        {
+            TraceLog(LOG_INFO, "%s\n", buffer);
+        }
+        DrawText(buffer, 12, 12, 20, BLACK);
+        DrawText(buffer, 10, 10, 20, WHITE);
 
         EndDrawing();
     }
