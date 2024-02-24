@@ -28,8 +28,18 @@ int load_meshes()
     };
 
     for (int i = 0; i < psg.model.meshCount; i++) {
+        char *meshName = psg.model.meshes[i].name;
+        if (meshName[0] == 't' && meshName[1] == '-')
+        {
+            psg.meshTiles = realloc(psg.meshTiles, sizeof(Mesh*) * (psg.meshTileCount + 1));
+            psg.meshTiles[psg.meshTileCount] = &psg.model.meshes[i];
+            psg.meshTileCount++;
+            TraceLog(LOG_INFO, "Added mesh tile: %s\n", meshName);
+            continue;
+        }
+
         for (int j = 0; meshMappings[j].name != NULL; j++) {
-            if (strcmp(psg.model.meshes[i].name, meshMappings[j].name) == 0) {
+            if (strcmp(meshName, meshMappings[j].name) == 0) {
                 *meshMappings[j].mesh = &psg.model.meshes[i];
             }
         }
@@ -245,6 +255,7 @@ void plane_sim_draw()
 
 void HandlePlayerInputUpdate();
 void HandleTargetSpawnSystem();
+void UpdateGroundTileSystem();
 
 void plane_sim_update(float dt)
 {
@@ -253,4 +264,5 @@ void plane_sim_update(float dt)
     SceneGraph_updateTick(psg.sceneGraph, dt);
     HandlePlayerInputUpdate();
     HandleTargetSpawnSystem();
+    UpdateGroundTileSystem();
 }

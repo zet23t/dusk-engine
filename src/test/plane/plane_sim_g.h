@@ -26,6 +26,9 @@ typedef struct PSG {
     Mesh* meshPlayerBullet;
     Mesh* meshTarget;
     Mesh* meshHitParticle1;
+    Mesh** meshTiles;
+
+    int meshTileCount;
 
     SceneObjectId playerPlane;
 } PSG;

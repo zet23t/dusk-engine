@@ -266,12 +266,14 @@ int main(void)
 #endif
 
     int showInfo = 0;
+    int isPaused = 0;
+    int isSlowmo = 0;
     // Main game loop
     while (!WindowShouldClose()) {
         // Update
 
         float t = GetTime();
-        plane_sim_update(GetFrameTime());
+        plane_sim_update(isPaused ? 0.0f : GetFrameTime() * (isSlowmo ? .1f : 1.0f));
         float updateDt = GetTime() - t;
         updateTimes[trackIndex % trackCount] = updateDt;
 
@@ -283,6 +285,12 @@ int main(void)
         float drawDt = GetTime() - t;
         drawTimes[trackIndex % trackCount] = drawDt;
 
+        if (IsKeyPressed(KEY_P)) {
+            isPaused = !isPaused;
+        }
+        if (IsKeyPressed(KEY_O)) {
+            isSlowmo = !isSlowmo;
+        }
         // update();
 
         // BeginMode3D(camera);
