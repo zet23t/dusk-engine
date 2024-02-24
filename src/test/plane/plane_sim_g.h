@@ -2,6 +2,13 @@
 #define __PLANE_SIM_G_H__
 
 #include "shared/scene_graph/scene_graph.h"
+#include <inttypes.h>
+
+typedef struct MeshTileConfig {
+    Mesh* mesh;
+    // corner identifiers for all 4 rotations
+    uint32_t cornerConfigs[4];
+} MeshTileConfig;
 
 typedef struct PSG {
     float time;
@@ -26,8 +33,8 @@ typedef struct PSG {
     Mesh* meshPlayerBullet;
     Mesh* meshTarget;
     Mesh* meshHitParticle1;
-    Mesh** meshTiles;
 
+    MeshTileConfig* meshTiles;
     int meshTileCount;
 
     SceneObjectId playerPlane;

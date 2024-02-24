@@ -22,19 +22,30 @@ int load_meshes()
         { "propeller", &psg.meshPropellerPin },
         { "propeller-blade-1", &psg.meshPropellerBlade },
         { "player-bullet-1", &psg.meshPlayerBullet },
-        { "target-1", &psg.meshTarget},
-        { "hit-particle-1", &psg.meshHitParticle1},
+        { "target-1", &psg.meshTarget },
+        { "hit-particle-1", &psg.meshHitParticle1 },
         { NULL, NULL }
     };
 
     for (int i = 0; i < psg.model.meshCount; i++) {
-        char *meshName = psg.model.meshes[i].name;
-        if (meshName[0] == 't' && meshName[1] == '-')
-        {
-            psg.meshTiles = realloc(psg.meshTiles, sizeof(Mesh*) * (psg.meshTileCount + 1));
-            psg.meshTiles[psg.meshTileCount] = &psg.model.meshes[i];
+        char* meshName = psg.model.meshes[i].name;
+        if (meshName[0] == 't' && meshName[1] == '-') {
+            psg.meshTiles = realloc(psg.meshTiles, sizeof(MeshTileConfig) * (psg.meshTileCount + 1));
+            uint32_t baserot = *(uint32_t*)(&meshName[2]);
+            MeshTileConfig config = {
+                .mesh = &psg.model.meshes[i],
+                .cornerConfigs = {
+                    // rotations char letter rotations of 0, 90, 180, 270 degrees
+                    baserot,
+                    baserot >> 8 | baserot << 24,
+                    baserot >> 16 | baserot << 16,
+                    baserot >> 24 | baserot << 8,
+                }
+            };
+            psg.meshTiles[psg.meshTileCount] = config;
+
             psg.meshTileCount++;
-            TraceLog(LOG_INFO, "Added mesh tile: %s\n", meshName);
+            TraceLog(LOG_INFO, "  Added mesh tile: %s", meshName);
             continue;
         }
 
@@ -94,8 +105,7 @@ static void onShoot(SceneGraph* graph, SceneComponentId shooter, ShootingCompone
         &(BulletComponent) {
             .radius = 0.01f,
             .colliderFlags = 1,
-            .damage = 1
-        });
+            .damage = 1 });
 }
 
 SceneObjectId plane_instantiate(Vector3 position)
@@ -148,7 +158,7 @@ SceneObjectId plane_instantiate(Vector3 position)
         .shotInterval = 0.15f,
         .bulletSpeed = 20.0f,
         .bulletLifetime = .75f,
-        .onShoot = (OnShootFn) onShoot,
+        .onShoot = (OnShootFn)onShoot,
     };
 
     SceneObjectId spawnPoint1 = SceneGraph_createObject(psg.sceneGraph, "spawn-point-1");
@@ -211,7 +221,6 @@ int plane_sim_init()
     psg.playerPlane = plane_instantiate((Vector3) { 0, 0, 0 });
     // plane_instantiate((Vector3) { 0, 0, 1.5f });
     // plane_instantiate((Vector3) { 2.5f, 0, 0 });
-
 
     return 0;
 }
