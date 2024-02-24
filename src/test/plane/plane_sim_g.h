@@ -28,6 +28,7 @@ typedef struct PSG {
 
     Model model;
     Mesh* meshPlane;
+    Mesh* meshPlane2;
     Mesh* meshPropellerPin;
     Mesh* meshPropellerBlade;
     Mesh* meshPlayerBullet;

@@ -44,18 +44,13 @@ static SceneObjectId spawnTile(int x, int y)
     float p2 = stb_perlin_fbm_noise3(x * .2f, y * .2f, 0, 0.5f, 0.5f, 3);
     float p3 = stb_perlin_fbm_noise3((x - 1) * .2f, (y) * .2f, 0, 0.5f, 0.5f, 3);
     float p4 = stb_perlin_fbm_noise3((x - 1) * .2f, (y - 1) * .2f, 0, 0.5f, 0.5f, 3);
-    // float p1 = sinf(x) + cosf(y - 1); // stb_perlin_fbm_noise3(column * .2f, offset * .2f, 0, 0.5f, 0.5f, 3);
-    // float p2 = sinf(x) + cosf(y); // stb_perlin_fbm_noise3(column * .2f, (offset - 1) * .2f, 0, 0.5f, 0.5f, 3);
-    // float p3 = sinf(x - 1) + cosf(y); // stb_perlin_fbm_noise3((column - 1) * .2f, (offset - 1) * .2f, 0, 0.5f, 0.5f, 3);
-    // float p4 = sinf(x - 1) + cosf(y - 1); // stb_perlin_fbm_noise3((column - 1) * .2f, offset * .2f, 0, 0.5f, 0.5f, 3);
-    // TraceLog(LOG_INFO, "%d %d p1: %f, p2: %f, p3: %f, p4: %f", x, y, p1, p2, p3, p4);
     char corners[4];
     corners[0] = p1 > .0f ? 'g' : 'w';
     corners[1] = p2 > .0f ? 'g' : 'w';
     corners[2] = p3 > .0f ? 'g' : 'w';
     corners[3] = p4 > .0f ? 'g' : 'w';
     uint32_t cornerConfig = *(uint32_t*)corners;
-    int rot;
+    int rot = 0;
     MeshTileConfig config = FindMatchingTile(cornerConfig, &rot);
     Vector3 rotation = { 0, 90 * rot, 0 };
     SceneGraph_setLocalRotation(psg.sceneGraph, id, rotation);
@@ -74,7 +69,7 @@ static SceneObjectId spawnTile(int x, int y)
 int step = 0;
 void UpdateGroundTileSystem()
 {
-    offset += psg.deltaTime * 1.125f;
+    offset += psg.deltaTime * .125f;
     if (offset > 1.0f) {
         offset -= 1.0f;
         step++;

@@ -271,6 +271,8 @@ SceneObjectId SceneGraph_createObject(SceneGraph* graph, const char* name)
     object->id.version = ++graph->versionCounter;
     object->name = strdup(name);
     object->flags = SCENE_OBJECT_FLAG_ENABLED;
+    object->transform.position = (Vector3) { 0, 0, 0 };
+    object->transform.eulerRotationDegrees = (Vector3) { 0, 0, 0 };
     object->transform.scale = (Vector3) { 1, 1, 1 };
     object->transform.localMatrix = MatrixIdentity();
     object->transform.worldMatrix = MatrixIdentity();

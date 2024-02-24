@@ -3,6 +3,7 @@
 #include "plane_sim_g.h"
 #include "shared/scene_graph/scene_graph.h"
 #include <raymath.h>
+#include <stdlib.h>
 
 #include <string.h>
 
@@ -19,6 +20,7 @@ int load_meshes()
     psg.meshPlane = NULL;
     struct MeshMapping meshMappings[] = {
         { "fighter-plane-1", &psg.meshPlane },
+        { "fighter-plane-2", &psg.meshPlane2 },
         { "propeller", &psg.meshPropellerPin },
         { "propeller-blade-1", &psg.meshPropellerBlade },
         { "player-bullet-1", &psg.meshPlayerBullet },
