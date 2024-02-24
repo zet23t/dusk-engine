@@ -114,6 +114,7 @@ SceneObjectId SceneGraph_createObject(SceneGraph* graph, const char* name);
 void SceneGraph_destroyObject(SceneGraph* graph, SceneObjectId id);
 SceneComponentId SceneGraph_addComponent(SceneGraph* graph, SceneObjectId id, SceneComponentTypeId componentType,
     void* componentData);
+SceneObject* SceneGraph_getObject(SceneGraph* graph, SceneObjectId id);
 SceneComponent* SceneGraph_getComponent(SceneGraph* graph, SceneComponentId id, void** componentData);
 SceneComponent* SceneGraph_getComponentByType(SceneGraph* graph, SceneObjectId id, SceneComponentTypeId typeId, void** componentData, int atIndex);
 SceneComponent* SceneGraph_getComponentOrFindByType(SceneGraph* graph, SceneObjectId id, SceneComponentId* componentId, SceneComponentTypeId typeId, void** componentData);

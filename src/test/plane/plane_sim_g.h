@@ -16,6 +16,8 @@ typedef struct PSG {
     SceneComponentTypeId autoDestroyComponentId;
     SceneComponentTypeId bulletComponentId;
     SceneComponentTypeId targetComponentId;
+    SceneComponentTypeId healthComponentId;
+    SceneComponentTypeId updateCallbackComponentId;
 
     Model model;
     Mesh* meshPlane;
@@ -23,12 +25,23 @@ typedef struct PSG {
     Mesh* meshPropellerBlade;
     Mesh* meshPlayerBullet;
     Mesh* meshTarget;
+    Mesh* meshHitParticle1;
 
     SceneObjectId playerPlane;
 } PSG;
 
 typedef struct ShootingConfig ShootingConfig;
 typedef struct ShootingComponent ShootingComponent;
+
+typedef struct HealthComponent {
+    float health;
+    float maxHealth;
+} HealthComponent;
+
+typedef struct UpdateCallbackComponent {
+    void (*update)(SceneGraph*, SceneObjectId, SceneComponentId, float dt, struct UpdateCallbackComponent*);
+    void* data;
+} UpdateCallbackComponent;
 
 typedef void (*OnShootFn)(SceneGraph*, SceneComponentId shooter, ShootingComponent*, ShootingConfig* shootingComponent);
 
@@ -53,6 +66,7 @@ typedef struct ShootingComponent {
 
 typedef struct BulletComponent {
     float radius;
+    float damage;
     uint32_t colliderFlags;
 } BulletComponent;
 
@@ -80,6 +94,7 @@ typedef struct PlaneBehaviorComponent {
 
 typedef struct LinearVelocityComponent {
     Vector3 velocity;
+    Vector3 acceleration;
     Vector3 drag;
 } LinearVelocityComponent;
 

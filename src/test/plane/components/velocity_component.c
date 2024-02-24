@@ -13,10 +13,17 @@ static void LinearVelocityComponentUpdateTick(SceneObject* sceneObject, SceneCom
     velocity->velocity.x *= calculateFrameTimeIndependentDragFactor(velocity->drag.x, psg.deltaTime);
     velocity->velocity.y *= calculateFrameTimeIndependentDragFactor(velocity->drag.y, psg.deltaTime);
     velocity->velocity.z *= calculateFrameTimeIndependentDragFactor(velocity->drag.z, psg.deltaTime);
-    
+
+    // if I am not mistaken, this is a simple Euler integration for acceleration on velocity
+    velocity->velocity.x += velocity->acceleration.x * psg.deltaTime * .5f;
+    velocity->velocity.y += velocity->acceleration.y * psg.deltaTime * .5f;
+    velocity->velocity.z += velocity->acceleration.z * psg.deltaTime * .5f;
     Vector3 position = SceneGraph_getLocalPosition(psg.sceneGraph, sceneObject->id);
     position = Vector3Add(position, Vector3Scale(velocity->velocity, psg.deltaTime));
     SceneGraph_setLocalPosition(psg.sceneGraph, sceneObject->id, position);
+    velocity->velocity.x += velocity->acceleration.x * psg.deltaTime * .5f;
+    velocity->velocity.y += velocity->acceleration.y * psg.deltaTime * .5f;
+    velocity->velocity.z += velocity->acceleration.z * psg.deltaTime * .5f;
 }
 
 void LinearVelocityComponentRegister()

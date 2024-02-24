@@ -240,13 +240,13 @@ int main(void)
 
     // init();
 
-    Camera3D camera = { 0 };
-    camera.position = (Vector3) { 30.0f, 30.0f, 10.0f };
-    camera.target = (Vector3) { 0.0f, 0.0f, 0.0f };
-    camera.up = (Vector3) { 0.0f, 1.0f, 0.0f };
-    camera.fovy = 45.0f;
-    camera.near = 0.1f;
-    camera.far = 100.0f;
+    // Camera3D camera = { 0 };
+    // camera.position = (Vector3) { 30.0f, 30.0f, 10.0f };
+    // camera.target = (Vector3) { 0.0f, 0.0f, 0.0f };
+    // camera.up = (Vector3) { 0.0f, 1.0f, 0.0f };
+    // camera.fovy = 45.0f;
+    // camera.near = 0.1f;
+    // camera.far = 100.0f;
 
     TraceLog(LOG_INFO, "Loop start\n");
 

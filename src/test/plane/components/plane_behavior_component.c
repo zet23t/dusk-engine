@@ -19,7 +19,7 @@ static void PlaneBehaviorComponentUpdateTick(SceneObject* sceneObject, SceneComp
     Vector3 accel = Vector3Scale(Vector3Subtract(velocity->velocity, planeBehavior->prevVelocity), 1 / delta);
     float accX = accel.x * .125 + planeBehavior->smoothedXAccel * .875f;
     planeBehavior->smoothedXAccel = accX;
-    float accmax = 5.0f;
+    // float accmax = 5.0f;
     // accel.x = fmaxf(-accmax, fminf(accel.x, accmax));
     planeBehavior->rolling = planeBehavior->rolling * .85f - accX * .25f;
 
