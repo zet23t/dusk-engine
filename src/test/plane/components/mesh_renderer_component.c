@@ -4,6 +4,10 @@ static void MeshRendererDraw(Camera3D camera, SceneObject* node, SceneComponentI
 {
     MeshRendererComponent* meshRenderer = (MeshRendererComponent*)component;
     Matrix m = SceneObject_getWorldMatrix(node);
+    if (psg.disableDrawMesh)
+    {
+        return;
+    }
     DrawMesh(*meshRenderer->mesh, meshRenderer->material, m);
 }
 

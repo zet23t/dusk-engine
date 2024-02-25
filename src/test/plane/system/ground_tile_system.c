@@ -89,7 +89,7 @@ static SceneObjectId spawnTile(int x, int y)
     };
 
     for (int i = 0; i < 64; i++) {
-        if (GetRandomValue(0, 100) > 80) {
+        if (GetRandomValue(0, 100) > 60) {
             continue;
         }
         float rx = GetRandomFloat(-1.0f / 2.0f, 1.0f / 2.0f);
@@ -117,6 +117,7 @@ static SceneObjectId spawnTile(int x, int y)
         if (scale < 0.5f) {
             continue;
         }
+        scale += GetRandomFloat(-.25f,.25f);
         float type = stb_perlin_turbulence_noise3(px * 1.2f, (pz - 1) * 1.2f, 3.25f, 0.5f, 0.5f, 3);
         int treeType = (int) (type * psg.leafTreeCount);
         if (treeType >= psg.leafTreeCount) {
@@ -128,6 +129,8 @@ static SceneObjectId spawnTile(int x, int y)
         position.z = (position.z - .5f) * TILE_SIZE;
         SceneGraph_setLocalScale(psg.sceneGraph, tree, (Vector3) { scale, scale, scale });
         SceneGraph_setLocalPosition(psg.sceneGraph, tree, position);
+        Vector3 rotate = { GetRandomFloat(-10,10), GetRandomFloat(0, 360), GetRandomFloat(-10,10) };
+        SceneGraph_setLocalRotation(psg.sceneGraph, tree, rotate);
         SceneGraph_addComponent(psg.sceneGraph, tree, psg.meshRendererComponentId,
             &(MeshRendererComponent) {
                 .material = psg.model.materials[2],

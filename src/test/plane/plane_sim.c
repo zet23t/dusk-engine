@@ -284,6 +284,10 @@ void UpdateGroundTileSystem();
 
 void plane_sim_update(float dt)
 {
+    if (IsKeyPressed(KEY_R))
+    {
+        psg.disableDrawMesh = !psg.disableDrawMesh;
+    }
     psg.time += dt;
     psg.deltaTime = dt;
     SceneGraph_updateTick(psg.sceneGraph, dt);

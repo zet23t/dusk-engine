@@ -41,6 +41,7 @@ typedef struct PSG {
 
     MeshTileConfig* meshTiles;
     int meshTileCount;
+    int disableDrawMesh;
 
     SceneObjectId playerPlane;
 } PSG;
