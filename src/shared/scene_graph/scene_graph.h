@@ -119,6 +119,7 @@ SceneComponent* SceneGraph_getComponent(SceneGraph* graph, SceneComponentId id, 
 SceneComponent* SceneGraph_getComponentByType(SceneGraph* graph, SceneObjectId id, SceneComponentTypeId typeId, void** componentData, int atIndex);
 SceneComponent* SceneGraph_getComponentOrFindByType(SceneGraph* graph, SceneObjectId id, SceneComponentId* componentId, SceneComponentTypeId typeId, void** componentData);
 
+Vector3 SceneGraph_localToWorld(SceneGraph *graph, SceneObjectId id, Vector3 local);
 Vector3 SceneGraph_getWorldPosition(SceneGraph* graph, SceneObjectId id);
 Vector3 SceneGraph_getWorldForward(SceneGraph* graph, SceneObjectId id);
 Vector3 SceneGraph_getLocalPosition(SceneGraph* graph, SceneObjectId id);

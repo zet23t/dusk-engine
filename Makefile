@@ -24,7 +24,9 @@ LIBDIR := $(shell echo $(LIBDIR) | tr A-Z a-z)
 BUILDDIR := $(shell echo $(BUILDDIR) | tr A-Z a-z)
 
 # Source files
-SRCS := $(shell find $(SRCDIR) -name '*.c')
+# SRCS := $(shell find $(SRCDIR) -name '*.c')
+# SRCS := $(filter-out src/stu.c, $(SRCS))
+SRCS := src/stu.c
 
 # Output file
 TARGET := $(BUILDDIR)/dusk-engine.exe

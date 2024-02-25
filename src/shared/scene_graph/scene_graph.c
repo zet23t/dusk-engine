@@ -252,6 +252,15 @@ void SceneGraph_draw(SceneGraph* graph, Camera3D camera, void* userdata)
     }
 }
 
+Vector3 SceneGraph_localToWorld(SceneGraph *graph, SceneObjectId id, Vector3 local)
+{
+    SceneObject* object = SceneGraph_getObject(graph, id);
+    if (object == NULL) {
+        return local;
+    }
+    return Vector3Transform(local, SceneObject_getWorldMatrix(object));
+}
+
 SceneObjectId SceneGraph_createObject(SceneGraph* graph, const char* name)
 {
     SceneObject* object = NULL;

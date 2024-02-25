@@ -25,6 +25,7 @@ typedef struct PSG {
     SceneComponentTypeId targetComponentId;
     SceneComponentTypeId healthComponentId;
     SceneComponentTypeId updateCallbackComponentId;
+    SceneComponentTypeId enemyPlaneBehaviorComponentId;
 
     Model model;
     Mesh* meshPlane;
@@ -34,6 +35,9 @@ typedef struct PSG {
     Mesh* meshPlayerBullet;
     Mesh* meshTarget;
     Mesh* meshHitParticle1;
+    
+    Mesh** leafTreeList;
+    int leafTreeCount;
 
     MeshTileConfig* meshTiles;
     int meshTileCount;
@@ -48,6 +52,16 @@ typedef struct HealthComponent {
     float health;
     float maxHealth;
 } HealthComponent;
+
+typedef struct EnemyPlaneBehaviorComponent {
+    float phase;
+    float rolling;
+    float smoothedXAccel;
+    float time;
+    Vector3 prevVelocity;
+    SceneObjectId propeller;
+    SceneComponentId velocityComponentId;
+} EnemyPlaneBehaviorComponent;
 
 typedef struct UpdateCallbackComponent {
     void (*update)(SceneGraph*, SceneObjectId, SceneComponentId, float dt, struct UpdateCallbackComponent*);

@@ -1,14 +1,10 @@
 #include "../plane_sim_g.h"
 
 #include <math.h>
+#include "../util/util_math.h"
 
-#define RAND_MAX 0x7fffff
 #define MAX_TARGETS 5
 static SceneObjectId targets[MAX_TARGETS];
-static float GetRandomFloat(float min, float max)
-{
-    return min + (max - min) * ((float)GetRandomValue(0, RAND_MAX) / (float)RAND_MAX);
-}
 
 static void onParticleUpdate(SceneGraph* graph, SceneObjectId objectId, SceneComponentId componentId, float dt, struct UpdateCallbackComponent* component)
 {
@@ -80,7 +76,7 @@ static SceneObjectId instantiate_target(Vector3 position)
     SceneGraph_addComponent(psg.sceneGraph, target, psg.meshRendererComponentId,
         &(MeshRendererComponent) {
             .material = psg.model.materials[1],
-            .mesh = psg.meshPlane2,
+            .mesh = psg.meshTarget,
         });
     SceneGraph_addComponent(psg.sceneGraph, target, psg.targetComponentId,
         &(TargetComponent) {

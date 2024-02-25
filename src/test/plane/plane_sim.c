@@ -9,7 +9,11 @@
 
 struct MeshMapping {
     const char* name;
-    Mesh** mesh;
+    union {
+        Mesh** mesh;
+        Mesh*** meshList;
+    };
+    int isList;
 };
 
 int load_meshes()
@@ -19,14 +23,15 @@ int load_meshes()
     psg.model = LoadModel(gltfMeshFile);
     psg.meshPlane = NULL;
     struct MeshMapping meshMappings[] = {
-        { "fighter-plane-1", &psg.meshPlane },
-        { "fighter-plane-2", &psg.meshPlane2 },
-        { "propeller", &psg.meshPropellerPin },
-        { "propeller-blade-1", &psg.meshPropellerBlade },
-        { "player-bullet-1", &psg.meshPlayerBullet },
-        { "target-1", &psg.meshTarget },
-        { "hit-particle-1", &psg.meshHitParticle1 },
-        { NULL, NULL }
+        { "fighter-plane-1", { .mesh = &psg.meshPlane }, 0 },
+        { "fighter-plane-2", { .mesh = &psg.meshPlane2 }, 0 },
+        { "propeller", { .mesh = &psg.meshPropellerPin }, 0 },
+        { "propeller-blade-1", { .mesh = &psg.meshPropellerBlade }, 0 },
+        { "player-bullet-1", { .mesh = &psg.meshPlayerBullet }, 0 },
+        { "target-1", { .mesh = &psg.meshTarget }, 0 },
+        { "hit-particle-1", { .mesh = &psg.meshHitParticle1 }, 0 },
+        { "leaftree-", { .meshList = &psg.leafTreeList }, 1 },
+        { 0 }
     };
 
     for (int i = 0; i < psg.model.meshCount; i++) {
@@ -52,7 +57,14 @@ int load_meshes()
         }
 
         for (int j = 0; meshMappings[j].name != NULL; j++) {
-            if (strcmp(meshName, meshMappings[j].name) == 0) {
+            if (meshMappings[j].isList) {
+                if (strncmp(meshName, meshMappings[j].name, strlen(meshMappings[j].name)) == 0) {
+                    Mesh*** list = meshMappings[j].meshList;
+                    *list = (Mesh**)realloc(*list, sizeof(Mesh*) * (psg.leafTreeCount + 1));
+                    (*list)[psg.leafTreeCount++] = &psg.model.meshes[i];
+                    TraceLog(LOG_INFO, "  Added mesh to list: %s", meshName);
+                }
+            } else if (strcmp(meshName, meshMappings[j].name) == 0) {
                 *meshMappings[j].mesh = &psg.model.meshes[i];
             }
         }
@@ -195,6 +207,7 @@ void BulletComponentRegister();
 void TargetComponentRegister();
 void HealthComponentRegister();
 void UpdateCallbackComponentRegister();
+void EnemyPlaneBehaviorComponentRegister();
 
 int plane_sim_init()
 {
@@ -213,6 +226,7 @@ int plane_sim_init()
     TargetComponentRegister();
     HealthComponentRegister();
     UpdateCallbackComponentRegister();
+    EnemyPlaneBehaviorComponentRegister();
 
     // for (int i = 0; i < 1000; i += 1) {
     //     plane_instantiate((Vector3) {
