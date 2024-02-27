@@ -76,7 +76,7 @@ static SceneObjectId instantiate_target(Vector3 position)
     SceneGraph_addComponent(psg.sceneGraph, target, psg.meshRendererComponentId,
         &(MeshRendererComponent) {
             .material = psg.model.materials[1],
-            .mesh = psg.meshTarget,
+            .mesh = psg.meshPlane2,
         });
     SceneGraph_addComponent(psg.sceneGraph, target, psg.targetComponentId,
         &(TargetComponent) {

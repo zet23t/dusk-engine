@@ -80,14 +80,7 @@ static SceneObjectId spawnTile(int x, int y)
         });
 
     // scatter trees on ground
-    // int grassCount = (corners[0] == 'g') + (corners[1] == 'g') + (corners[2] == 'g') + (corners[3] == 'g');
-    Vector3 cornerCoordinates[4] = {
-        { 1.0f, 0.0f, 0.0f },
-        { 1.0f, 0.0f, 1.0f },
-        { 0.0f, 0.0f, 1.0f },
-        { 0.0f, 0.0f, 0.0f },
-    };
-
+    
     for (int i = 0; i < 64; i++) {
         if (GetRandomValue(0, 100) > 60) {
             continue;
@@ -99,9 +92,7 @@ static SceneObjectId spawnTile(int x, int y)
             0,
             (i / 8 + ry) / 8.0f + 0.125f * .5f // GetRandomFloat(0, 1),
         };
-        int closestCorner = 0;
-        float closestDistance = 10;
-
+        
         char* grid = &config.mesh->name[2];
         float v = bilinearInterpolate(
             grid[1] == 'g', grid[0] == 'g', grid[3] == 'g', grid[2] == 'g',
