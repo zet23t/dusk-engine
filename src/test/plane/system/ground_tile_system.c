@@ -139,7 +139,7 @@ void UpdateGroundTileSystem()
     if (IsKeyPressed(KEY_Q)) {
         moveSpeedSetting = !moveSpeedSetting;
     }
-    if (offset > 1.0f) {
+    while (offset > 1.0f) {
         offset -= 1.0f;
         step++;
         for (int x = 0; x < COLUMN_COUNT; x += 1) {

@@ -26,6 +26,7 @@ typedef struct PSG {
     SceneComponentTypeId healthComponentId;
     SceneComponentTypeId updateCallbackComponentId;
     SceneComponentTypeId enemyPlaneBehaviorComponentId;
+    SceneComponentTypeId movementPatternComponentId;
 
     Model model;
     Mesh* meshPlane;
@@ -63,6 +64,12 @@ typedef struct EnemyPlaneBehaviorComponent {
     SceneObjectId propeller;
     SceneComponentId velocityComponentId;
 } EnemyPlaneBehaviorComponent;
+
+typedef struct MovementPatternComponent {
+    float time;
+    float speed;
+    SceneComponentId velocityComponentId;
+} MovementPatternComponent;
 
 typedef struct UpdateCallbackComponent {
     void (*update)(SceneGraph*, SceneObjectId, SceneComponentId, float dt, struct UpdateCallbackComponent*);

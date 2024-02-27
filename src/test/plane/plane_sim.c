@@ -7,6 +7,16 @@
 
 #include <string.h>
 
+
+#define RLIGHTS_IMPLEMENTATION
+#include "rlights.h"
+
+#if defined(PLATFORM_DESKTOP)
+    #define GLSL_VERSION            330
+#else   // PLATFORM_ANDROID, PLATFORM_WEB
+    #define GLSL_VERSION            100
+#endif
+
 struct MeshMapping {
     const char* name;
     union {
@@ -16,7 +26,7 @@ struct MeshMapping {
     int isList;
 };
 
-int load_meshes()
+int loadMeshes()
 {
     const char* gltfMeshFile = "assets/meshes.glb";
 
@@ -77,7 +87,60 @@ int load_meshes()
         }
     }
 
+
+    return 0;
+}
+
+static Shader shader;
+static char *loadedTxVs = NULL;
+static char *loadedTxFs = NULL;
+
+static void shaderLoad(int isReload)
+{
+    if (isReload)
+    {
+        char *txVs = LoadFileText(TextFormat("assets/shaders/glsl%i/lighting.vs", GLSL_VERSION));
+        char *txFs = LoadFileText(TextFormat("assets/shaders/glsl%i/fog.fs", GLSL_VERSION));
+        if (txVs == NULL || txFs == NULL)
+        {
+            TraceLog(LOG_ERROR, "Failed to load shader files");
+            return;
+        }
+        if (loadedTxFs != NULL && strcmp(txVs, loadedTxVs) == 0 && strcmp(txFs, loadedTxFs) == 0)
+        {
+            UnloadFileText(txVs);
+            UnloadFileText(txFs);
+            return;
+        }
+        if (loadedTxFs)
+        {
+            UnloadFileText(loadedTxVs);
+            UnloadFileText(loadedTxFs);
+        }
+        loadedTxVs = txVs;
+        loadedTxFs = txFs;
+    }
+    if (shader.id != 0 && isReload) {
+        UnloadShader(shader);
+    }
+    
+    // Load shader and set up some uniforms
+    shader = LoadShader(TextFormat("assets/shaders/glsl%i/lighting.vs", GLSL_VERSION),
+                               TextFormat("assets/shaders/glsl%i/fog.fs", GLSL_VERSION));
+    shader.locs[SHADER_LOC_MATRIX_MODEL] = GetShaderLocation(shader, "matModel");
+    shader.locs[SHADER_LOC_VECTOR_VIEW] = GetShaderLocation(shader, "viewPos");
+
+    // Ambient light level
+    int ambientLoc = GetShaderLocation(shader, "ambient");
+    SetShaderValue(shader, ambientLoc, (float[4]){ 0.2f, 0.2f, 0.2f, 1.0f }, SHADER_UNIFORM_VEC4);
+
+    float fogDensity = 0.15f;
+    int fogDensityLoc = GetShaderLocation(shader, "fogDensity");
+    SetShaderValue(shader, fogDensityLoc, &fogDensity, SHADER_UNIFORM_FLOAT);
+
+
     for (int i = 0; i < psg.model.materialCount; i++) {
+        psg.model.materials[i].shader = shader;
         for (int j = 0; j < MAX_MATERIAL_MAPS; j++) {
             if (psg.model.materials[i].maps[j].texture.id == 0) {
                 continue;
@@ -85,8 +148,10 @@ int load_meshes()
             SetTextureFilter(psg.model.materials[i].maps[j].texture, TEXTURE_FILTER_BILINEAR);
         }
     }
-
-    return 0;
+    if (!isReload)
+    {
+        CreateLight(LIGHT_POINT, (Vector3){ 0, 2, 6 }, Vector3Zero(), WHITE, shader);
+    }
 }
 
 static void onShoot(SceneGraph* graph, SceneComponentId shooter, ShootingComponent* shootingComponent, ShootingConfig* shootingConfig)
@@ -208,12 +273,15 @@ void TargetComponentRegister();
 void HealthComponentRegister();
 void UpdateCallbackComponentRegister();
 void EnemyPlaneBehaviorComponentRegister();
+void MovementPatternComponentRegister();
 
 int plane_sim_init()
 {
-    if (load_meshes()) {
+    if (loadMeshes()) {
         return 1;
     }
+
+    shaderLoad(0);
 
     psg.sceneGraph = SceneGraph_create();
 
@@ -227,6 +295,7 @@ int plane_sim_init()
     HealthComponentRegister();
     UpdateCallbackComponentRegister();
     EnemyPlaneBehaviorComponentRegister();
+    MovementPatternComponentRegister();
 
     // for (int i = 0; i < 1000; i += 1) {
     //     plane_instantiate((Vector3) {
@@ -242,6 +311,8 @@ int plane_sim_init()
 }
 
 static int textIndex = 0;
+static int autoreload = 0;
+static int reloadTimer = 0;
 void plane_sim_draw()
 {
     Camera3D camera = { 0 };
@@ -255,6 +326,18 @@ void plane_sim_draw()
     BeginMode3D(camera);
     SceneGraph_draw(psg.sceneGraph, camera, NULL);
     EndMode3D();
+
+#if !defined(PLATFORM_WEB)
+    if (IsKeyDown(KEY_F6))
+    {
+        autoreload = 1;
+    }
+    if (IsKeyDown(KEY_F5) || (autoreload && reloadTimer++ > 30))
+    {
+        reloadTimer = 0;
+        shaderLoad(1);
+    }
+#endif
 
     if (IsKeyDown(KEY_SPACE) || IsKeyDown(KEY_LEFT_CONTROL) || IsKeyDown(KEY_RIGHT_CONTROL)) {
         int width = GetScreenWidth();
