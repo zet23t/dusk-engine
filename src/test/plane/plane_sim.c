@@ -249,8 +249,8 @@ void plane_sim_draw()
     camera.target = (Vector3) { 0, 0, 5 };
     camera.up = (Vector3) { 0, 1, 0 };
     camera.fovy = 10;
-    camera.far = 1000;
-    camera.near = 0.1f;
+    camera.far = 256.0f;
+    camera.near = 64.0f;
 
     BeginMode3D(camera);
     SceneGraph_draw(psg.sceneGraph, camera, NULL);
