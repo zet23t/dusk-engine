@@ -8,7 +8,8 @@ static void MeshRendererDraw(Camera3D camera, SceneObject* node, SceneComponentI
     {
         return;
     }
-    DrawMesh(*meshRenderer->mesh, meshRenderer->material, m);
+    SetShaderValue(meshRenderer->material->shader, psg.litAmountIndex, &meshRenderer->litAmount, SHADER_UNIFORM_FLOAT);
+    DrawMesh(*meshRenderer->mesh, *meshRenderer->material, m);
 }
 
 void MeshRendererComponentRegister()

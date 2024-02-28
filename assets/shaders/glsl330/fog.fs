@@ -10,6 +10,8 @@ in vec3 fragNormal;
 uniform sampler2D texture0;
 uniform vec4 colDiffuse;
 
+uniform float litAmount;
+
 // Output fragment color
 out vec4 finalColor;
 
@@ -92,12 +94,17 @@ void main()
     fogFactor = clamp(fogFactor, 0.0, 1.0);
 
     finalColor = mix(fogColor, finalColor, fogFactor);*/
-    const vec4 fogColor = vec4(0.25, 0.25, 0.25, 1.0);
+    vec4 fogColor = vec4(0.5, 0.59, 0.67, 1.0);
 
     float dist = length(viewPos - fragPosition);
-    float fogFactor = -fragPosition.y * 0.01;
+    float fogFactor = -fragPosition.y * 0.0125;
+    float greyScale = dot(texelColor.rgb, vec3(0.299, 0.587, 0.114));
+    fogColor = mix(vec4(greyScale, greyScale, greyScale, 1.0), fogColor, fogFactor);
 
-    
-    finalColor = mix(texelColor, fogColor, min(1, fogFactor + (1 - normal.y)*.15));// 
-    // finalColor = texelColor;//vec4(0, -fragPosition.y*.01, 0.0, 1.0);
+    float lightf = mix((normal.y)*0.5 + .25, 1.0, litAmount);
+    vec4 color = vec4(lightf, lightf, lightf, 1.0) * texelColor;
+    // finalColor = color;
+    finalColor = mix(color, fogColor, min(1, fogFactor));// 
+    // finalColor = texelColor;
+    // finalColor = vec4(0, -fragPosition.y*.01, 0.0, 1.0);
 }

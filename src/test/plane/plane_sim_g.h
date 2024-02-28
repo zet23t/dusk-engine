@@ -1,8 +1,30 @@
 #ifndef __PLANE_SIM_G_H__
 #define __PLANE_SIM_G_H__
 
+#include "external/cjson.h"
 #include "shared/scene_graph/scene_graph.h"
 #include <inttypes.h>
+
+
+
+#define VALUE_TYPE_FLOAT 0
+#define VALUE_TYPE_INT 1
+#define VALUE_TYPE_STRING 2
+#define VALUE_TYPE_BOOL 3
+
+typedef struct MappedVariable {
+    const char* name;
+    int type;
+    union {
+        float* floatValue;
+        int* intValue;
+        const char** stringValue;
+        bool* boolValue;
+    };
+
+} MappedVariable;
+
+void ReadMappedVariables(cJSON *map, MappedVariable *variables);
 
 typedef struct MeshTileConfig {
     Mesh* mesh;
@@ -15,6 +37,8 @@ typedef struct PSG {
     float deltaTime;
 
     SceneGraph* sceneGraph;
+
+    cJSON *levelConfig;
 
     SceneComponentTypeId meshRendererComponentId;
     SceneComponentTypeId planeBehaviorComponentId;
@@ -42,9 +66,14 @@ typedef struct PSG {
 
     MeshTileConfig* meshTiles;
     int meshTileCount;
-    int disableDrawMesh;
 
+    Mesh** cloudList;
+    int cloudCount;
+
+    int disableDrawMesh;
     SceneObjectId playerPlane;
+
+    ShaderLocationIndex litAmountIndex;
 } PSG;
 
 typedef struct ShootingConfig ShootingConfig;
@@ -111,7 +140,8 @@ typedef struct TargetComponent {
 } TargetComponent;
 
 typedef struct MeshRendererComponent {
-    Material material;
+    float litAmount;
+    Material *material;
     Mesh* mesh;
 } MeshRendererComponent;
 

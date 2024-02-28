@@ -13,6 +13,7 @@ const char groundTypes[TILE_TYPE_COUNT] = { 'g', 'w' };
 
 static Vector3 groundTileOffset = { -TILE_SIZE * (COLUMN_COUNT - 1) * .5f, -50, 0 };
 static float offset = 0;
+static float waterLineLevel = 0.5f;
 static SceneObjectId groundTiles[ROW_COUNT * COLUMN_COUNT];
 
 static MeshTileConfig FindMatchingTile(uint32_t cornersToMatch, int* rotation)
@@ -60,10 +61,10 @@ static SceneObjectId spawnTile(int x, int y)
     float p3 = stb_perlin_turbulence_noise3((x - 1) * freq, (y)*freq, 0, 0.5f, 0.5f, 3);
     float p4 = stb_perlin_turbulence_noise3((x - 1) * freq, (y - 1) * freq, 0, 0.5f, 0.5f, 3);
     char corners[4];
-    corners[0] = p1 > .5f ? 'g' : 'w';
-    corners[1] = p2 > .5f ? 'g' : 'w';
-    corners[2] = p3 > .5f ? 'g' : 'w';
-    corners[3] = p4 > .5f ? 'g' : 'w';
+    corners[0] = p1 > waterLineLevel ? 'g' : 'w';
+    corners[1] = p2 > waterLineLevel ? 'g' : 'w';
+    corners[2] = p3 > waterLineLevel ? 'g' : 'w';
+    corners[3] = p4 > waterLineLevel ? 'g' : 'w';
     uint32_t cornerConfig = *(uint32_t*)corners;
     int rot = 0;
     MeshTileConfig config = FindMatchingTile(cornerConfig, &rot);
@@ -75,12 +76,12 @@ static SceneObjectId spawnTile(int x, int y)
     }
     SceneGraph_addComponent(psg.sceneGraph, id, psg.meshRendererComponentId,
         &(MeshRendererComponent) {
-            .material = psg.model.materials[1],
+            .material = &psg.model.materials[1],
             .mesh = config.mesh,
         });
 
     // scatter trees on ground
-    
+
     for (int i = 0; i < 64; i++) {
         if (GetRandomValue(0, 100) > 60) {
             continue;
@@ -92,7 +93,7 @@ static SceneObjectId spawnTile(int x, int y)
             0,
             (i / 8 + ry) / 8.0f + 0.125f * .5f // GetRandomFloat(0, 1),
         };
-        
+
         char* grid = &config.mesh->name[2];
         float v = bilinearInterpolate(
             grid[1] == 'g', grid[0] == 'g', grid[3] == 'g', grid[2] == 'g',
@@ -103,14 +104,13 @@ static SceneObjectId spawnTile(int x, int y)
         Vector3 worldPos = SceneGraph_localToWorld(psg.sceneGraph, id, (Vector3) { px, 0, pz });
         px = worldPos.x;
         pz = worldPos.z;
-        scale += stb_perlin_turbulence_noise3(px * 1.2f, (pz - 1) * 1.2f, 2.25f, 0.5f, 0.5f, 3) * 1.0f - .35f + 
-            GetRandomFloat(0,.25f);
+        scale += stb_perlin_turbulence_noise3(px * 1.2f, (pz - 1) * 1.2f, 2.25f, 0.5f, 0.5f, 3) * 1.0f - .35f + GetRandomFloat(0, .25f);
         if (scale < 0.5f) {
             continue;
         }
-        scale += GetRandomFloat(-.25f,.25f);
+        scale += GetRandomFloat(-.25f, .25f);
         float type = stb_perlin_turbulence_noise3(px * 1.2f, (pz - 1) * 1.2f, 3.25f, 0.5f, 0.5f, 3);
-        int treeType = (int) (type * psg.leafTreeCount);
+        int treeType = (int)(type * psg.leafTreeCount);
         if (treeType >= psg.leafTreeCount) {
             treeType = psg.leafTreeCount - 1;
         }
@@ -120,22 +120,47 @@ static SceneObjectId spawnTile(int x, int y)
         position.z = (position.z - .5f) * TILE_SIZE;
         SceneGraph_setLocalScale(psg.sceneGraph, tree, (Vector3) { scale, scale, scale });
         SceneGraph_setLocalPosition(psg.sceneGraph, tree, position);
-        Vector3 rotate = { GetRandomFloat(-10,10), GetRandomFloat(0, 360), GetRandomFloat(-10,10) };
+        Vector3 rotate = { GetRandomFloat(-10, 10), GetRandomFloat(0, 360), GetRandomFloat(-10, 10) };
         SceneGraph_setLocalRotation(psg.sceneGraph, tree, rotate);
         SceneGraph_addComponent(psg.sceneGraph, tree, psg.meshRendererComponentId,
             &(MeshRendererComponent) {
-                .material = psg.model.materials[2],
+                .material = &psg.model.materials[2],
                 .mesh = psg.leafTreeList[treeType],
             });
     }
     return id;
 }
 
-int step = 0;
-int moveSpeedSetting = 0;
+static int step = 0;
+static int moveSpeedSetting = 0;
+static float baseSpeed = 0.125f;
+static cJSON* parsedGroundTileCfg;
+
+static MappedVariable mappedGroundVariables[] = {
+    { "baseSpeed", VALUE_TYPE_FLOAT, .floatValue = &baseSpeed },
+    { "waterLineLevel", VALUE_TYPE_FLOAT, .floatValue = &waterLineLevel},
+    { 0 },
+};
+
+void readParsedCfg()
+{
+    if (parsedGroundTileCfg == psg.levelConfig) {
+        return;
+    }
+
+    parsedGroundTileCfg = psg.levelConfig;
+    cJSON* groundTileCfg = cJSON_GetObjectItem(parsedGroundTileCfg, "groundTileCfg");
+    if (groundTileCfg == NULL) {
+        TraceLog(LOG_ERROR, "groundTileCfg not found in level config");
+        return;
+    }
+    ReadMappedVariables(groundTileCfg, mappedGroundVariables);
+}
+
 void UpdateGroundTileSystem()
 {
-    offset += psg.deltaTime * (moveSpeedSetting == 0 ? .125f : 2.0f);
+    readParsedCfg();
+    offset += psg.deltaTime * baseSpeed * (moveSpeedSetting == 0 ? 1.0f : 8.0f);
     if (IsKeyPressed(KEY_Q)) {
         moveSpeedSetting = !moveSpeedSetting;
     }

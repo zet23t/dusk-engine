@@ -1,0 +1,16 @@
+{
+    "groundTileCfg": {
+        "baseSpeed": 0.125,
+        "waterLineLevel": 0.25
+    },
+    "cloudCfg": {
+        "cloudSpeed": 0.025,
+        "cloudSpawnRangeX": 15,
+        "cloudSpawnMinZ": 30,
+        "cloudSpawnMaxZ": 50,
+        "cloudSpawnMinY": -10,
+        "cloudSpawnMaxY": -40,
+        "cloudSpawnMinScale": 1.2,
+        "cloudSpawnMaxScale": 3
+    }
+}

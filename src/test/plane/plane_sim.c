@@ -7,21 +7,23 @@
 
 #include <string.h>
 
-
 #define RLIGHTS_IMPLEMENTATION
 #include "rlights.h"
 
 #if defined(PLATFORM_DESKTOP)
-    #define GLSL_VERSION            330
-#else   // PLATFORM_ANDROID, PLATFORM_WEB
-    #define GLSL_VERSION            100
+#define GLSL_VERSION 330
+#else // PLATFORM_ANDROID, PLATFORM_WEB
+#define GLSL_VERSION 100
 #endif
 
 struct MeshMapping {
     const char* name;
     union {
         Mesh** mesh;
-        Mesh*** meshList;
+        struct {
+            Mesh*** meshList;
+            int* count;
+        };
     };
     int isList;
 };
@@ -40,7 +42,8 @@ int loadMeshes()
         { "player-bullet-1", { .mesh = &psg.meshPlayerBullet }, 0 },
         { "target-1", { .mesh = &psg.meshTarget }, 0 },
         { "hit-particle-1", { .mesh = &psg.meshHitParticle1 }, 0 },
-        { "leaftree-", { .meshList = &psg.leafTreeList }, 1 },
+        { "leaftree-", { .meshList = &psg.leafTreeList, .count = &psg.leafTreeCount }, 1 },
+        { "cloud.", { .meshList = &psg.cloudList, .count = &psg.cloudCount }, 1 },
         { 0 }
     };
 
@@ -70,8 +73,10 @@ int loadMeshes()
             if (meshMappings[j].isList) {
                 if (strncmp(meshName, meshMappings[j].name, strlen(meshMappings[j].name)) == 0) {
                     Mesh*** list = meshMappings[j].meshList;
-                    *list = (Mesh**)realloc(*list, sizeof(Mesh*) * (psg.leafTreeCount + 1));
-                    (*list)[psg.leafTreeCount++] = &psg.model.meshes[i];
+                    int count = *meshMappings[j].count;
+                    *list = (Mesh**)realloc(*list, sizeof(Mesh*) * (count + 1));
+                    (*list)[count] = &psg.model.meshes[i];
+                    *meshMappings[j].count = count + 1;
                     TraceLog(LOG_INFO, "  Added mesh to list: %s", meshName);
                 }
             } else if (strcmp(meshName, meshMappings[j].name) == 0) {
@@ -87,33 +92,54 @@ int loadMeshes()
         }
     }
 
-
     return 0;
 }
 
+static void levelConfigLoad(int isReload)
+{
+    char* levelConfigText = LoadFileText("assets/level.json");
+    if (levelConfigText == NULL) {
+        TraceLog(LOG_ERROR, "Failed to load level config");
+        if (psg.levelConfig == NULL) {
+            psg.levelConfig = cJSON_CreateObject();
+        }
+        return;
+    }
+    cJSON* loaded = cJSON_Parse(levelConfigText);
+    UnloadFileText(levelConfigText);
+    if (loaded == NULL) {
+        TraceLog(LOG_ERROR, "Failed to parse level config");
+        if (psg.levelConfig == NULL) {
+            psg.levelConfig = cJSON_CreateObject();
+        }
+        return;
+    }
+
+    if (psg.levelConfig) {
+        cJSON_Delete(psg.levelConfig);
+    }
+    psg.levelConfig = loaded;
+}
+
 static Shader shader;
-static char *loadedTxVs = NULL;
-static char *loadedTxFs = NULL;
+static char* loadedTxVs = NULL;
+static char* loadedTxFs = NULL;
 
 static void shaderLoad(int isReload)
 {
-    if (isReload)
-    {
-        char *txVs = LoadFileText(TextFormat("assets/shaders/glsl%i/lighting.vs", GLSL_VERSION));
-        char *txFs = LoadFileText(TextFormat("assets/shaders/glsl%i/fog.fs", GLSL_VERSION));
-        if (txVs == NULL || txFs == NULL)
-        {
+    if (isReload) {
+        char* txVs = LoadFileText(TextFormat("assets/shaders/glsl%i/lighting.vs", GLSL_VERSION));
+        char* txFs = LoadFileText(TextFormat("assets/shaders/glsl%i/fog.fs", GLSL_VERSION));
+        if (txVs == NULL || txFs == NULL) {
             TraceLog(LOG_ERROR, "Failed to load shader files");
             return;
         }
-        if (loadedTxFs != NULL && strcmp(txVs, loadedTxVs) == 0 && strcmp(txFs, loadedTxFs) == 0)
-        {
+        if (loadedTxFs != NULL && strcmp(txVs, loadedTxVs) == 0 && strcmp(txFs, loadedTxFs) == 0 && 1) {
             UnloadFileText(txVs);
             UnloadFileText(txFs);
             return;
         }
-        if (loadedTxFs)
-        {
+        if (loadedTxFs) {
             UnloadFileText(loadedTxVs);
             UnloadFileText(loadedTxFs);
         }
@@ -123,21 +149,22 @@ static void shaderLoad(int isReload)
     if (shader.id != 0 && isReload) {
         UnloadShader(shader);
     }
-    
+
     // Load shader and set up some uniforms
     shader = LoadShader(TextFormat("assets/shaders/glsl%i/lighting.vs", GLSL_VERSION),
-                               TextFormat("assets/shaders/glsl%i/fog.fs", GLSL_VERSION));
+        TextFormat("assets/shaders/glsl%i/fog.fs", GLSL_VERSION));
     shader.locs[SHADER_LOC_MATRIX_MODEL] = GetShaderLocation(shader, "matModel");
     shader.locs[SHADER_LOC_VECTOR_VIEW] = GetShaderLocation(shader, "viewPos");
 
     // Ambient light level
     int ambientLoc = GetShaderLocation(shader, "ambient");
-    SetShaderValue(shader, ambientLoc, (float[4]){ 0.2f, 0.2f, 0.2f, 1.0f }, SHADER_UNIFORM_VEC4);
+    SetShaderValue(shader, ambientLoc, (float[4]) { 0.2f, 0.2f, 0.2f, 1.0f }, SHADER_UNIFORM_VEC4);
 
     float fogDensity = 0.15f;
     int fogDensityLoc = GetShaderLocation(shader, "fogDensity");
     SetShaderValue(shader, fogDensityLoc, &fogDensity, SHADER_UNIFORM_FLOAT);
 
+    psg.litAmountIndex = GetShaderLocation(shader, "litAmount");
 
     for (int i = 0; i < psg.model.materialCount; i++) {
         psg.model.materials[i].shader = shader;
@@ -148,9 +175,8 @@ static void shaderLoad(int isReload)
             SetTextureFilter(psg.model.materials[i].maps[j].texture, TEXTURE_FILTER_BILINEAR);
         }
     }
-    if (!isReload)
-    {
-        CreateLight(LIGHT_POINT, (Vector3){ 0, 2, 6 }, Vector3Zero(), WHITE, shader);
+    if (!isReload) {
+        // CreateLight(LIGHT_POINT, (Vector3){ 0, 2, 6 }, Vector3Zero(), WHITE, shader);
     }
 }
 
@@ -165,7 +191,7 @@ static void onShoot(SceneGraph* graph, SceneComponentId shooter, ShootingCompone
     SceneGraph_setLocalPosition(psg.sceneGraph, bullet, SceneGraph_getWorldPosition(psg.sceneGraph, shootingComponent->spawnPoint));
     SceneGraph_addComponent(psg.sceneGraph, bullet, psg.meshRendererComponentId,
         &(MeshRendererComponent) {
-            .material = psg.model.materials[1],
+            .material = &psg.model.materials[1],
             .mesh = psg.meshPlayerBullet,
         });
 
@@ -193,7 +219,7 @@ SceneObjectId plane_instantiate(Vector3 position)
     SceneGraph_setLocalPosition(psg.sceneGraph, plane, position);
     SceneGraph_addComponent(psg.sceneGraph, plane, psg.meshRendererComponentId,
         &(MeshRendererComponent) {
-            .material = psg.model.materials[1],
+            .material = &psg.model.materials[1],
             .mesh = psg.meshPlane,
         });
 
@@ -202,7 +228,7 @@ SceneObjectId plane_instantiate(Vector3 position)
     SceneGraph_setLocalPosition(psg.sceneGraph, propeller, (Vector3) { 0, 0.062696f, 0.795618f });
     SceneGraph_addComponent(psg.sceneGraph, propeller, psg.meshRendererComponentId,
         &(MeshRendererComponent) {
-            .material = psg.model.materials[1],
+            .material = &psg.model.materials[1],
             .mesh = psg.meshPropellerPin,
         });
 
@@ -213,7 +239,7 @@ SceneObjectId plane_instantiate(Vector3 position)
         SceneGraph_setLocalRotation(psg.sceneGraph, propellerBlade, (Vector3) { 0, 0, 120 * i });
         SceneGraph_addComponent(psg.sceneGraph, propellerBlade, psg.meshRendererComponentId,
             &(MeshRendererComponent) {
-                .material = psg.model.materials[1],
+                .material = &psg.model.materials[1],
                 .mesh = psg.meshPropellerBlade,
             });
     }
@@ -280,8 +306,8 @@ int plane_sim_init()
     if (loadMeshes()) {
         return 1;
     }
-
     shaderLoad(0);
+    levelConfigLoad(0);
 
     psg.sceneGraph = SceneGraph_create();
 
@@ -315,6 +341,21 @@ static int autoreload = 0;
 static int reloadTimer = 0;
 void plane_sim_draw()
 {
+
+#if !defined(PLATFORM_WEB)
+    if (IsKeyPressed(KEY_F6)) {
+        autoreload = !autoreload;
+        TraceLog(LOG_INFO, "autoreload: %d", autoreload);
+    }
+    if (IsKeyPressed(KEY_F5) || (autoreload && reloadTimer++ > 30)) {
+        reloadTimer = 0;
+        SetTraceLogLevel(LOG_WARNING);
+        shaderLoad(1);
+        levelConfigLoad(1);
+        SetTraceLogLevel(LOG_INFO);
+    }
+#endif
+
     Camera3D camera = { 0 };
     camera.position = (Vector3) { 0, 100, -25 };
     camera.target = (Vector3) { 0, 0, 5 };
@@ -326,18 +367,6 @@ void plane_sim_draw()
     BeginMode3D(camera);
     SceneGraph_draw(psg.sceneGraph, camera, NULL);
     EndMode3D();
-
-#if !defined(PLATFORM_WEB)
-    if (IsKeyDown(KEY_F6))
-    {
-        autoreload = 1;
-    }
-    if (IsKeyDown(KEY_F5) || (autoreload && reloadTimer++ > 30))
-    {
-        reloadTimer = 0;
-        shaderLoad(1);
-    }
-#endif
 
     if (IsKeyDown(KEY_SPACE) || IsKeyDown(KEY_LEFT_CONTROL) || IsKeyDown(KEY_RIGHT_CONTROL)) {
         int width = GetScreenWidth();
@@ -364,11 +393,11 @@ void plane_sim_draw()
 void HandlePlayerInputUpdate();
 void HandleTargetSpawnSystem();
 void UpdateGroundTileSystem();
+void UpdateCloudSystem();
 
 void plane_sim_update(float dt)
 {
-    if (IsKeyPressed(KEY_R))
-    {
+    if (IsKeyPressed(KEY_R)) {
         psg.disableDrawMesh = !psg.disableDrawMesh;
     }
     psg.time += dt;
@@ -377,4 +406,5 @@ void plane_sim_update(float dt)
     HandlePlayerInputUpdate();
     HandleTargetSpawnSystem();
     UpdateGroundTileSystem();
+    UpdateCloudSystem();
 }
