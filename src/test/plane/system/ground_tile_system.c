@@ -83,9 +83,6 @@ static SceneObjectId spawnTile(int x, int y)
     // scatter trees on ground
 
     for (int i = 0; i < 64; i++) {
-        if (GetRandomValue(0, 100) > 60) {
-            continue;
-        }
         float rx = GetRandomFloat(-1.0f / 2.0f, 1.0f / 2.0f);
         float ry = GetRandomFloat(-1.0f / 2.0f, 1.0f / 2.0f);
         Vector3 position = {
@@ -94,13 +91,21 @@ static SceneObjectId spawnTile(int x, int y)
             (i / 8 + ry) / 8.0f + 0.125f * .5f // GetRandomFloat(0, 1),
         };
 
+        float px = (x + position.x) * TILE_SIZE;
+        float pz = (y + position.z) * TILE_SIZE;
+
+        float variation = stb_perlin_turbulence_noise3(px * .2f, (pz - 1) * .2f, 4.25f, 0.5f, 0.5f, 3) * 1.0f - .35f + GetRandomFloat(0, .25f);
+
+
+        if (GetRandomValue(0, 100) > 50 + (int)(80.0f * (variation - .5f))) {
+            continue;
+        }
+
         char* grid = &config.mesh->name[2];
         float v = bilinearInterpolate(
             grid[1] == 'g', grid[0] == 'g', grid[3] == 'g', grid[2] == 'g',
             position.x, position.z);
         float scale = v * 2.0f - 1.0f;
-        float px = (x + position.x) * TILE_SIZE;
-        float pz = (y + position.z) * TILE_SIZE;
         Vector3 worldPos = SceneGraph_localToWorld(psg.sceneGraph, id, (Vector3) { px, 0, pz });
         px = worldPos.x;
         pz = worldPos.z;

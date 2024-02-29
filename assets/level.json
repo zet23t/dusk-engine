@@ -12,5 +12,51 @@
         "cloudSpawnMaxY": -40,
         "cloudSpawnMinScale": 1.2,
         "cloudSpawnMaxScale": 3
+    },
+    "ui": {
+        "root": "ui",
+        "objects": {
+            "ui-border": {
+                "type": "MeshRendererComponent",
+                "mesh": "ui-border",
+                "litAmount": 1
+            },
+            "border-element": {
+                "components": [ "ui-border" ]
+            },
+            "border-group": {
+                "children": [
+                    {
+                        "prefab": "border-element",
+                        "position": [ 0, 6, 0 ]
+                    },
+                    {
+                        "prefab": "border-element",
+                        "position": [ 0, 2, 0 ]
+                    },
+                    {
+                        "prefab": "border-element",
+                        "position": [ 0, -2, 0 ]
+                    },
+                    {
+                        "prefab": "border-element",
+                        "position": [ 0, -6, 0 ]
+                    }
+                ]
+            },
+            "ui": {
+                "children": [
+                    {
+                        "prefab": "border-group",
+                        "position": [ 8, 0, 0 ]
+                    },
+                    {
+                        "prefab": "border-group",
+                        "position": [ -8, 0, 0 ],
+                        "rotation": [ 0, 0, 180 ]
+                    }
+                ]
+            }
+        }
     }
 }

@@ -2,6 +2,7 @@
 #include "shared/ecs/pico_ecs.c"
 #include "shared/scene_graph/scene_graph.c"
 #include "test/plane/util/util_math.c"
+#include "test/plane/util/prefab.c"
 #include "test/plane/util/mapped_variables.c"
 #include "test/plane/components/bullet_component.c"
 #include "test/plane/components/camera_component.c"

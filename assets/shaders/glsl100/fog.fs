@@ -38,57 +38,21 @@ uniform vec4 ambient;
 uniform vec3 viewPos;
 uniform float fogDensity;
 
+uniform float litAmount;
+
 void main()
 {
-    // Texel color fetching from texture sampler
     vec4 texelColor = texture2D(texture0, fragTexCoord);
-    vec3 lightDot = vec3(0.0);
     vec3 normal = normalize(fragNormal);
-    vec3 viewD = normalize(viewPos - fragPosition);
-    vec3 specular = vec3(0.0);
+    
+    vec4 fogColor = vec4(0.5, 0.59, 0.67, 1.0);
 
-    // NOTE: Implement here your fragment shader code
-
-    for (int i = 0; i < MAX_LIGHTS; i++)
-    {
-        if (lights[i].enabled == 1)
-        {
-            vec3 light = vec3(0.0);
-
-            if (lights[i].type == LIGHT_DIRECTIONAL) light = -normalize(lights[i].target - lights[i].position);
-            if (lights[i].type == LIGHT_POINT) light = normalize(lights[i].position - fragPosition);
-
-            float NdotL = max(dot(normal, light), 0.0);
-            lightDot += lights[i].color.rgb*NdotL;
-
-            float specCo = 0.0;
-            if (NdotL > 0.0) specCo = pow(max(0.0, dot(viewD, reflect(-(light), normal))), 16.0); // Shine: 16.0
-            specular += specCo;
-        }
-    }
-
-    vec4 finalColor = (texelColor*((colDiffuse + vec4(specular,1))*vec4(lightDot, 1.0)));
-    finalColor += texelColor*(ambient/10.0);
-
-    // Gamma correction
-    finalColor = pow(finalColor, vec4(1.0/2.2));
-
-    // Fog calculation
     float dist = length(viewPos - fragPosition);
+    float fogFactor = -fragPosition.y * 0.0125;
+    float greyScale = dot(texelColor.rgb, vec3(0.299, 0.587, 0.114));
+    fogColor = mix(vec4(greyScale, greyScale, greyScale, 1.0), fogColor, fogFactor);
 
-    // these could be parameters...
-    const vec4 fogColor = vec4(0.5, 0.5, 0.5, 1.0);
-    //const float fogDensity = 0.16;
-
-    // Exponential fog
-    float fogFactor = 1.0/exp((dist*fogDensity)*(dist*fogDensity));
-
-    // Linear fog (less nice)
-    //const float fogStart = 2.0;
-    //const float fogEnd = 10.0;
-    //float fogFactor = (fogEnd - dist)/(fogEnd - fogStart);
-
-    fogFactor = clamp(fogFactor, 0.0, 1.0);
-
-    gl_FragColor = mix(fogColor, finalColor, fogFactor);
+    float lightf = mix((normal.y)*0.5 + .25, 1.0, litAmount);
+    vec4 color = vec4(lightf, lightf, lightf, 1.0) * texelColor;
+    gl_FragColor = mix(color, fogColor, min(1.0, fogFactor));
 }

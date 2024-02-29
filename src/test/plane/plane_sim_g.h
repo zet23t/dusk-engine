@@ -65,6 +65,7 @@ typedef struct PSG {
     Mesh* meshPlayerBullet;
     Mesh* meshTarget;
     Mesh* meshHitParticle1;
+    Mesh* meshUiBorder;
     
     Mesh** leafTreeList;
     int leafTreeCount;
@@ -176,5 +177,6 @@ typedef struct LinearVelocityComponent {
 extern PSG psg;
 
 Camera3D CameraComponent_getCamera3D(SceneGraph* sceneGraph, SceneObjectId nodeId);
+SceneObjectId InstantiateFromJSON(SceneGraph* sceneGraph, cJSON* objects, const char* rootId);
 
 #endif

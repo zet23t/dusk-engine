@@ -1,6 +1,7 @@
 #include "scene_graph.h"
 
 #include <raymath.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -22,7 +23,6 @@ int SceneGraph_countLiveObjects(SceneGraph* graph)
         }
     }
     return count;
-
 }
 
 void SceneGraph_destroy(SceneGraph* graph)
@@ -73,6 +73,12 @@ Matrix SceneObject_getLocalMatrix(SceneObject* object)
 Matrix SceneObject_getWorldMatrix(SceneObject* object)
 {
     SceneObject* parent = SceneGraph_getObject(object->graph, object->parent);
+    if (parent != NULL) {
+        // this is annoying and I don't know if this can be improved: while there's a cache of the world matrix including a version identifier
+        // of the parent matrix, if the parent matrix is outdated and not queried, the children will not be updated
+        SceneObject_getWorldMatrix(parent);
+    }
+
     if (object->flags & SCENE_OBJECT_FLAG_WORLD_MATRIX_DIRTY || (parent != NULL && parent->transform.worldMatrixVersion != object->parentWorldMatrixVersion)) {
         if (parent != NULL) {
             object->transform.worldMatrix = MatrixMultiply(SceneObject_getLocalMatrix(object), SceneObject_getWorldMatrix(parent));
@@ -280,7 +286,7 @@ void SceneGraph_draw(SceneGraph* graph, Camera3D camera, void* userdata)
     }
 }
 
-Vector3 SceneGraph_localToWorld(SceneGraph *graph, SceneObjectId id, Vector3 local)
+Vector3 SceneGraph_localToWorld(SceneGraph* graph, SceneObjectId id, Vector3 local)
 {
     SceneObject* object = SceneGraph_getObject(graph, id);
     if (object == NULL) {
@@ -327,6 +333,15 @@ SceneObject* SceneGraph_getObject(SceneGraph* graph, SceneObjectId id)
         return NULL;
     }
     return object;
+}
+
+const char* SceneGraph_getObjectName(SceneGraph* graph, SceneObjectId id)
+{
+    SceneObject* object = SceneGraph_getObject(graph, id);
+    if (object == NULL) {
+        return NULL;
+    }
+    return object->name;
 }
 
 void SceneGraph_destroyObject(SceneGraph* graph, SceneObjectId id)
@@ -397,7 +412,6 @@ SceneComponentId SceneGraph_addComponent(SceneGraph* graph, SceneObjectId id, Sc
 
     if (componentData != NULL && type->dataSize > 0)
         memcpy(&type->componentData[dataIndex * type->dataSize], componentData, type->dataSize);
-    
 
     for (int i = 0; i < object->components_count; i++) {
         if (object->components[i].version == 0) {
@@ -491,4 +505,48 @@ void SceneGraph_destroyComponent(SceneGraph* graph, SceneComponentId id)
         return;
     }
     component->id.version = 0;
+}
+
+void SceneGraph_printObject(SceneObject* object, const char* indent)
+{
+    int indentLength = strlen(indent);
+    char newIndent[indentLength + 3];
+    for (int i = 0; i < indentLength + 2; i++) {
+        newIndent[i] = ' ';
+    }
+    newIndent[indentLength + 2] = '\0';
+
+    Vector3 position = object->transform.position;
+    Vector3 rotation = object->transform.eulerRotationDegrees;
+    Vector3 worldPos = SceneGraph_getWorldPosition(object->graph, object->id);
+
+    printf("%sObject %3d: %s (%.2f, %.2f, %.2f) @ (%.2f, %.2f, %.2f) | (%.2f, %.2f, %.2f)\n", indent, object->id.id, object->name,
+        position.x, position.y, position.z,
+        rotation.x, rotation.y, rotation.z,
+        worldPos.x, worldPos.y, worldPos.z);
+
+    for (int i = 0; i < object->children_count; i++) {
+        SceneObject* child = SceneGraph_getObject(object->graph, object->children[i]);
+        if (child->parent.id != object->id.id || child->parent.version != object->id.version) {
+            printf("%sInvalid child %3d: %s\n", newIndent, object->children[i].id, child->name);
+            continue;
+        }
+        if (child == NULL) {
+            continue;
+        }
+        SceneGraph_printObject(child, newIndent);
+    }
+}
+
+void SceneGraph_print(SceneGraph* graph)
+{
+    printf("SceneGraph: %d objects\n", graph->objects_count);
+    for (int i = 0; i < graph->objects_count; i++) {
+        SceneObject* object = &graph->objects[i];
+        if (object->id.version == 0 || SceneGraph_getObject(graph, object->parent) != NULL) {
+            continue;
+        }
+
+        SceneGraph_printObject(object, "");
+    }
 }

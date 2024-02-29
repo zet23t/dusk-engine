@@ -44,6 +44,7 @@ int loadMeshes()
         { "hit-particle-1", { .mesh = &psg.meshHitParticle1 }, 0 },
         { "leaftree-", { .meshList = &psg.leafTreeList, .count = &psg.leafTreeCount }, 1 },
         { "cloud.", { .meshList = &psg.cloudList, .count = &psg.cloudCount }, 1 },
+        { "ui-border", { .mesh = &psg.meshUiBorder }, 0 },
         { 0 }
     };
 
@@ -301,7 +302,7 @@ void UpdateCallbackComponentRegister();
 void EnemyPlaneBehaviorComponentRegister();
 void MovementPatternComponentRegister();
 void CameraComponentRegister();
-
+#include <stdio.h>
 int plane_sim_init()
 {
     if (loadMeshes()) {
@@ -329,10 +330,50 @@ int plane_sim_init()
     SceneGraph_setLocalPosition(psg.sceneGraph, psg.camera, (Vector3) { 0, 100, -25 });
     SceneGraph_setLocalRotation(psg.sceneGraph, psg.camera, (Vector3) { 74.5, 0, 0 });
     SceneGraph_addComponent(psg.sceneGraph, psg.camera, psg.cameraComponentId, &(CameraComponent) {
-        .fov = 10,
-        .nearPlane = 64.0f,
-        .farPlane = 256.0f,
-    });
+                                                                                   .fov = 10,
+                                                                                   .nearPlane = 64.0f,
+                                                                                   .farPlane = 256.0f,
+                                                                               });
+
+    psg.playerPlane = plane_instantiate((Vector3) { 0, 0, 0 });
+
+
+    SceneObjectId uiPlaneId = SceneGraph_createObject(psg.sceneGraph, "ui-plane");
+    SceneGraph_setParent(psg.sceneGraph, uiPlaneId, psg.camera);
+    SceneGraph_setLocalPosition(psg.sceneGraph, uiPlaneId, (Vector3) { 0, 0, 70.0f });
+
+    cJSON* uiConfig = cJSON_GetObjectItemCaseSensitive(psg.levelConfig, "ui");
+    if (!cJSON_IsObject(uiConfig)) {
+        TraceLog(LOG_ERROR, "No 'ui' object in level config");
+        return 0;
+    }
+    cJSON* uiRootName = cJSON_GetObjectItemCaseSensitive(uiConfig, "root");
+    if (!cJSON_IsString(uiRootName)) {
+        TraceLog(LOG_ERROR, "No 'root' string in 'ui' object in level config");
+        return 0;
+    }
+
+    cJSON* objects = cJSON_GetObjectItemCaseSensitive(uiConfig, "objects");
+
+
+    SceneObjectId groupLeftId = SceneGraph_createObject(psg.sceneGraph, "group-left");
+    SceneGraph_setLocalPosition(psg.sceneGraph, groupLeftId, (Vector3) { 8, 0, 0 });
+    SceneGraph_setParent(psg.sceneGraph, groupLeftId, uiPlaneId);
+    SceneObjectId borderLeftId = SceneGraph_createObject(psg.sceneGraph, "border-left");
+    SceneGraph_setParent(psg.sceneGraph, borderLeftId, groupLeftId);
+    SceneGraph_setLocalPosition(psg.sceneGraph, borderLeftId, (Vector3) { 0, 5, 0 });
+
+    SceneObjectId uiCanvas = InstantiateFromJSON(psg.sceneGraph, objects, uiRootName->valuestring);
+    SceneGraph_setParent(psg.sceneGraph, uiCanvas, uiPlaneId);
+    // SceneGraph_print(psg.sceneGraph);
+
+
+    // SceneGraph_addComponent(psg.sceneGraph, borderLeftId, psg.meshRendererComponentId,
+    //     &(MeshRendererComponent) {
+    //         .litAmount = 1.0f,
+    //         .material = &psg.model.materials[1],
+    //         .mesh = psg.meshUiBorder,
+    //     });
 
     // for (int i = 0; i < 1000; i += 1) {
     //     plane_instantiate((Vector3) {
@@ -340,7 +381,6 @@ int plane_sim_init()
     //         GetRandomValue(-20, 20) * .5f,
     //         GetRandomValue(-50, 50) * .5f });
     // }
-    psg.playerPlane = plane_instantiate((Vector3) { 0, 0, 0 });
     // plane_instantiate((Vector3) { 0, 0, 1.5f });
     // plane_instantiate((Vector3) { 2.5f, 0, 0 });
 
