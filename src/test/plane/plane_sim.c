@@ -300,6 +300,7 @@ void HealthComponentRegister();
 void UpdateCallbackComponentRegister();
 void EnemyPlaneBehaviorComponentRegister();
 void MovementPatternComponentRegister();
+void CameraComponentRegister();
 
 int plane_sim_init()
 {
@@ -322,6 +323,16 @@ int plane_sim_init()
     UpdateCallbackComponentRegister();
     EnemyPlaneBehaviorComponentRegister();
     MovementPatternComponentRegister();
+    CameraComponentRegister();
+
+    psg.camera = SceneGraph_createObject(psg.sceneGraph, "camera");
+    SceneGraph_setLocalPosition(psg.sceneGraph, psg.camera, (Vector3) { 0, 100, -25 });
+    SceneGraph_setLocalRotation(psg.sceneGraph, psg.camera, (Vector3) { 74.5, 0, 0 });
+    SceneGraph_addComponent(psg.sceneGraph, psg.camera, psg.cameraComponentId, &(CameraComponent) {
+        .fov = 10,
+        .nearPlane = 64.0f,
+        .farPlane = 256.0f,
+    });
 
     // for (int i = 0; i < 1000; i += 1) {
     //     plane_instantiate((Vector3) {
@@ -356,10 +367,13 @@ void plane_sim_draw()
     }
 #endif
 
-    Camera3D camera = { 0 };
-    camera.position = (Vector3) { 0, 100, -25 };
-    camera.target = (Vector3) { 0, 0, 5 };
-    camera.up = (Vector3) { 0, 1, 0 };
+    Camera3D camera = CameraComponent_getCamera3D(psg.sceneGraph, psg.camera);
+
+    camera.position = SceneGraph_getWorldPosition(psg.sceneGraph, psg.camera);
+    Vector3 forward = SceneGraph_getWorldForward(psg.sceneGraph, psg.camera);
+    Vector3 up = SceneGraph_getWorldUp(psg.sceneGraph, psg.camera);
+    camera.target = Vector3Add(camera.position, forward);
+    camera.up = up;
     camera.fovy = 10;
     camera.far = 256.0f;
     camera.near = 64.0f;

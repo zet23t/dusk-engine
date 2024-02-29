@@ -122,6 +122,8 @@ SceneComponent* SceneGraph_getComponentOrFindByType(SceneGraph* graph, SceneObje
 Vector3 SceneGraph_localToWorld(SceneGraph *graph, SceneObjectId id, Vector3 local);
 Vector3 SceneGraph_getWorldPosition(SceneGraph* graph, SceneObjectId id);
 Vector3 SceneGraph_getWorldForward(SceneGraph* graph, SceneObjectId id);
+Vector3 SceneGraph_getWorldUp(SceneGraph* graph, SceneObjectId id);
+Vector3 SceneGraph_getWorldRight(SceneGraph* graph, SceneObjectId id);
 Vector3 SceneGraph_getLocalPosition(SceneGraph* graph, SceneObjectId id);
 Vector3 SceneGraph_getLocalRotation(SceneGraph* graph, SceneObjectId id);
 Vector3 SceneGraph_getLocalScale(SceneGraph* graph, SceneObjectId id);

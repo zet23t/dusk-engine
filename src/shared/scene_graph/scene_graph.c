@@ -101,6 +101,34 @@ Vector3 SceneGraph_getWorldForward(SceneGraph* graph, SceneObjectId id)
     };
 }
 
+Vector3 SceneGraph_getWorldUp(SceneGraph* graph, SceneObjectId id)
+{
+    SceneObject* object = SceneGraph_getObject(graph, id);
+    if (object == NULL) {
+        return (Vector3) { 0, 0, 0 };
+    }
+    Matrix m = SceneObject_getWorldMatrix(object);
+    return (Vector3) {
+        m.m4,
+        m.m5,
+        m.m6,
+    };
+}
+
+Vector3 SceneGraph_getWorldRight(SceneGraph* graph, SceneObjectId id)
+{
+    SceneObject* object = SceneGraph_getObject(graph, id);
+    if (object == NULL) {
+        return (Vector3) { 0, 0, 0 };
+    }
+    Matrix m = SceneObject_getWorldMatrix(object);
+    return (Vector3) {
+        m.m0,
+        m.m1,
+        m.m2,
+    };
+}
+
 Vector3 SceneGraph_getWorldPosition(SceneGraph* graph, SceneObjectId id)
 {
     SceneObject* object = SceneGraph_getObject(graph, id);

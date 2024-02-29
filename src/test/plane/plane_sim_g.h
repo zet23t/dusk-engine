@@ -4,6 +4,8 @@
 #include "external/cjson.h"
 #include "shared/scene_graph/scene_graph.h"
 #include <inttypes.h>
+#include <raylib.h>
+#include <raymath.h>
 
 
 
@@ -51,6 +53,9 @@ typedef struct PSG {
     SceneComponentTypeId updateCallbackComponentId;
     SceneComponentTypeId enemyPlaneBehaviorComponentId;
     SceneComponentTypeId movementPatternComponentId;
+    SceneComponentTypeId cameraComponentId;
+
+    SceneObjectId camera;
 
     Model model;
     Mesh* meshPlane;
@@ -78,6 +83,13 @@ typedef struct PSG {
 
 typedef struct ShootingConfig ShootingConfig;
 typedef struct ShootingComponent ShootingComponent;
+
+typedef struct CameraComponent
+{
+    float fov;
+    float nearPlane;
+    float farPlane;
+} CameraComponent;
 
 typedef struct HealthComponent {
     float health;
@@ -162,5 +174,7 @@ typedef struct LinearVelocityComponent {
 } LinearVelocityComponent;
 
 extern PSG psg;
+
+Camera3D CameraComponent_getCamera3D(SceneGraph* sceneGraph, SceneObjectId nodeId);
 
 #endif

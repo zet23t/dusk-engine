@@ -4,6 +4,7 @@
 #include "test/plane/util/util_math.c"
 #include "test/plane/util/mapped_variables.c"
 #include "test/plane/components/bullet_component.c"
+#include "test/plane/components/camera_component.c"
 #include "test/plane/components/health_component.c"
 #include "test/plane/components/auto_destroy_component.c"
 #include "test/plane/components/update_callback_component.c"
