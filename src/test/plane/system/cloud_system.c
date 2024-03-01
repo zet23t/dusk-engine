@@ -45,12 +45,7 @@ static void UpdateCloudSystem()
         if (cloudObj == 0) {
             cloudId = SceneGraph_createObject(psg.sceneGraph, "cloud");
             cloudList[i] = cloudId;
-            SceneGraph_addComponent(psg.sceneGraph, cloudId, psg.meshRendererComponentId,
-                &(MeshRendererComponent) {
-                    .litAmount = 1.0f,
-                    .material = &psg.model.materials[1],
-                    .mesh = psg.cloudList[0],
-                });
+            AddMeshRendererComponent(cloudId, psg.cloudList[0], 1.0f);
             SceneGraph_setLocalPosition(psg.sceneGraph, cloudId, (Vector3) { 
                 GetRandomFloat(-cloudSpawnRangeX, cloudSpawnRangeX), 
                 GetRandomFloat(cloudSpawnMinY, cloudSpawnMaxY), 

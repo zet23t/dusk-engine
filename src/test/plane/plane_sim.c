@@ -190,11 +190,7 @@ static void onShoot(SceneGraph* graph, SceneComponentId shooter, ShootingCompone
     }
     SceneObjectId bullet = SceneGraph_createObject(graph, "bullet");
     SceneGraph_setLocalPosition(psg.sceneGraph, bullet, SceneGraph_getWorldPosition(psg.sceneGraph, shootingComponent->spawnPoint));
-    SceneGraph_addComponent(psg.sceneGraph, bullet, psg.meshRendererComponentId,
-        &(MeshRendererComponent) {
-            .material = &psg.model.materials[1],
-            .mesh = psg.meshPlayerBullet,
-        });
+    AddMeshRendererComponent(bullet, psg.meshPlayerBullet, 1.0f);
 
     Vector3 forward = SceneGraph_getWorldForward(psg.sceneGraph, shootingComponent->spawnPoint);
     forward = Vector3Scale(forward, shootingConfig->bulletSpeed);
@@ -218,31 +214,19 @@ SceneObjectId plane_instantiate(Vector3 position)
 {
     SceneObjectId plane = SceneGraph_createObject(psg.sceneGraph, "plane");
     SceneGraph_setLocalPosition(psg.sceneGraph, plane, position);
-    SceneGraph_addComponent(psg.sceneGraph, plane, psg.meshRendererComponentId,
-        &(MeshRendererComponent) {
-            .material = &psg.model.materials[1],
-            .mesh = psg.meshPlane,
-        });
-
+    AddMeshRendererComponent(plane, psg.meshPlane, 0.0f);
+    
     SceneObjectId propeller = SceneGraph_createObject(psg.sceneGraph, "propeller");
     SceneGraph_setParent(psg.sceneGraph, propeller, plane);
     SceneGraph_setLocalPosition(psg.sceneGraph, propeller, (Vector3) { 0, 0.062696f, 0.795618f });
-    SceneGraph_addComponent(psg.sceneGraph, propeller, psg.meshRendererComponentId,
-        &(MeshRendererComponent) {
-            .material = &psg.model.materials[1],
-            .mesh = psg.meshPropellerPin,
-        });
+    AddMeshRendererComponent(propeller, psg.meshPropellerPin, 0.0f);
 
     for (int i = 0; i < 3; i += 1) {
         SceneObjectId propellerBlade = SceneGraph_createObject(psg.sceneGraph, "propeller-blade");
         SceneGraph_setParent(psg.sceneGraph, propellerBlade, propeller);
         SceneGraph_setLocalPosition(psg.sceneGraph, propellerBlade, (Vector3) { 0, 0, 0 });
         SceneGraph_setLocalRotation(psg.sceneGraph, propellerBlade, (Vector3) { 0, 0, 120 * i });
-        SceneGraph_addComponent(psg.sceneGraph, propellerBlade, psg.meshRendererComponentId,
-            &(MeshRendererComponent) {
-                .material = &psg.model.materials[1],
-                .mesh = psg.meshPropellerBlade,
-            });
+        AddMeshRendererComponent(propellerBlade, psg.meshPropellerBlade, 0.0f);
     }
 
     SceneGraph_addComponent(psg.sceneGraph, plane, psg.planeBehaviorComponentId,

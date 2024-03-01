@@ -26,7 +26,7 @@ static Vector3 VectorFromJSONArrayN(cJSON *json, const char *key, Vector3 def)
 
 static void SceneObject_ApplyJSONValues(SceneGraph* sceneGraph, cJSON* objects, SceneObjectId nodeId, cJSON* object)
 {
-    TraceLog(LOG_INFO, "Applying JSON values to object %s", SceneGraph_getObjectName(sceneGraph, nodeId));
+    // TraceLog(LOG_INFO, "Applying JSON values to object %s", SceneGraph_getObjectName(sceneGraph, nodeId));
     SceneGraph_setLocalPosition(psg.sceneGraph, nodeId, VectorFromJSONArrayN(object, "position", SceneGraph_getLocalPosition(sceneGraph, nodeId)));
     SceneGraph_setLocalRotation(psg.sceneGraph, nodeId, VectorFromJSONArrayN(object, "rotation", SceneGraph_getLocalRotation(sceneGraph, nodeId)));
     SceneGraph_setLocalScale(psg.sceneGraph, nodeId, VectorFromJSONArrayN(object, "scale", SceneGraph_getLocalScale(sceneGraph, nodeId)));
@@ -52,28 +52,22 @@ static void SceneObject_ApplyJSONValues(SceneGraph* sceneGraph, cJSON* objects, 
             }
             // TODO: hardcoding the components here to avoid rabbit hole descent
             const char *componentType = type->valuestring;
-            if (strcmp(componentType, "MeshRendererComponent") == 0) {
-                cJSON* mesh = cJSON_GetObjectItemCaseSensitive(component, "mesh");
-                cJSON* litAmount = cJSON_GetObjectItemCaseSensitive(component, "litAmount");
-                if (cJSON_IsString(mesh)) {
-                    SceneGraph_addComponent(psg.sceneGraph, nodeId, psg.meshRendererComponentId,
-                        &(MeshRendererComponent) {
-                            .litAmount = cJSON_IsNumber(litAmount) ? (float) litAmount->valuedouble : 0.0f,
-                            .material = &psg.model.materials[1],
-                            .mesh = psg.meshUiBorder,
-                        });
-                    Vector3 worldPos = SceneGraph_getWorldPosition(psg.sceneGraph, nodeId);
-                    TraceLog(LOG_INFO, "Added MeshRendererComponent to object %s at %f %f %f", SceneGraph_getObjectName(sceneGraph, nodeId),
-                        worldPos.x, worldPos.y, worldPos.z);
-                }
-                else
-                {
-                    TraceLog(LOG_ERROR, "No 'mesh' string in MeshRendererComponent of object %s", SceneGraph_getObjectName(sceneGraph, nodeId));
-                }
+            SceneComponentTypeId componentTypeId = SceneGraph_getComponentTypeId(sceneGraph, componentType);
+            
+            SceneComponentType* typeClass = SceneGraph_getComponentType(sceneGraph, componentTypeId);
+            if (typeClass == NULL) {
+                TraceLog(LOG_ERROR, "Component type %s not found in component types list (referred by %s)", componentType, SceneGraph_getObjectName(sceneGraph, nodeId));
                 continue;
             }
-            
-            TraceLog(LOG_ERROR, "Unknown component type %s in components list of object %s", componentType, SceneGraph_getObjectName(sceneGraph, nodeId));
+            if (typeClass->methods.initialize == NULL)
+            {
+                TraceLog(LOG_ERROR, "Component type %s does not support JSON init (referred by %s)", componentType, SceneGraph_getObjectName(sceneGraph, nodeId));
+                continue;
+            }
+
+            SceneGraph_addComponent(psg.sceneGraph, nodeId, psg.meshRendererComponentId, &(ComponentInitializer) {
+                .config = component
+            });
         }
     }
 

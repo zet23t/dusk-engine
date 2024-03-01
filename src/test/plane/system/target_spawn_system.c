@@ -22,11 +22,7 @@ static void spawnHitEffect(Vector3 position, Vector3 impactVelocity)
     for (int i = 0; i < 5; i++) {
         SceneObjectId effect = SceneGraph_createObject(psg.sceneGraph, "hit_effect");
         SceneGraph_setLocalPosition(psg.sceneGraph, effect, position);
-        SceneGraph_addComponent(psg.sceneGraph, effect, psg.meshRendererComponentId,
-            &(MeshRendererComponent) {
-                .material = &psg.model.materials[2],
-                .mesh = psg.meshHitParticle1,
-            });
+        AddMeshRendererComponent(effect, psg.meshHitParticle1, 1.0f);
         SceneGraph_addComponent(psg.sceneGraph, effect, psg.autoDestroyComponentId,
             &(AutoDestroyComponent) {
                 .lifeTimeLeft = 1.0f,
@@ -73,11 +69,7 @@ static SceneObjectId instantiate_target(Vector3 position)
 {
     SceneObjectId target = SceneGraph_createObject(psg.sceneGraph, "target");
     SceneGraph_setLocalPosition(psg.sceneGraph, target, position);
-    SceneGraph_addComponent(psg.sceneGraph, target, psg.meshRendererComponentId,
-        &(MeshRendererComponent) {
-            .material = &psg.model.materials[1],
-            .mesh = psg.meshPlane2,
-        });
+    AddMeshRendererComponent(target, psg.meshPlane2, 0.0f);
     SceneGraph_addComponent(psg.sceneGraph, target, psg.targetComponentId,
         &(TargetComponent) {
             .radius = 0.8f,

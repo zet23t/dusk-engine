@@ -3,6 +3,7 @@
 
 #include "external/cjson.h"
 #include "shared/scene_graph/scene_graph.h"
+#include <memory.h>
 #include <inttypes.h>
 #include <raylib.h>
 #include <raymath.h>
@@ -13,6 +14,11 @@
 #define VALUE_TYPE_INT 1
 #define VALUE_TYPE_STRING 2
 #define VALUE_TYPE_BOOL 3
+
+typedef struct ComponentInitializer {
+    cJSON* config;
+    void* memData;
+} ComponentInitializer;
 
 typedef struct MappedVariable {
     const char* name;
@@ -178,5 +184,6 @@ extern PSG psg;
 
 Camera3D CameraComponent_getCamera3D(SceneGraph* sceneGraph, SceneObjectId nodeId);
 SceneObjectId InstantiateFromJSON(SceneGraph* sceneGraph, cJSON* objects, const char* rootId);
+SceneComponentId AddMeshRendererComponent(SceneObjectId id, Mesh* mesh, float litAmount);
 
 #endif

@@ -7,7 +7,7 @@
 
 #define COLUMN_COUNT 6
 #define ROW_COUNT 8
-#define TILE_SIZE 8
+#define TILE_SIZE 7.999f
 #define TILE_TYPE_COUNT 2
 const char groundTypes[TILE_TYPE_COUNT] = { 'g', 'w' };
 
@@ -74,11 +74,7 @@ static SceneObjectId spawnTile(int x, int y)
     if (config.mesh == NULL) {
         return id;
     }
-    SceneGraph_addComponent(psg.sceneGraph, id, psg.meshRendererComponentId,
-        &(MeshRendererComponent) {
-            .material = &psg.model.materials[1],
-            .mesh = config.mesh,
-        });
+    AddMeshRendererComponent(id, config.mesh, 0.0f);
 
     // scatter trees on ground
 
@@ -127,11 +123,7 @@ static SceneObjectId spawnTile(int x, int y)
         SceneGraph_setLocalPosition(psg.sceneGraph, tree, position);
         Vector3 rotate = { GetRandomFloat(-10, 10), GetRandomFloat(0, 360), GetRandomFloat(-10, 10) };
         SceneGraph_setLocalRotation(psg.sceneGraph, tree, rotate);
-        SceneGraph_addComponent(psg.sceneGraph, tree, psg.meshRendererComponentId,
-            &(MeshRendererComponent) {
-                .material = &psg.model.materials[2],
-                .mesh = psg.leafTreeList[treeType],
-            });
+        AddMeshRendererComponent(tree, psg.leafTreeList[treeType], 0.0f);
     }
     return id;
 }
