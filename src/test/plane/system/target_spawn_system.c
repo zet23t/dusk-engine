@@ -3,9 +3,6 @@
 #include <math.h>
 #include "../util/util_math.h"
 
-#define MAX_TARGETS 5
-static SceneObjectId targets[MAX_TARGETS];
-
 static void onParticleUpdate(SceneGraph* graph, SceneObjectId objectId, SceneComponentId componentId, float dt, struct UpdateCallbackComponent* component)
 {
     Vector3 scale = SceneGraph_getLocalScale(graph, objectId);
@@ -85,20 +82,35 @@ static SceneObjectId instantiate_target(Vector3 position)
     return target;
 }
 
-void HandleTargetSpawnSystem()
+#define MAX_TARGETS 5
+typedef struct TargetSpawnSystem {
+    SceneObjectId targets[MAX_TARGETS];
+} TargetSpawnSystem;
+
+void HandleTargetSpawnSystem(SceneObject *object, SceneComponentId componentId, float dt, void *targetSpawnSystemPtr)
 {
+    TargetSpawnSystem *targetSpawnSystem = (TargetSpawnSystem*)targetSpawnSystemPtr;
+
     for (int i = 0; i < MAX_TARGETS; i++) {
-        if (SceneGraph_getObject(psg.sceneGraph, targets[i]) == NULL) {
+        if (SceneGraph_getObject(psg.sceneGraph, targetSpawnSystem->targets[i]) == NULL) {
             Vector3 position = (Vector3) { GetRandomValue(-5, 5), 0, 20 };
-            targets[i] = instantiate_target(position);
+            targetSpawnSystem->targets[i] = instantiate_target(position);
         } else {
-            Vector3 pos = SceneGraph_getLocalPosition(psg.sceneGraph, targets[i]);
+            Vector3 pos = SceneGraph_getLocalPosition(psg.sceneGraph, targetSpawnSystem->targets[i]);
             if (pos.z < -5) {
-                SceneGraph_destroyObject(psg.sceneGraph, targets[i]);
+                SceneGraph_destroyObject(psg.sceneGraph, targetSpawnSystem->targets[i]);
             } else {
                 pos.z -= psg.deltaTime * 2.5f;
-                SceneGraph_setLocalPosition(psg.sceneGraph, targets[i], pos);
+                SceneGraph_setLocalPosition(psg.sceneGraph, targetSpawnSystem->targets[i], pos);
             }
         }
     }
+}
+
+void RegisterTargetSpawnSystem()
+{
+    psg.targetSpawnSystemId = SceneGraph_registerComponentType(psg.sceneGraph, "TargetSpawnSystem", sizeof(TargetSpawnSystem),
+        (SceneComponentTypeMethods) {
+            .updateTick = HandleTargetSpawnSystem,
+        });
 }

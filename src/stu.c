@@ -20,6 +20,7 @@
 #include "test/plane/system/player_input_handler.c"
 #include "test/plane/system/target_spawn_system.c"
 #include "test/plane/system/cloud_system.c"
+#include "test/plane/system/level_system.c"
 #include "test/plane/plane_sim_g.c"
 #include "test/plane/plane_sim.c"
 #include "dusk-engine.c"

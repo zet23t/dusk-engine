@@ -96,7 +96,9 @@ int loadMeshes()
     return 0;
 }
 
-static void levelConfigLoad(int isReload)
+static char* previousText = NULL;
+
+static int levelConfigLoad()
 {
     char* levelConfigText = LoadFileText("assets/level.json");
     if (levelConfigText == NULL) {
@@ -104,22 +106,30 @@ static void levelConfigLoad(int isReload)
         if (psg.levelConfig == NULL) {
             psg.levelConfig = cJSON_CreateObject();
         }
-        return;
+        return 0;
+    }
+    if (previousText != NULL && strcmp(levelConfigText, previousText) == 0) {
+        UnloadFileText(levelConfigText);
+        return 0;
+    }
+    if (previousText) {
+        UnloadFileText(previousText);
     }
     cJSON* loaded = cJSON_Parse(levelConfigText);
-    UnloadFileText(levelConfigText);
+    previousText = levelConfigText;
     if (loaded == NULL) {
         TraceLog(LOG_ERROR, "Failed to parse level config");
         if (psg.levelConfig == NULL) {
             psg.levelConfig = cJSON_CreateObject();
         }
-        return;
+        return 0;
     }
 
     if (psg.levelConfig) {
         cJSON_Delete(psg.levelConfig);
     }
     psg.levelConfig = loaded;
+    return 1;
 }
 
 static Shader shader;
@@ -215,7 +225,7 @@ SceneObjectId plane_instantiate(Vector3 position)
     SceneObjectId plane = SceneGraph_createObject(psg.sceneGraph, "plane");
     SceneGraph_setLocalPosition(psg.sceneGraph, plane, position);
     AddMeshRendererComponent(plane, psg.meshPlane, 0.0f);
-    
+
     SceneObjectId propeller = SceneGraph_createObject(psg.sceneGraph, "propeller");
     SceneGraph_setParent(psg.sceneGraph, propeller, plane);
     SceneGraph_setLocalPosition(psg.sceneGraph, propeller, (Vector3) { 0, 0.062696f, 0.795618f });
@@ -286,41 +296,32 @@ void UpdateCallbackComponentRegister();
 void EnemyPlaneBehaviorComponentRegister();
 void MovementPatternComponentRegister();
 void CameraComponentRegister();
+
+void RegisterTargetSpawnSystem();
+void CloudSystemRegister();
+void LevelSystemRegister();
+
 #include <stdio.h>
-int plane_sim_init()
+
+static int initScene()
 {
-    if (loadMeshes()) {
-        return 1;
-    }
-    shaderLoad(0);
-    levelConfigLoad(0);
-
-    psg.sceneGraph = SceneGraph_create();
-
-    MeshRendererComponentRegister();
-    PlaneBehaviorComponentRegister();
-    LinearVelocityComponentRegister();
-    ShootingComponentRegister();
-    AutoDestroyComponentRegister();
-    BulletComponentRegister();
-    TargetComponentRegister();
-    HealthComponentRegister();
-    UpdateCallbackComponentRegister();
-    EnemyPlaneBehaviorComponentRegister();
-    MovementPatternComponentRegister();
-    CameraComponentRegister();
+    SceneGraph_clear(psg.sceneGraph);
+    SceneObjectId systemsId = SceneGraph_createObject(psg.sceneGraph, "systems");
+    SceneGraph_addComponent(psg.sceneGraph, systemsId, psg.targetSpawnSystemId, NULL);
+    SceneGraph_addComponent(psg.sceneGraph, systemsId, psg.cloudSystemId, NULL);
+    SceneGraph_addComponent(psg.sceneGraph, systemsId, psg.levelSystemId, NULL);
 
     psg.camera = SceneGraph_createObject(psg.sceneGraph, "camera");
     SceneGraph_setLocalPosition(psg.sceneGraph, psg.camera, (Vector3) { 0, 100, -25 });
     SceneGraph_setLocalRotation(psg.sceneGraph, psg.camera, (Vector3) { 74.5, 0, 0 });
-    SceneGraph_addComponent(psg.sceneGraph, psg.camera, psg.cameraComponentId, &(CameraComponent) {
-                                                                                   .fov = 10,
-                                                                                   .nearPlane = 64.0f,
-                                                                                   .farPlane = 256.0f,
-                                                                               });
+    SceneGraph_addComponent(psg.sceneGraph, psg.camera, psg.cameraComponentId,
+        &(CameraComponent) {
+            .fov = 10,
+            .nearPlane = 64.0f,
+            .farPlane = 256.0f,
+        });
 
     psg.playerPlane = plane_instantiate((Vector3) { 0, 0, 0 });
-
 
     SceneObjectId uiPlaneId = SceneGraph_createObject(psg.sceneGraph, "ui-plane");
     SceneGraph_setParent(psg.sceneGraph, uiPlaneId, psg.camera);
@@ -339,7 +340,6 @@ int plane_sim_init()
 
     cJSON* objects = cJSON_GetObjectItemCaseSensitive(uiConfig, "objects");
 
-
     SceneObjectId groupLeftId = SceneGraph_createObject(psg.sceneGraph, "group-left");
     SceneGraph_setLocalPosition(psg.sceneGraph, groupLeftId, (Vector3) { 8, 0, 0 });
     SceneGraph_setParent(psg.sceneGraph, groupLeftId, uiPlaneId);
@@ -349,26 +349,38 @@ int plane_sim_init()
 
     SceneObjectId uiCanvas = InstantiateFromJSON(psg.sceneGraph, objects, uiRootName->valuestring);
     SceneGraph_setParent(psg.sceneGraph, uiCanvas, uiPlaneId);
-    // SceneGraph_print(psg.sceneGraph);
-
-
-    // SceneGraph_addComponent(psg.sceneGraph, borderLeftId, psg.meshRendererComponentId,
-    //     &(MeshRendererComponent) {
-    //         .litAmount = 1.0f,
-    //         .material = &psg.model.materials[1],
-    //         .mesh = psg.meshUiBorder,
-    //     });
-
-    // for (int i = 0; i < 1000; i += 1) {
-    //     plane_instantiate((Vector3) {
-    //         GetRandomValue(-50, 50) * .5f,
-    //         GetRandomValue(-20, 20) * .5f,
-    //         GetRandomValue(-50, 50) * .5f });
-    // }
-    // plane_instantiate((Vector3) { 0, 0, 1.5f });
-    // plane_instantiate((Vector3) { 2.5f, 0, 0 });
 
     return 0;
+}
+
+int plane_sim_init()
+{
+    if (loadMeshes()) {
+        return 1;
+    }
+    shaderLoad(0);
+    levelConfigLoad();
+
+    psg.sceneGraph = SceneGraph_create();
+
+    RegisterTargetSpawnSystem();
+    CloudSystemRegister();
+    LevelSystemRegister();
+
+    MeshRendererComponentRegister();
+    PlaneBehaviorComponentRegister();
+    LinearVelocityComponentRegister();
+    ShootingComponentRegister();
+    AutoDestroyComponentRegister();
+    BulletComponentRegister();
+    TargetComponentRegister();
+    HealthComponentRegister();
+    UpdateCallbackComponentRegister();
+    EnemyPlaneBehaviorComponentRegister();
+    MovementPatternComponentRegister();
+    CameraComponentRegister();
+
+    return initScene();
 }
 
 static int textIndex = 0;
@@ -386,7 +398,10 @@ void plane_sim_draw()
         reloadTimer = 0;
         SetTraceLogLevel(LOG_WARNING);
         shaderLoad(1);
-        levelConfigLoad(1);
+        if (levelConfigLoad())
+        {
+            initScene();
+        }
         SetTraceLogLevel(LOG_INFO);
     }
 #endif
@@ -429,9 +444,7 @@ void plane_sim_draw()
 }
 
 void HandlePlayerInputUpdate();
-void HandleTargetSpawnSystem();
 void UpdateGroundTileSystem();
-void UpdateCloudSystem();
 
 void plane_sim_update(float dt)
 {
@@ -442,7 +455,5 @@ void plane_sim_update(float dt)
     psg.deltaTime = dt;
     SceneGraph_updateTick(psg.sceneGraph, dt);
     HandlePlayerInputUpdate();
-    HandleTargetSpawnSystem();
     UpdateGroundTileSystem();
-    UpdateCloudSystem();
 }

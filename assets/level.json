@@ -11,50 +11,38 @@
         "cloudSpawnMinY": -10,
         "cloudSpawnMaxY": -40,
         "cloudSpawnMinScale": 1.2,
-        "cloudSpawnMaxScale": 3
+        "cloudSpawnMaxScale": 3,
+        "cloudDespawnZ": -10
+    },
+    "level": {
+        "events": [
+            { "time": 0, "message": "and so it begins", "prefab": "enemy-plane-1", "position": [0,0,0] }
+        ],
+        "objects": {
+            "enemy-plane-1": {
+                "components": [
+                    { "type": "MeshRendererComponent", "mesh": "enemy-plane-1", "litAmount": 1 }
+                ]
+            }
+        }
     },
     "ui": {
         "root": "ui",
         "objects": {
-            "ui-border": {
-                "type": "MeshRendererComponent",
-                "mesh": "ui-border",
-                "litAmount": 1
-            },
-            "border-element": {
-                "components": [ "ui-border" ]
-            },
+            "ui-border": { "type": "MeshRendererComponent", "mesh": "ui-border", "litAmount": 1 },
+            "border-element": { "components": [ "ui-border" ] },
             "border-group": {
                 "children": [
-                    {
-                        "prefab": "border-element",
-                        "position": [ 0, 6, 0 ]
-                    },
-                    {
-                        "prefab": "border-element",
-                        "position": [ 0, 2, 0 ]
-                    },
-                    {
-                        "prefab": "border-element",
-                        "position": [ 0, -2, 0 ]
-                    },
-                    {
-                        "prefab": "border-element",
-                        "position": [ 0, -6, 0 ]
-                    }
+                    { "prefab": "border-element", "position": [ 0, 6, 0 ] },
+                    { "prefab": "border-element", "position": [ 0, 2, 0 ] },
+                    { "prefab": "border-element", "position": [ 0, -2, 0 ] },
+                    { "prefab": "border-element", "position": [ 0, -6, 0 ] }
                 ]
             },
             "ui": {
                 "children": [
-                    {
-                        "prefab": "border-group",
-                        "position": [ 8, 0, 0 ]
-                    },
-                    {
-                        "prefab": "border-group",
-                        "position": [ -8, 0, 0 ],
-                        "rotation": [ 0, 0, 180 ]
-                    }
+                    { "prefab": "border-group", "position": [ 8, 0, 0 ] },
+                    { "prefab": "border-group", "position": [ -8, 0, 0 ], "rotation": [ 0, 0, 180 ] }
                 ]
             }
         }

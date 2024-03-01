@@ -60,6 +60,10 @@ typedef struct PSG {
     SceneComponentTypeId enemyPlaneBehaviorComponentId;
     SceneComponentTypeId movementPatternComponentId;
     SceneComponentTypeId cameraComponentId;
+    
+    SceneComponentTypeId targetSpawnSystemId;
+    SceneComponentTypeId levelSystemId;
+    SceneComponentTypeId cloudSystemId;
 
     SceneObjectId camera;
 
@@ -183,6 +187,7 @@ typedef struct LinearVelocityComponent {
 extern PSG psg;
 
 Camera3D CameraComponent_getCamera3D(SceneGraph* sceneGraph, SceneObjectId nodeId);
+void SceneObject_ApplyJSONValues(SceneGraph* sceneGraph, cJSON* objects, SceneObjectId nodeId, cJSON* object);
 SceneObjectId InstantiateFromJSON(SceneGraph* sceneGraph, cJSON* objects, const char* rootId);
 SceneComponentId AddMeshRendererComponent(SceneObjectId id, Mesh* mesh, float litAmount);
 

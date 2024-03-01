@@ -151,6 +151,7 @@ void readParsedCfg()
         TraceLog(LOG_ERROR, "groundTileCfg not found in level config");
         return;
     }
+    offset = 0;
     ReadMappedVariables(groundTileCfg, mappedGroundVariables);
 }
 

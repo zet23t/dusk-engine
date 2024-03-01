@@ -9,6 +9,11 @@ static void MeshRendererDraw(Camera3D camera, SceneObject* node, SceneComponentI
         return;
     }
     SetShaderValue(meshRenderer->material->shader, psg.litAmountIndex, &meshRenderer->litAmount, SHADER_UNIFORM_FLOAT);
+    if (meshRenderer->mesh == NULL)
+    {
+        DrawCube(Vector3Transform((Vector3){0,0,0}, m), 1, 1, 1, PINK);
+        return;
+    }
     DrawMesh(*meshRenderer->mesh, *meshRenderer->material, m);
 }
 

@@ -30,7 +30,21 @@ void SceneGraph_destroy(SceneGraph* graph)
     for (int i = 0; i < graph->objects_count; i++) {
         SceneGraph_destroyObject(graph, graph->objects[i].id);
     }
+    for (int i=0; i < graph->componentTypes_count; i++) {
+        SceneComponentType* type = &graph->componentTypes[i];
+        free(type->name);
+        free(type->componentData);
+    }
+    free(graph->componentTypes);
+    free(graph->objects);
     free(graph);
+}
+
+void SceneGraph_clear(SceneGraph* graph)
+{
+    for (int i = 0; i < graph->objects_count; i++) {
+        SceneGraph_destroyObject(graph, graph->objects[i].id);
+    }
 }
 
 STRUCT_LIST_ACQUIRE_FN(SceneGraph, SceneObject, objects)
@@ -351,12 +365,12 @@ void SceneGraph_destroyObject(SceneGraph* graph, SceneObjectId id)
         return;
     }
 
-    for (int i = 0; i < object->children_count; i++) {
-        SceneGraph_destroyObject(graph, object->children[i]);
-    }
-
     for (int i = 0; i < object->components_count; i++) {
         SceneGraph_destroyComponent(graph, object->components[i]);
+    }
+
+    for (int i = 0; i < object->children_count; i++) {
+        SceneGraph_destroyObject(graph, object->children[i]);
     }
 
     free(object->children);
@@ -414,6 +428,8 @@ SceneComponentId SceneGraph_addComponent(SceneGraph* graph, SceneObjectId id, Sc
         type->methods.initialize(object, component->id, &type->componentData[dataIndex * type->dataSize], componentData);
     else if (componentData != NULL && type->dataSize > 0)
         memcpy(&type->componentData[dataIndex * type->dataSize], componentData, type->dataSize);
+    else if (type->dataSize > 0) 
+        memset(&type->componentData[dataIndex * type->dataSize], 0, type->dataSize);
 
     for (int i = 0; i < object->components_count; i++) {
         if (object->components[i].version == 0) {
@@ -518,6 +534,12 @@ void SceneGraph_destroyComponent(SceneGraph* graph, SceneComponentId id)
 {
     SceneComponent* component = SceneGraph_getComponent(graph, id, NULL);
     if (component == NULL) {
+        return;
+    }
+    SceneComponentType* type = SceneGraph_getComponentType(graph, id.typeId);
+    if (type != NULL && type->methods.onDestroy != NULL) {
+        void* componentData = type->dataSize > 0 ? &type->componentData[id.id * type->dataSize] : NULL;
+        type->methods.onDestroy(SceneGraph_getObject(graph, component->objectId), id, componentData);
         return;
     }
     component->id.version = 0;

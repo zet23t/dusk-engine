@@ -65,6 +65,7 @@ typedef struct SceneComponentTypeMethods {
         float delta, void* componentData);
     void (*draw)(Camera3D camera, SceneObject* sceneObject, SceneComponentId sceneComponent,
         void* componentData, void* userdata);
+    void (*onDestroy)(SceneObject* sceneObject, SceneComponentId sceneComponent, void* componentData);
 } SceneComponentTypeMethods;
 
 typedef struct SceneComponent {
@@ -75,7 +76,7 @@ typedef struct SceneComponent {
 
 typedef struct SceneComponentType {
     SceneComponentTypeId id;
-    const char* name;
+    char* name;
     size_t dataSize;
     STRUCT_LIST_ELEMENT(SceneComponent, components)
     STRUCT_LIST_ELEMENT(uint8_t, componentData)
@@ -99,12 +100,13 @@ typedef struct SceneGraph {
     int32_t versionCounter;
 
     STRUCT_LIST_ELEMENT(SceneObject, objects)
-    STRUCT_LIST_ELEMENT(SceneObjectId, rootElements)
     STRUCT_LIST_ELEMENT(SceneComponentType, componentTypes)
 } SceneGraph;
 
 SceneGraph* SceneGraph_create();
 void SceneGraph_destroy(SceneGraph* graph);
+// deletes all objects and components - but registered types remain. Use for unloading scenes
+void SceneGraph_clear(SceneGraph* graph);
 SceneComponentTypeId SceneGraph_registerComponentType(SceneGraph* graph, const char* name,
     size_t dataSize, SceneComponentTypeMethods methods);
 SceneComponentType* SceneGraph_getComponentType(SceneGraph* graph, SceneComponentTypeId componentType);

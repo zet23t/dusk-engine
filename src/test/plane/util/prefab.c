@@ -24,7 +24,7 @@ static Vector3 VectorFromJSONArrayN(cJSON *json, const char *key, Vector3 def)
     return VectorFromJSONArray(value, def);
 }
 
-static void SceneObject_ApplyJSONValues(SceneGraph* sceneGraph, cJSON* objects, SceneObjectId nodeId, cJSON* object)
+void SceneObject_ApplyJSONValues(SceneGraph* sceneGraph, cJSON* objects, SceneObjectId nodeId, cJSON* object)
 {
     // TraceLog(LOG_INFO, "Applying JSON values to object %s", SceneGraph_getObjectName(sceneGraph, nodeId));
     SceneGraph_setLocalPosition(psg.sceneGraph, nodeId, VectorFromJSONArrayN(object, "position", SceneGraph_getLocalPosition(sceneGraph, nodeId)));
@@ -36,11 +36,12 @@ static void SceneObject_ApplyJSONValues(SceneGraph* sceneGraph, cJSON* objects, 
         int componentsCount = cJSON_GetArraySize(components);
         for (int i = 0; i < componentsCount; i++) {
             cJSON* reference = cJSON_GetArrayItem(components, i);
-            if (!cJSON_IsString(reference)) {
+            if (!cJSON_IsString(reference) && !cJSON_IsObject(reference)) {
+                
                 TraceLog(LOG_ERROR, "Invalid component reference in components list of object %s", SceneGraph_getObjectName(sceneGraph, nodeId));
                 continue;
             }
-            cJSON* component = cJSON_GetObjectItemCaseSensitive(objects, reference->valuestring);
+            cJSON* component = cJSON_IsObject(reference) ? reference : cJSON_GetObjectItemCaseSensitive(objects, reference->valuestring);
             if (component == NULL) {
                 TraceLog(LOG_ERROR, "Component %s not found in objects list (referred by %s)", reference->valuestring, SceneGraph_getObjectName(sceneGraph, nodeId));
                 continue;
@@ -50,7 +51,7 @@ static void SceneObject_ApplyJSONValues(SceneGraph* sceneGraph, cJSON* objects, 
                 TraceLog(LOG_ERROR, "No 'type' string in components list of object %s", SceneGraph_getObjectName(sceneGraph, nodeId));
                 continue;
             }
-            // TODO: hardcoding the components here to avoid rabbit hole descent
+
             const char *componentType = type->valuestring;
             SceneComponentTypeId componentTypeId = SceneGraph_getComponentTypeId(sceneGraph, componentType);
             
