@@ -60,7 +60,7 @@ typedef struct SceneObjectTransform {
 } SceneObjectTransform;
 
 typedef struct SceneComponentTypeMethods {
-    void (*initialize)(SceneObject* sceneObject, SceneComponentId SceneComponent, void* componentData);
+    void (*initialize)(SceneObject* sceneObject, SceneComponentId SceneComponent, void* componentData, void *initArg);
     void (*updateTick)(SceneObject* sceneObject, SceneComponentId SceneComponent,
         float delta, void* componentData);
     void (*draw)(Camera3D camera, SceneObject* sceneObject, SceneComponentId sceneComponent,
@@ -108,6 +108,7 @@ void SceneGraph_destroy(SceneGraph* graph);
 SceneComponentTypeId SceneGraph_registerComponentType(SceneGraph* graph, const char* name,
     size_t dataSize, SceneComponentTypeMethods methods);
 SceneComponentType* SceneGraph_getComponentType(SceneGraph* graph, SceneComponentTypeId componentType);
+SceneComponentTypeId SceneGraph_getComponentTypeId(SceneGraph* graph, const char* name);
 int SceneGraph_countLiveObjects(SceneGraph* graph);
 
 SceneObjectId SceneGraph_createObject(SceneGraph* graph, const char* name);

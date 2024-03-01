@@ -410,7 +410,9 @@ SceneComponentId SceneGraph_addComponent(SceneGraph* graph, SceneObjectId id, Sc
         type->componentData = realloc(type->componentData, type->componentData_capacity * type->dataSize);
     }
 
-    if (componentData != NULL && type->dataSize > 0)
+    if (type->methods.initialize != NULL)
+        type->methods.initialize(object, component->id, &type->componentData[dataIndex * type->dataSize], componentData);
+    else if (componentData != NULL && type->dataSize > 0)
         memcpy(&type->componentData[dataIndex * type->dataSize], componentData, type->dataSize);
 
     for (int i = 0; i < object->components_count; i++) {
@@ -436,6 +438,20 @@ SceneComponentType* SceneGraph_getComponentType(SceneGraph* graph, SceneComponen
         return NULL;
     }
     return type;
+}
+
+SceneComponentTypeId SceneGraph_getComponentTypeId(SceneGraph* graph, const char* name)
+{
+    for (int i = 0; i < graph->componentTypes_count; i++) {
+        SceneComponentType* type = &graph->componentTypes[i];
+        if (type->id.version == 0) {
+            continue;
+        }
+        if (strcmp(type->name, name) == 0) {
+            return type->id;
+        }
+    }
+    return (SceneComponentTypeId) { 0 };
 }
 
 SceneComponent* SceneGraph_getComponent(SceneGraph* graph, SceneComponentId id, void** componentData)
