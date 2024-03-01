@@ -73,6 +73,6 @@ void MeshRendererComponentRegister()
     psg.meshRendererComponentId = SceneGraph_registerComponentType(psg.sceneGraph, "MeshRendererComponent", sizeof(MeshRendererComponent),
         (SceneComponentTypeMethods) {
             .draw = MeshRendererDraw,
-            .initialize = MeshRendererInitialize,
+            .onInitialize = MeshRendererInitialize,
         });
 }

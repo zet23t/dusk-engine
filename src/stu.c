@@ -16,6 +16,7 @@
 #include "test/plane/components/target_component.c"
 #include "test/plane/components/enemy_plane_behavior_component.c"
 #include "test/plane/components/movement_pattern_component.c"
+#include "test/plane/components/target_handler_component.c"
 #include "test/plane/system/ground_tile_system.c"
 #include "test/plane/system/player_input_handler.c"
 #include "test/plane/system/target_spawn_system.c"

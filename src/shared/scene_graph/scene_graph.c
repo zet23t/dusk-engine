@@ -424,8 +424,8 @@ SceneComponentId SceneGraph_addComponent(SceneGraph* graph, SceneObjectId id, Sc
         type->componentData = realloc(type->componentData, type->componentData_capacity * type->dataSize);
     }
 
-    if (type->methods.initialize != NULL)
-        type->methods.initialize(object, component->id, &type->componentData[dataIndex * type->dataSize], componentData);
+    if (type->methods.onInitialize != NULL)
+        type->methods.onInitialize(object, component->id, &type->componentData[dataIndex * type->dataSize], componentData);
     else if (componentData != NULL && type->dataSize > 0)
         memcpy(&type->componentData[dataIndex * type->dataSize], componentData, type->dataSize);
     else if (type->dataSize > 0) 

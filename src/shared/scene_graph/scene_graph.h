@@ -60,7 +60,7 @@ typedef struct SceneObjectTransform {
 } SceneObjectTransform;
 
 typedef struct SceneComponentTypeMethods {
-    void (*initialize)(SceneObject* sceneObject, SceneComponentId SceneComponent, void* componentData, void *initArg);
+    void (*onInitialize)(SceneObject* sceneObject, SceneComponentId SceneComponent, void* componentData, void *initArg);
     void (*updateTick)(SceneObject* sceneObject, SceneComponentId SceneComponent,
         float delta, void* componentData);
     void (*draw)(Camera3D camera, SceneObject* sceneObject, SceneComponentId sceneComponent,

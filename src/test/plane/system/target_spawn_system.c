@@ -20,21 +20,17 @@ static void spawnHitEffect(Vector3 position, Vector3 impactVelocity)
         SceneObjectId effect = SceneGraph_createObject(psg.sceneGraph, "hit_effect");
         SceneGraph_setLocalPosition(psg.sceneGraph, effect, position);
         AddMeshRendererComponent(effect, psg.meshHitParticle1, 1.0f);
-        SceneGraph_addComponent(psg.sceneGraph, effect, psg.autoDestroyComponentId,
-            &(AutoDestroyComponent) {
-                .lifeTimeLeft = 1.0f,
-            });
+        AddAutoDestroyComponent(effect, 1.0f);
         
-        SceneGraph_addComponent(psg.sceneGraph, effect, psg.linearVelocityComponentId,
-            &(LinearVelocityComponent) {
-                .velocity = (Vector3) {
+        AddLinearVelocityComponent(effect, 
+                (Vector3) {
                     GetRandomFloat(-vSpread, vSpread) - impactVelocity.x * .5f,
                     GetRandomFloat(-vSpread, vSpread) - impactVelocity.y * .5f,
                     GetRandomFloat(-vSpread, vSpread) - impactVelocity.z * .5f,
                 },
-                .acceleration = (Vector3) { 0, -9.8f, 0 },
-                .drag = (Vector3) { drag, drag, drag },
-            });
+                (Vector3) { 0, -9.8f, 0 },
+                (Vector3) { drag, drag, drag }
+        );
 
         SceneGraph_addComponent(psg.sceneGraph, effect, psg.updateCallbackComponentId,
             &(UpdateCallbackComponent) {
@@ -73,12 +69,8 @@ static SceneObjectId instantiate_target(Vector3 position)
             .colliderMask = 1,
             .onHit = onTargetHit,
         });
-    SceneGraph_addComponent(psg.sceneGraph, target, psg.healthComponentId,
-        &(HealthComponent) {
-            .health = 3,
-            .maxHealth = 3,
-        });
-
+    AddHealthComponent(target, 3, 3);
+    
     return target;
 }
 

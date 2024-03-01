@@ -60,14 +60,15 @@ void SceneObject_ApplyJSONValues(SceneGraph* sceneGraph, cJSON* objects, SceneOb
                 TraceLog(LOG_ERROR, "Component type %s not found in component types list (referred by %s)", componentType, SceneGraph_getObjectName(sceneGraph, nodeId));
                 continue;
             }
-            if (typeClass->methods.initialize == NULL)
+            if (typeClass->methods.onInitialize == NULL)
             {
                 TraceLog(LOG_ERROR, "Component type %s does not support JSON init (referred by %s)", componentType, SceneGraph_getObjectName(sceneGraph, nodeId));
                 continue;
             }
 
-            SceneGraph_addComponent(psg.sceneGraph, nodeId, psg.meshRendererComponentId, &(ComponentInitializer) {
-                .config = component
+            SceneGraph_addComponent(psg.sceneGraph, nodeId, typeClass->id, &(ComponentInitializer) {
+                .config = component,
+                .objects = objects
             });
         }
     }

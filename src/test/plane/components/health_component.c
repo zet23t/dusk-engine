@@ -8,10 +8,43 @@ static void HealthComponentUpdate(SceneObject* node, SceneComponentId sceneCompo
     }
 }
 
+static void HealthComponentInitialize(SceneObject* sceneObject, SceneComponentId sceneComponentId, void* componentData, void *arg)
+{
+    HealthComponent* health = (HealthComponent*)componentData;
+    ComponentInitializer *ci = (ComponentInitializer*) arg;
+    if (ci->memData)
+    {
+        *health = *(HealthComponent*)ci->memData;
+        return;
+    }
+    health->health = 100;
+    if (ci->config)
+    {
+        MappedVariable mapped[] = {
+            {.name="health", .type=VALUE_TYPE_FLOAT, .floatValue=&health->health},
+            {0}
+        };
+        ReadMappedVariables(ci->config, mapped);
+        return;
+    }
+}
+
+void AddHealthComponent(SceneObjectId objectId, int health, int maxHealth)
+{
+    HealthComponent component = {
+        .health = health,
+        .maxHealth = maxHealth,
+    };
+    SceneGraph_addComponent(psg.sceneGraph, objectId, psg.healthComponentId, &(ComponentInitializer) {
+        .memData = &component,
+    });
+}
+
 void HealthComponentRegister()
 {
-    psg.healthComponentId = SceneGraph_registerComponentType(psg.sceneGraph, "Health", sizeof(HealthComponent),
+    psg.healthComponentId = SceneGraph_registerComponentType(psg.sceneGraph, "HealthComponent", sizeof(HealthComponent),
         (SceneComponentTypeMethods) {
             .updateTick = HealthComponentUpdate,
+            .onInitialize = HealthComponentInitialize,
         });
 }

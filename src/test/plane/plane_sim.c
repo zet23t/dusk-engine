@@ -98,7 +98,7 @@ int loadMeshes()
 
 static char* previousText = NULL;
 
-static int levelConfigLoad()
+static int levelConfigLoad(int force)
 {
     char* levelConfigText = LoadFileText("assets/level.json");
     if (levelConfigText == NULL) {
@@ -108,7 +108,7 @@ static int levelConfigLoad()
         }
         return 0;
     }
-    if (previousText != NULL && strcmp(levelConfigText, previousText) == 0) {
+    if (previousText != NULL && strcmp(levelConfigText, previousText) == 0 && !force) {
         UnloadFileText(levelConfigText);
         return 0;
     }
@@ -205,14 +205,9 @@ static void onShoot(SceneGraph* graph, SceneComponentId shooter, ShootingCompone
     Vector3 forward = SceneGraph_getWorldForward(psg.sceneGraph, shootingComponent->spawnPoint);
     forward = Vector3Scale(forward, shootingConfig->bulletSpeed);
     forward.y = 0;
-    SceneGraph_addComponent(graph, bullet, psg.linearVelocityComponentId,
-        &(LinearVelocityComponent) {
-            .velocity = forward,
-            .drag = (Vector3) { 0, 0, 0 } });
-
-    SceneGraph_addComponent(graph, bullet, psg.autoDestroyComponentId,
-        &(AutoDestroyComponent) {
-            .lifeTimeLeft = shootingConfig->bulletLifetime });
+    AddLinearVelocityComponent(bullet, forward, Vector3Zero(), Vector3Zero());
+    
+    AddAutoDestroyComponent(bullet, shootingConfig->bulletLifetime);
     SceneGraph_addComponent(graph, bullet, psg.bulletComponentId,
         &(BulletComponent) {
             .radius = 0.01f,
@@ -249,10 +244,7 @@ SceneObjectId plane_instantiate(Vector3 position)
         });
 
     const float drag = 5.0f;
-    SceneGraph_addComponent(psg.sceneGraph, plane, psg.linearVelocityComponentId,
-        &(LinearVelocityComponent) {
-            .velocity = (Vector3) { 1, 0, 0 },
-            .drag = (Vector3) { drag, drag, drag } });
+    AddLinearVelocityComponent(plane, Vector3Zero(), Vector3Zero(), (Vector3) {drag, drag, drag});
 
     ShootingConfig shootingConfig = {
         .shotInterval = 0.15f,
@@ -296,6 +288,7 @@ void UpdateCallbackComponentRegister();
 void EnemyPlaneBehaviorComponentRegister();
 void MovementPatternComponentRegister();
 void CameraComponentRegister();
+void TargetHandlerComponentRegister();
 
 void RegisterTargetSpawnSystem();
 void CloudSystemRegister();
@@ -307,7 +300,7 @@ static int initScene()
 {
     SceneGraph_clear(psg.sceneGraph);
     SceneObjectId systemsId = SceneGraph_createObject(psg.sceneGraph, "systems");
-    SceneGraph_addComponent(psg.sceneGraph, systemsId, psg.targetSpawnSystemId, NULL);
+    // SceneGraph_addComponent(psg.sceneGraph, systemsId, psg.targetSpawnSystemId, NULL);
     SceneGraph_addComponent(psg.sceneGraph, systemsId, psg.cloudSystemId, NULL);
     SceneGraph_addComponent(psg.sceneGraph, systemsId, psg.levelSystemId, NULL);
 
@@ -359,7 +352,7 @@ int plane_sim_init()
         return 1;
     }
     shaderLoad(0);
-    levelConfigLoad();
+    levelConfigLoad(1);
 
     psg.sceneGraph = SceneGraph_create();
 
@@ -379,6 +372,7 @@ int plane_sim_init()
     EnemyPlaneBehaviorComponentRegister();
     MovementPatternComponentRegister();
     CameraComponentRegister();
+    TargetHandlerComponentRegister();
 
     return initScene();
 }
@@ -398,7 +392,7 @@ void plane_sim_draw()
         reloadTimer = 0;
         SetTraceLogLevel(LOG_WARNING);
         shaderLoad(1);
-        if (levelConfigLoad())
+        if (levelConfigLoad(IsKeyPressed(KEY_F5)))
         {
             initScene();
         }

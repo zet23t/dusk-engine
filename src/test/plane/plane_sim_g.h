@@ -12,22 +12,29 @@
 
 #define VALUE_TYPE_FLOAT 0
 #define VALUE_TYPE_INT 1
+#define VALUE_TYPE_INT32 5
 #define VALUE_TYPE_STRING 2
 #define VALUE_TYPE_BOOL 3
+#define VALUE_TYPE_VEC3 4
 
 typedef struct ComponentInitializer {
     cJSON* config;
+    cJSON* objects;
     void* memData;
 } ComponentInitializer;
 
 typedef struct MappedVariable {
     const char* name;
     int type;
+    int isRequired;
     union {
         float* floatValue;
         int* intValue;
+        int32_t* int32Value;
+        uint32_t* uint32Value;
         const char** stringValue;
         bool* boolValue;
+        Vector3* vec3Value;
     };
 
 } MappedVariable;
@@ -60,6 +67,7 @@ typedef struct PSG {
     SceneComponentTypeId enemyPlaneBehaviorComponentId;
     SceneComponentTypeId movementPatternComponentId;
     SceneComponentTypeId cameraComponentId;
+    SceneComponentTypeId targetHandlerComponentId;
     
     SceneComponentTypeId targetSpawnSystemId;
     SceneComponentTypeId levelSystemId;
@@ -189,6 +197,10 @@ extern PSG psg;
 Camera3D CameraComponent_getCamera3D(SceneGraph* sceneGraph, SceneObjectId nodeId);
 void SceneObject_ApplyJSONValues(SceneGraph* sceneGraph, cJSON* objects, SceneObjectId nodeId, cJSON* object);
 SceneObjectId InstantiateFromJSON(SceneGraph* sceneGraph, cJSON* objects, const char* rootId);
+
 SceneComponentId AddMeshRendererComponent(SceneObjectId id, Mesh* mesh, float litAmount);
+void AddLinearVelocityComponent(SceneObjectId objectId, Vector3 velocity, Vector3 acceleration, Vector3 drag);
+void AddAutoDestroyComponent(SceneObjectId objectId, float lifeTime);
+void AddHealthComponent(SceneObjectId objectId, int health, int maxHealth);
 
 #endif

@@ -7,7 +7,8 @@ void ReadMappedVariables(cJSON *map, MappedVariable *variables)
         MappedVariable* var = &variables[i];
         cJSON* value = cJSON_GetObjectItem(map, var->name);
         if (value == NULL) {
-            TraceLog(LOG_ERROR, "%s not found in level config", var->name);
+            if (var->isRequired)
+                TraceLog(LOG_ERROR, "%s not found in level config", var->name);
             continue;
         }
 
@@ -18,11 +19,19 @@ void ReadMappedVariables(cJSON *map, MappedVariable *variables)
         case VALUE_TYPE_INT:
             *var->intValue = value->valueint;
             break;
+        case VALUE_TYPE_INT32:
+            *var->int32Value = (int32_t) value->valueint;
+            break;
         case VALUE_TYPE_STRING:
             *var->stringValue = value->valuestring;
             break;
         case VALUE_TYPE_BOOL:
             *var->boolValue = value->valueint;
+            break;
+        case VALUE_TYPE_VEC3:
+            var->vec3Value->x = (float) cJSON_GetArrayItem(value, 0)->valuedouble;
+            var->vec3Value->y = (float) cJSON_GetArrayItem(value, 1)->valuedouble;
+            var->vec3Value->z = (float) cJSON_GetArrayItem(value, 2)->valuedouble;
             break;
         }
     }

@@ -16,12 +16,27 @@
     },
     "level": {
         "events": [
-            { "time": 0, "message": "and so it begins", "prefab": "enemy-plane-1", "position": [0,0,0] }
+            { "time": 0, "message": "and so it begins", "prefab": "enemy-plane-flyin-1", "position": [9,-35,-6] },
+            { "time": 0, "prefab": "enemy-plane-flyin-1", "position": [7,-35,-7.5] },
+            { "time": 7, "prefab": "enemy-plane-1", "position": [4,0,12.5], "rotation": [0, 180, 0] },
+            { "time": 7, "prefab": "enemy-plane-1", "position": [2.5,0,13.5], "rotation": [0, 180, 0] }
+
         ],
         "objects": {
+            "enemy-plane-flyin-1": {
+                "components": [
+                    { "type": "MeshRendererComponent", "mesh": "fighter-plane-2", "litAmount": 0 },
+                    { "type": "LinearVelocityComponent", "velocity": [0,0,5] },
+                    { "type": "AutoDestroyComponent", "lifeTime": 7 }
+                ]
+            },
             "enemy-plane-1": {
                 "components": [
-                    { "type": "MeshRendererComponent", "mesh": "enemy-plane-1", "litAmount": 1 }
+                    { "type": "MeshRendererComponent", "mesh": "fighter-plane-2", "litAmount": 0 },
+                    { "type": "LinearVelocityComponent", "velocity": [0,0,-5] },
+                    { "type": "TargetHandlerComponent", "radius": 1.5, "colliderMask": 1},
+                    { "type": "HealthComponent", "maxHealth": 3, "currentHealth": 3 },
+                    { "type": "AutoDestroyComponent", "lifeTime": 7 }
                 ]
             }
         }
