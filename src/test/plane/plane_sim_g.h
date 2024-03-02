@@ -12,10 +12,11 @@
 
 #define VALUE_TYPE_FLOAT 0
 #define VALUE_TYPE_INT 1
-#define VALUE_TYPE_INT32 5
-#define VALUE_TYPE_STRING 2
-#define VALUE_TYPE_BOOL 3
-#define VALUE_TYPE_VEC3 4
+#define VALUE_TYPE_INT32 2
+#define VALUE_TYPE_STRING 3
+#define VALUE_TYPE_BOOL 4
+#define VALUE_TYPE_VEC2 5
+#define VALUE_TYPE_VEC3 6
 
 typedef struct ComponentInitializer {
     cJSON* config;
@@ -34,6 +35,7 @@ typedef struct MappedVariable {
         uint32_t* uint32Value;
         const char** stringValue;
         bool* boolValue;
+        Vector2* vec2Value;
         Vector3* vec3Value;
     };
 

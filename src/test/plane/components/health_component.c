@@ -17,11 +17,13 @@ static void HealthComponentInitialize(SceneObject* sceneObject, SceneComponentId
         *health = *(HealthComponent*)ci->memData;
         return;
     }
-    health->health = 100;
+    health->health = 1;
+    health->maxHealth = 1;
     if (ci->config)
     {
         MappedVariable mapped[] = {
             {.name="health", .type=VALUE_TYPE_FLOAT, .floatValue=&health->health},
+            {.name="maxHealth", .type=VALUE_TYPE_FLOAT, .floatValue=&health->maxHealth},
             {0}
         };
         ReadMappedVariables(ci->config, mapped);

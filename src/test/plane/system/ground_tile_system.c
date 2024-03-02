@@ -7,7 +7,7 @@
 
 #define COLUMN_COUNT 6
 #define ROW_COUNT 8
-#define TILE_SIZE 7.999f
+#define TILE_SIZE 8.0f
 #define TILE_TYPE_COUNT 2
 const char groundTypes[TILE_TYPE_COUNT] = { 'g', 'w' };
 
@@ -74,7 +74,7 @@ static SceneObjectId spawnTile(int x, int y)
     if (config.mesh == NULL) {
         return id;
     }
-    AddMeshRendererComponent(id, config.mesh, 0.0f);
+    AddMeshRendererComponent(id, config.mesh, 1.0f);
 
     // scatter trees on ground
 

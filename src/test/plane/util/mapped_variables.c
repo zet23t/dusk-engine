@@ -28,6 +28,10 @@ void ReadMappedVariables(cJSON *map, MappedVariable *variables)
         case VALUE_TYPE_BOOL:
             *var->boolValue = value->valueint;
             break;
+        case VALUE_TYPE_VEC2:
+            var->vec2Value->x = (float) cJSON_GetArrayItem(value, 0)->valuedouble;
+            var->vec2Value->y = (float) cJSON_GetArrayItem(value, 1)->valuedouble;
+            break;
         case VALUE_TYPE_VEC3:
             var->vec3Value->x = (float) cJSON_GetArrayItem(value, 0)->valuedouble;
             var->vec3Value->y = (float) cJSON_GetArrayItem(value, 1)->valuedouble;
