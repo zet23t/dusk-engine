@@ -1,4 +1,9 @@
 {
+    "playerInput": {
+        "movementRangeX": 10,
+        "movementRangeZ": 7,
+        "offsetZ": -3
+    },
     "groundTileCfg": {
         "baseSpeed": 0.125,
         "waterLineLevel": 0.25
@@ -65,6 +70,9 @@
     "ui": {
         "root": "ui",
         "objects": {
+            "score-counter": { 
+                "position": [6.3, -5.5, 0],
+                "components": [ { "type": "MeshRendererComponent", "mesh": "ui-score-counter", "litAmount": 1 }]},
             "ui-border": { "type": "MeshRendererComponent", "mesh": "ui-border", "litAmount": 1 },
             "border-element": { "components": [ "ui-border" ] },
             "border-group": {
@@ -77,6 +85,7 @@
             },
             "ui": {
                 "children": [
+                    { "prefab": "score-counter"},
                     { "prefab": "border-group", "position": [ 8, 0, 0 ] },
                     { "prefab": "border-group", "position": [ -8, 0, 0 ], "rotation": [ 0, 0, 180 ] }
                 ]

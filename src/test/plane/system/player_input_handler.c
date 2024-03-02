@@ -1,7 +1,26 @@
 #include "../plane_sim_g.h"
 
+static float planeMovementRangeX = 5.0f;
+static float planeMovementRangeZ = 5.0f;
+static float planeOffsetZ = 0;
+
+static cJSON* playerInputConfigMarker = NULL;
+
 void HandlePlayerInputUpdate()
 {
+    if (playerInputConfigMarker != psg.levelConfig) {
+        playerInputConfigMarker = psg.levelConfig;
+        cJSON* playerInputConfig = cJSON_GetObjectItem(psg.levelConfig, "playerInput");
+        if (playerInputConfig != NULL) {
+            MappedVariable variables[] = {
+                { "movementRangeX", VALUE_TYPE_FLOAT, .floatValue = &planeMovementRangeX },
+                { "movementRangeZ", VALUE_TYPE_FLOAT, .floatValue = &planeMovementRangeZ },
+                { "offsetZ", VALUE_TYPE_FLOAT, .floatValue = &planeOffsetZ },
+                { 0 }
+            };
+            ReadMappedVariables(playerInputConfig, variables);
+        }
+    }
     if (psg.deltaTime == 0) return;
     Vector3 position = SceneGraph_getLocalPosition(psg.sceneGraph, psg.playerPlane);
     LinearVelocityComponent *velocity;
@@ -30,8 +49,8 @@ void HandlePlayerInputUpdate()
         }
     }
 
-    const float movementRangeX = 5.0f;
-    const float movementRangeZ = 5.0f;
+    const float movementRangeX = planeMovementRangeX;
+    const float movementRangeZ = planeMovementRangeZ;
     if (position.x > movementRangeX)
     {
         velocity->velocity.x = velocity->velocity.x * .5f - (position.x - movementRangeX) * 1.0f;
@@ -40,13 +59,13 @@ void HandlePlayerInputUpdate()
     {
         velocity->velocity.x = velocity->velocity.x * .5f - (position.x + movementRangeX) * 1.0f;
     }
-    if (position.z > movementRangeZ)
+    if (position.z + planeOffsetZ > movementRangeZ)
     {
-        velocity->velocity.z = velocity->velocity.z * .5f - (position.z - movementRangeZ) * 1.0f;
+        velocity->velocity.z = velocity->velocity.z * .5f - (position.z + planeOffsetZ - movementRangeZ) * 1.0f;
     }
-    else if (position.z < -movementRangeZ)
+    else if (position.z + planeOffsetZ < -movementRangeZ)
     {
-        velocity->velocity.z = velocity->velocity.z * .5f - (position.z + movementRangeZ) * 1.0f;
+        velocity->velocity.z = velocity->velocity.z * .5f - (position.z + planeOffsetZ + movementRangeZ) * 1.0f;
     }
 
     Vector3 rotation = SceneGraph_getLocalRotation(psg.sceneGraph, psg.playerPlane);
