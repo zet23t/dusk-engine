@@ -70,12 +70,15 @@ typedef struct PSG {
     SceneComponentTypeId movementPatternComponentId;
     SceneComponentTypeId cameraComponentId;
     SceneComponentTypeId targetHandlerComponentId;
+    SceneComponentTypeId textComponentId;
+    SceneComponentTypeId actionComponentTypeId;
     
     SceneComponentTypeId targetSpawnSystemId;
     SceneComponentTypeId levelSystemId;
     SceneComponentTypeId cloudSystemId;
 
     SceneObjectId camera;
+    SceneObjectId uiRootId;
 
     Model model;
     Mesh* meshPlane;
@@ -104,6 +107,45 @@ typedef struct PSG {
 
 typedef struct ShootingConfig ShootingConfig;
 typedef struct ShootingComponent ShootingComponent;
+
+typedef struct TextComponent {
+    char* text;
+    Vector2 align;
+    float fontSize;
+    float fontSpacing;
+    float lineSpacing;
+    Color color;
+} TextComponent;
+
+#define ACTION_TYPE_ENABLE_OBJECT 1
+#define ACTION_TYPE_DISABLE_OBJECT 2
+#define ACTION_TYPE_DESTROY_OBJECT 3
+#define ACTION_TYPE_ENABLE_COMPONENT 16
+#define ACTION_TYPE_DISABLE_COMPONENT 17
+#define ACTION_TYPE_DESTROY_COMPONENT 18
+#define ACTION_TYPE_ENABLE_CHILD_OBJECT 32
+#define ACTION_TYPE_DISABLE_CHILD_OBJECT 33
+#define ACTION_TYPE_DESTROY_CHILD_OBJECT 34
+#define ACTION_TYPE_ENABLE_CHILD_COMPONENT 48
+#define ACTION_TYPE_DISABLE_CHILD_COMPONENT 49
+#define ACTION_TYPE_DESTROY_CHILD_COMPONENT 50
+
+typedef struct Action {
+    uint32_t actionType;
+    char *targetName;
+} Action;
+
+typedef struct ActionComponent {
+    Action *actions;
+    int actionCount;
+    int disableOnTrigger;
+} ActionComponent;
+
+typedef struct TimerComponent {
+    Action actions[4];
+    float time;
+    float triggerTime;
+} TimerComponent;
 
 typedef struct CameraComponent
 {
@@ -204,5 +246,7 @@ SceneComponentId AddMeshRendererComponent(SceneObjectId id, Mesh* mesh, float li
 void AddLinearVelocityComponent(SceneObjectId objectId, Vector3 velocity, Vector3 acceleration, Vector3 drag);
 void AddAutoDestroyComponent(SceneObjectId objectId, float lifeTime);
 void AddHealthComponent(SceneObjectId objectId, int health, int maxHealth);
+
+void TriggerActions(SceneGraph *sceneGraph, SceneObjectId objectId, Action *actions, int count);
 
 #endif

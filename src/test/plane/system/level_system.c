@@ -5,8 +5,10 @@
 typedef struct LevelEvent {
     float time;
     char* message;
+    char* showMessage;
     char* spawnPrefabId;
     int triggered;
+    float messageDuration;
     cJSON* overrides;
 } LevelEvent;
 
@@ -58,6 +60,8 @@ static void LevelSystemInit(LevelSystem* levelSystem)
         }
         levelSystem->events[i].time = (float)time->valuedouble;
         levelSystem->events[i].message = cJSON_GetStringValue(cJSON_GetObjectItemCaseSensitive(event, "message"));
+        levelSystem->events[i].showMessage = cJSON_GetStringValue(cJSON_GetObjectItemCaseSensitive(event, "showMessage"));
+        levelSystem->events[i].messageDuration = (float)cJSON_GetNumberValue(cJSON_GetObjectItemCaseSensitive(event, "messageDuration"));
         levelSystem->events[i].spawnPrefabId = cJSON_GetStringValue(cJSON_GetObjectItemCaseSensitive(event, "prefab"));
         levelSystem->events[i].overrides = event;
     }
@@ -83,23 +87,39 @@ static void LevelSystemUpdate(SceneObject* node, SceneComponentId sceneComponent
 
     levelSystem->time += dt;
     for (int i = 0; i < levelSystem->eventCount; i += 1) {
-        if (levelSystem->events[i].triggered || levelSystem->events[i].time > levelSystem->time) {
+        LevelEvent* event = &levelSystem->events[i];
+        if (event->triggered || event->time > levelSystem->time) {
             continue;
         }
 
-        levelSystem->events[i].triggered = 1;
-        if (levelSystem->events[i].message != NULL) {
-            TraceLog(LOG_INFO, "Level event: %s", levelSystem->events[i].message);
+        event->triggered = 1;
+        if (event->message != NULL) {
+            TraceLog(LOG_INFO, "Level event: %s", event->message);
         }
 
-        if (levelSystem->events[i].spawnPrefabId != NULL) {
-            cJSON* prefab = cJSON_GetObjectItemCaseSensitive(levelSystem->objects, levelSystem->events[i].spawnPrefabId);
+        if (event->showMessage != NULL) {
+            TraceLog(LOG_INFO, "Level event, show message: %s", event->showMessage);
+            SceneObjectId messageId = SceneGraph_createObject(node->graph, "message");
+            SceneGraph_setParent(node->graph, messageId, psg.uiRootId);
+
+            SceneGraph_addComponent(node->graph, messageId, psg.textComponentId, &(TextComponent) {
+                .color = (Color) { 255, 255, 255, 255 },
+                .text = event->showMessage,
+                .align = (Vector2) {.5f, .0f},
+                .fontSize = 10,
+                .fontSpacing = 2
+            });
+            // AddAutoDestroyComponent(messageId, event->messageDuration);
+        }
+
+        if (event->spawnPrefabId != NULL) {
+            cJSON* prefab = cJSON_GetObjectItemCaseSensitive(levelSystem->objects, event->spawnPrefabId);
             if (prefab == NULL) {
-                TraceLog(LOG_ERROR, "Prefab %s not found in level config", levelSystem->events[i].spawnPrefabId);
+                TraceLog(LOG_ERROR, "Prefab %s not found in level config", event->spawnPrefabId);
                 continue;
             }
-            SceneObjectId objectId = InstantiateFromJSON(node->graph, levelSystem->objects, levelSystem->events[i].spawnPrefabId);
-            SceneObject_ApplyJSONValues(node->graph, levelSystem->objects, objectId, levelSystem->events[i].overrides);
+            SceneObjectId objectId = InstantiateFromJSON(node->graph, levelSystem->objects, event->spawnPrefabId);
+            SceneObject_ApplyJSONValues(node->graph, levelSystem->objects, objectId, event->overrides);
         }
     }
 }

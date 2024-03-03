@@ -289,6 +289,7 @@ void EnemyPlaneBehaviorComponentRegister();
 void MovementPatternComponentRegister();
 void CameraComponentRegister();
 void TargetHandlerComponentRegister();
+void TextComponentRegister();
 
 void RegisterTargetSpawnSystem();
 void CloudSystemRegister();
@@ -317,8 +318,16 @@ static int initScene()
     psg.playerPlane = plane_instantiate((Vector3) { 0, 0, 0 });
 
     SceneObjectId uiPlaneId = SceneGraph_createObject(psg.sceneGraph, "ui-plane");
+    psg.uiRootId = uiPlaneId;
     SceneGraph_setParent(psg.sceneGraph, uiPlaneId, psg.camera);
     SceneGraph_setLocalPosition(psg.sceneGraph, uiPlaneId, (Vector3) { 0, 0, 70.0f });
+    // SceneGraph_addComponent(psg.sceneGraph, uiPlaneId, psg.textComponentId,
+    //     &(TextComponent) {
+    //         .text = "Hello, world!",
+    //         .fontSize = 40,
+    //         .color = WHITE,
+    //     });
+    // SceneGraph_setLocalRotation(psg.sceneGraph, uiPlaneId, (Vector3) { 0, 0, 0 });
 
     cJSON* uiConfig = cJSON_GetObjectItemCaseSensitive(psg.levelConfig, "ui");
     if (!cJSON_IsObject(uiConfig)) {
@@ -373,6 +382,7 @@ int plane_sim_init()
     MovementPatternComponentRegister();
     CameraComponentRegister();
     TargetHandlerComponentRegister();
+    TextComponentRegister();
 
     return initScene();
 }
@@ -413,6 +423,7 @@ void plane_sim_draw()
 
     BeginMode3D(camera);
     SceneGraph_draw(psg.sceneGraph, camera, NULL);
+    SceneGraph_sequentialDraw(psg.sceneGraph, camera, NULL);
     EndMode3D();
 
     if (IsKeyDown(KEY_SPACE) || IsKeyDown(KEY_LEFT_CONTROL) || IsKeyDown(KEY_RIGHT_CONTROL)) {
