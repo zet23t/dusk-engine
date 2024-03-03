@@ -523,6 +523,7 @@ SceneComponentId SceneGraph_addComponent(SceneGraph* graph, SceneObjectId id, Sc
 
     SceneComponentType* type = SceneGraph_getComponentType(graph, componentType);
     if (type == NULL) {
+        TraceLog(LOG_ERROR, "SceneGraph_addComponent: component type not found");
         return (SceneComponentId) { 0 };
     }
 
@@ -801,7 +802,6 @@ void SceneGraph_destroyComponent(SceneGraph* graph, SceneComponentId id)
     if (type != NULL && type->methods.onDestroy != NULL) {
         void* componentData = type->dataSize > 0 ? &type->componentData[id.id * type->dataSize] : NULL;
         type->methods.onDestroy(SceneGraph_getObject(graph, component->objectId), id, componentData);
-        return;
     }
     component->id.version = 0;
     if (component->name) {
