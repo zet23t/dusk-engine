@@ -230,6 +230,9 @@ int main(void)
         "}, false);");
 
 #endif
+#ifndef DEBUG
+    SetTraceLogLevel(LOG_WARNING);
+#endif
     // Initialization
     const int screenWidth = 640;
     const int screenHeight = 480;
@@ -269,6 +272,7 @@ int main(void)
     int isPaused = 0;
     int isSlowmo = 0;
     // Main game loop
+    SetTraceLogLevel(LOG_INFO);
     while (!WindowShouldClose()) {
         // Update
 
