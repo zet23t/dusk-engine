@@ -23,10 +23,17 @@
         "events": [
             { "time": 0, "message": "and so it begins", "prefab": "enemy-plane-flyin-1", "position": [9,-35,-6] },
             { "time": 0, "prefab": "enemy-plane-flyin-1", "position": [7,-35,-7.5] },
-            { "time": 7, "prefab": "enemy-plane-1", "position": [4,0,12.5], "rotation": [0, 180, 0] },
-            { "time": 7, "prefab": "enemy-plane-1", "position": [2.5,0,13.5], "rotation": [0, 180, 0] }
+            { "time": 1, "showMessage": "ENEMIES SPOTED\nGET READY", "messageDuration": 2 },
+            { "time": 7, "prefab": "formation-1", "position": [4,0,12.5] },
+            { "time": 9, "prefab": "formation-1", "position": [-5,0,12.5] }
         ],
         "objects": {
+            "formation-1":{
+                "children": [
+                    { "prefab": "enemy-plane-1", "position": [ 0, 0, 0 ], "rotation": [0, 180, 0] },
+                    { "prefab": "enemy-plane-1", "position": [ 1.5, 0, 1.5 ], "rotation": [0, 180, 0] }
+                ]
+            },
             "enemy-plane-flyin-1": {
                 "components": [
                     { "type": "MeshRendererComponent", "mesh": "fighter-plane-2", "litAmount": 0 },
@@ -38,7 +45,7 @@
                 "components": [
                     { "type": "MeshRendererComponent", "mesh": "fighter-plane-2", "litAmount": 0 },
                     { "type": "LinearVelocityComponent", "velocity": [0,0,-5] },
-                    { "type": "TargetHandlerComponent", "radius": 1.5, "colliderMask": 1, 
+                    { "type": "TargetHandlerComponent", "radius": 1.0, "colliderMask": 1, 
                         "onHit": [{ 
                             "prefab": "spark",
                             "spawnCount": 12,
@@ -54,8 +61,8 @@
                             "maxRandomVelocityRange": [4, 4, 4]
                         }]
                     },
-                    { "type": "HealthComponent", "maxHealth": 15, "health": 15 },
-                    { "type": "AutoDestroyComponent", "lifeTime": 7 }
+                    { "type": "HealthComponent", "maxHealth": 5, "health": 5 },
+                    { "type": "AutoDestroyComponent", "lifeTime": 8 }
                 ]
             },
             "spark": {
