@@ -109,6 +109,8 @@ static void LevelSystemUpdate(SceneObject* node, SceneComponentId sceneComponent
                 .fontSize = 10,
                 .fontSpacing = 2
             });
+            SceneComponentId timerId = AddTimerComponent(messageId, event->messageDuration, 0);
+            TimerComponentAddAction(timerId, ACTION_TYPE_DESTROY_OBJECT, "");
             // AddAutoDestroyComponent(messageId, event->messageDuration);
         }
 

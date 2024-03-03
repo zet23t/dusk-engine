@@ -19,82 +19,31 @@ void ActionComponent_onInitialize(SceneObject* sceneObject, SceneComponentId sce
         {
             int arrayLengh = cJSON_GetArraySize(actions);
             actionComponent->actions = (Action*)malloc(sizeof(Action) * arrayLengh);
+            memset(actionComponent->actions, 0, sizeof(Action) * arrayLengh);
             int n = 0;
             for (int i = 0; i < arrayLengh; i++)
             {
-                cJSON *actionCfg = cJSON_GetArrayItem(actions, i);
-                cJSON *type = cJSON_GetObjectItemCaseSensitive(actionCfg, "type");
                 Action action = {0};
-                if (cJSON_IsString(type))
+                cJSON *actionCfg = cJSON_GetArrayItem(actions, i);
+                if (ActionFromJSON(actionCfg, &action) == 0)
                 {
-                    if (strcmp(type->valuestring, "enable_object") == 0)
-                    {
-                        action.actionType = ACTION_TYPE_ENABLE_OBJECT;
-                    }
-                    else if (strcmp(type->valuestring, "disable_object") == 0)
-                    {
-                        action.actionType = ACTION_TYPE_DISABLE_OBJECT;
-                    }
-                    else if (strcmp(type->valuestring, "destroy_object") == 0)
-                    {
-                        action.actionType = ACTION_TYPE_DESTROY_OBJECT;
-                    }
-                    else if (strcmp(type->valuestring, "enable_component") == 0)
-                    {
-                        action.actionType = ACTION_TYPE_ENABLE_COMPONENT;
-                    }
-                    else if (strcmp(type->valuestring, "disable_component") == 0)
-                    {
-                        action.actionType = ACTION_TYPE_DISABLE_COMPONENT;
-                    }
-                    else if (strcmp(type->valuestring, "destroy_component") == 0)
-                    {
-                        action.actionType = ACTION_TYPE_DESTROY_COMPONENT;
-                    }
-                    else if (strcmp(type->valuestring, "enable_child_object") == 0)
-                    {
-                        action.actionType = ACTION_TYPE_ENABLE_CHILD_OBJECT;
-                    }
-                    else if (strcmp(type->valuestring, "disable_child_object") == 0)
-                    {
-                        action.actionType = ACTION_TYPE_DISABLE_CHILD_OBJECT;
-                    }
-                    else if (strcmp(type->valuestring, "destroy_child_object") == 0)
-                    {
-                        action.actionType = ACTION_TYPE_DESTROY_CHILD_OBJECT;
-                    }
-                    else if (strcmp(type->valuestring, "enable_child_component") == 0)
-                    {
-                        action.actionType = ACTION_TYPE_ENABLE_CHILD_COMPONENT;
-                    }
-                    else if (strcmp(type->valuestring, "disable_child_component") == 0)
-                    {
-                        action.actionType = ACTION_TYPE_DISABLE_CHILD_COMPONENT;
-                    }
-                    else if (strcmp(type->valuestring, "destroy_child_component") == 0)
-                    {
-                        action.actionType = ACTION_TYPE_DESTROY_CHILD_COMPONENT;
-                    }
-                    else
-                    {
-                        TraceLog(LOG_ERROR, "Unknown action type: %s", type->valuestring);
-                        continue;
-                    }
-                }
-                else
-                {
-                    TraceLog(LOG_ERROR, "Action type is not a string");
+                    actionComponent->actions[n++] = action;
                     continue;
                 }
-                cJSON *target = cJSON_GetObjectItemCaseSensitive(actionCfg, "targetName");
-                
-                if (cJSON_IsString(target))
-                {
-                    action.targetName = strdup(target->valuestring);
-                }
             }
+            actionComponent->actionCount = n;
         }
     }
+}
+
+void ActionComponent_onDestroy(SceneObject* sceneObject, SceneComponentId sceneComponentId, void* componentData)
+{
+    ActionComponent* actionComponent = (ActionComponent*)componentData;
+    for (int i = 0; i < actionComponent->actionCount; i++)
+    {
+        free(actionComponent->actions[i].targetName);
+    }
+    free(actionComponent->actions);
 }
 
 void ActionComponentRegister()
@@ -102,5 +51,6 @@ void ActionComponentRegister()
     psg.actionComponentTypeId = SceneGraph_registerComponentType(psg.sceneGraph, "ActionComponent", sizeof(ActionComponent),
         (SceneComponentTypeMethods) {
             .onInitialize = ActionComponent_onInitialize,
+            .onDestroy = ActionComponent_onDestroy,
         });
 }

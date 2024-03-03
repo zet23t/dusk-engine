@@ -72,6 +72,7 @@ typedef struct PSG {
     SceneComponentTypeId targetHandlerComponentId;
     SceneComponentTypeId textComponentId;
     SceneComponentTypeId actionComponentTypeId;
+    SceneComponentTypeId timerComponentTypeId;
     
     SceneComponentTypeId targetSpawnSystemId;
     SceneComponentTypeId levelSystemId;
@@ -142,7 +143,9 @@ typedef struct ActionComponent {
 } ActionComponent;
 
 typedef struct TimerComponent {
-    Action actions[4];
+    Action *actions;
+    int actionCount;
+    int repeatCount;
     float time;
     float triggerTime;
 } TimerComponent;
@@ -246,7 +249,9 @@ SceneComponentId AddMeshRendererComponent(SceneObjectId id, Mesh* mesh, float li
 void AddLinearVelocityComponent(SceneObjectId objectId, Vector3 velocity, Vector3 acceleration, Vector3 drag);
 void AddAutoDestroyComponent(SceneObjectId objectId, float lifeTime);
 void AddHealthComponent(SceneObjectId objectId, int health, int maxHealth);
+SceneComponentId AddTimerComponent(SceneObjectId objectId, float duration, int repeat);
 
+int ActionFromJSON(cJSON* actionCfg, Action* action);
 void TriggerActions(SceneGraph *sceneGraph, SceneObjectId objectId, Action *actions, int count);
-
+void TimerComponentAddAction(SceneComponentId componentId, int actionType, const char* targetName);
 #endif

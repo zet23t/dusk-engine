@@ -290,6 +290,8 @@ void MovementPatternComponentRegister();
 void CameraComponentRegister();
 void TargetHandlerComponentRegister();
 void TextComponentRegister();
+void ActionComponentRegister();
+void TimerComponentRegister();
 
 void RegisterTargetSpawnSystem();
 void CloudSystemRegister();
@@ -383,6 +385,8 @@ int plane_sim_init()
     CameraComponentRegister();
     TargetHandlerComponentRegister();
     TextComponentRegister();
+    ActionComponentRegister();
+    TimerComponentRegister();
 
     return initScene();
 }
