@@ -25,6 +25,8 @@
         return entry;                                                      \
     }
 
+#define SCENE_COMPONENT_FLAG_ENABLED 1
+
 #define SCENE_OBJECT_FLAG_ENABLED 1
 #define SCENE_OBJECT_FLAG_INITIALIZE 2
 #define SCENE_OBJECT_FLAG_LOCAL_MATRIX_DIRTY 4
@@ -65,6 +67,8 @@ typedef struct SceneComponentTypeMethods {
         float delta, void* componentData);
     void (*draw)(Camera3D camera, SceneObject* sceneObject, SceneComponentId sceneComponent,
         void* componentData, void* userdata);
+    void (*sequentialDraw)(Camera3D camera, SceneObject* sceneObject, SceneComponentId sceneComponent,
+        void* componentData, void* userdata);
     void (*onDestroy)(SceneObject* sceneObject, SceneComponentId sceneComponent, void* componentData);
 } SceneComponentTypeMethods;
 
@@ -72,6 +76,8 @@ typedef struct SceneComponent {
     SceneComponentId id;
     SceneObjectId objectId;
     SceneComponentTypeId typeId;
+    char *name;
+    uint32_t flags;
 } SceneComponent;
 
 typedef struct SceneComponentType {
@@ -88,6 +94,7 @@ typedef struct SceneObject {
     SceneGraph* graph;
     char* name;
     int32_t flags;
+    int32_t marker;
     int32_t parentWorldMatrixVersion;
     SceneObjectId parent;
     SceneObjectTransform transform;
@@ -98,7 +105,7 @@ typedef struct SceneObject {
 
 typedef struct SceneGraph {
     int32_t versionCounter;
-
+    int32_t markerCounter;
     STRUCT_LIST_ELEMENT(SceneObject, objects)
     STRUCT_LIST_ELEMENT(SceneComponentType, componentTypes)
 } SceneGraph;
@@ -140,11 +147,29 @@ Matrix SceneObject_getLocalMatrix(SceneObject* object);
 Matrix SceneObject_getWorldMatrix(SceneObject* object);
 void SceneGraph_setParent(SceneGraph* graph, SceneObjectId id, SceneObjectId parentId);
 
+// calls update methods of all components in order of type registration. No particular order of objects is followed
 void SceneGraph_updateTick(SceneGraph* graph, float delta);
+// calls draw methods of all components in order of type registration. No particular order of objects is followed
 void SceneGraph_draw(SceneGraph* graph, Camera3D camera, void* userdata);
+// calls sequential draw methods of all components in order of being added to the object. No particular order of objects is followed
+// for root objects, but within a tree of objects, children are drawn after their parents and in the order they were added.
+// This form of iteration is most inefficient (memory wise) and should be used only for UI or other cases where draw order is important.
+// Certain optimizations can help: Any parent object without any child with a sequential draw component is be skipped. Therefore keeping
+// sequential draw components used only in certain tree branches can help (e.g. one UI canvas parent that has nothing to do with 
+// the world object part of the scene graph).
+void SceneGraph_sequentialDraw(SceneGraph* graph, Camera3D camera, void* userdata);
 
+SceneObject* SceneGraph_findObjectByName(SceneGraph* graph, const char *name, int includeDisabled);
+SceneComponent* SceneGraph_findComponentByName(SceneGraph* graph, const char *name, int includeDisabled);
+SceneObject* SceneGraph_findChildByName(SceneGraph* graph, SceneObjectId parentId, const char *name, int includeDisabled);
+SceneComponent* SceneGraph_findChildComponentByName(SceneGraph* graph, SceneObjectId parentId, const char *name, int includeDisabled);
 void SceneGraph_destroyComponent(SceneGraph* graph, SceneComponentId id);
 void SceneGraph_printObject(SceneObject *object, const char *indent);
 void SceneGraph_print(SceneGraph* graph);
+
+void SceneGraph_setComponentEnabled(SceneGraph* graph, SceneComponentId id, int enabled);
+int SceneGraph_isComponentEnabled(SceneGraph* graph, SceneComponentId id);
+void SceneGraph_setObjectEnabled(SceneGraph* graph, SceneObjectId id, int enabled);
+int SceneGraph_isObjectEnabled(SceneGraph* graph, SceneObjectId id);
 
 #endif
