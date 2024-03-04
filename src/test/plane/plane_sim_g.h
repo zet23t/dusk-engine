@@ -131,6 +131,27 @@ typedef struct TextComponent {
 #define ACTION_TYPE_DISABLE_CHILD_COMPONENT 49
 #define ACTION_TYPE_DESTROY_CHILD_COMPONENT 50
 
+
+typedef struct TrailNode {
+    Vector3 position;
+    Vector3 velocity;
+    float time;
+    float maxTime;
+} TrailNode;
+
+typedef struct TrailRendererComponent {
+    Mesh *mesh;
+    TrailNode *nodes;
+    int nodeCount;
+    int nodeCapacity;
+    float emitterWidth;
+    float emitterDuration;
+    float emitterRate;
+    float time;
+    float accumulatedTime;
+    Vector3 emitterVelocity;
+} TrailRendererComponent;
+
 typedef struct Action {
     uint32_t actionType;
     char *targetName;
