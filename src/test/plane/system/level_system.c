@@ -101,7 +101,7 @@ static void LevelSystemUpdate(SceneObject* node, SceneComponentId sceneComponent
             TraceLog(LOG_INFO, "Level event, show message: %s", event->showMessage);
             SceneObjectId messageId = SceneGraph_createObject(node->graph, "message");
             SceneGraph_setParent(node->graph, messageId, psg.uiRootId);
-
+            SceneGraph_setLocalPosition(node->graph, messageId, (Vector3) { 0, 5, 0 });
             SceneGraph_addComponent(node->graph, messageId, psg.textComponentId, &(TextComponent) {
                 .color = (Color) { 255, 255, 255, 255 },
                 .text = event->showMessage,
