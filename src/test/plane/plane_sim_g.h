@@ -73,6 +73,7 @@ typedef struct PSG {
     SceneComponentTypeId textComponentId;
     SceneComponentTypeId actionComponentTypeId;
     SceneComponentTypeId timerComponentTypeId;
+    SceneComponentTypeId trailRendererComponentTypeId;
     
     SceneComponentTypeId targetSpawnSystemId;
     SceneComponentTypeId levelSystemId;
@@ -136,20 +137,29 @@ typedef struct TrailNode {
     Vector3 position;
     Vector3 velocity;
     float time;
-    float maxTime;
 } TrailNode;
 
+typedef struct TrailWidthStep {
+    float width;
+    float percent;
+} TrailWidthStep;
+
 typedef struct TrailRendererComponent {
-    Mesh *mesh;
+    Mesh mesh;
+    int meshIsDirty;
     TrailNode *nodes;
     int nodeCount;
     int nodeCapacity;
-    float emitterWidth;
-    float emitterDuration;
+    TrailWidthStep* trailWidths;
+    int trailWidthCount;
+
     float emitterRate;
+    float maxLifeTime;
     float time;
-    float accumulatedTime;
+    float lastEmitTime;
     Vector3 emitterVelocity;
+    Vector3 lastPosition;
+    int maxVertexCount;
 } TrailRendererComponent;
 
 typedef struct Action {
@@ -271,6 +281,7 @@ void AddLinearVelocityComponent(SceneObjectId objectId, Vector3 velocity, Vector
 void AddAutoDestroyComponent(SceneObjectId objectId, float lifeTime);
 void AddHealthComponent(SceneObjectId objectId, int health, int maxHealth);
 SceneComponentId AddTimerComponent(SceneObjectId objectId, float duration, int repeat);
+SceneComponentId AddTrailRendererComponent(SceneObjectId objectId, Mesh mesh, float emitterRate, float maxLifeTime, Vector3 emitterVelocity, int maxVertexCount);
 
 int ActionFromJSON(cJSON* actionCfg, Action* action);
 void TriggerActions(SceneGraph *sceneGraph, SceneObjectId objectId, Action *actions, int count);

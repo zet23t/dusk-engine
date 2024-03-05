@@ -21,6 +21,7 @@
 #include "test/plane/components/text_component.c"
 #include "test/plane/components/timer_component.c"
 #include "test/plane/components/action_component.c"
+#include "test/plane/components/trail_renderer_component.c"
 #include "test/plane/system/ground_tile_system.c"
 #include "test/plane/system/player_input_handler.c"
 #include "test/plane/system/target_spawn_system.c"

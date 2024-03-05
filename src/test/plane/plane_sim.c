@@ -292,6 +292,7 @@ void TargetHandlerComponentRegister();
 void TextComponentRegister();
 void ActionComponentRegister();
 void TimerComponentRegister();
+void TrailRendererComponentRegister();
 
 void RegisterTargetSpawnSystem();
 void CloudSystemRegister();
@@ -387,6 +388,7 @@ int plane_sim_init()
     TextComponentRegister();
     ActionComponentRegister();
     TimerComponentRegister();
+    TrailRendererComponentRegister();
 
     return initScene();
 }
