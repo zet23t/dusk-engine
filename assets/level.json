@@ -46,7 +46,7 @@
                     { "type": "MeshRendererComponent", "mesh": "fighter-plane-2", "litAmount": 0 },
                     { "type": "LinearVelocityComponent", "velocity": [0,0,-5] },
                     { "type": "TargetHandlerComponent", "radius": 1.0, "colliderMask": 1, 
-                        "onHit": [{ 
+                        "onHit": [{
                             "prefab": "spark",
                             "spawnCount": 12,
                             "bulletVelocityFactor": [-0.25, -0.5],

@@ -1,6 +1,7 @@
 #include "../plane_sim_g.h"
 #include <memory.h>
 #include <string.h>
+#include <stdlib.h>
 void TrailRendererComponent_onInitialize(SceneObject* sceneObject, SceneComponentId sceneComponentId, void* componentData, void* initArg)
 {
     TrailRendererComponent* trailRendererComponent = (TrailRendererComponent*)componentData;
@@ -66,6 +67,10 @@ void TrailRendererComponent_onInitialize(SceneObject* sceneObject, SceneComponen
 void TrailRendererComponent_onDestroy(SceneObject* sceneObject, SceneComponentId sceneComponentId, void* componentData)
 {
     TrailRendererComponent* trailRendererComponent = (TrailRendererComponent*)componentData;
+    UnloadMesh(trailRendererComponent->mesh);
+    if (trailRendererComponent->trailWidths) {
+        free(trailRendererComponent->trailWidths);
+    }
     if (trailRendererComponent->nodes) {
         free(trailRendererComponent->nodes);
     }
@@ -79,6 +84,11 @@ static void TrailRendererComponent_newNode(TrailRendererComponent* trailRenderer
             : trailRendererComponent->nodeCapacity * 2;
         trailRendererComponent->nodes = realloc(
             trailRendererComponent->nodes, trailRendererComponent->nodeCapacity * sizeof(TrailNode));
+        if (trailRendererComponent->mesh.vboId != NULL)
+        {
+            UnloadMesh(trailRendererComponent->mesh);
+            memset(&trailRendererComponent->mesh, 0, sizeof(Mesh));
+        }
     }
     memmove(trailRendererComponent->nodes + 1, trailRendererComponent->nodes, trailRendererComponent->nodeCount * sizeof(TrailNode));
     TrailNode* node = &trailRendererComponent->nodes[0];
@@ -106,15 +116,14 @@ void TrailRendererComponent_onUpdate(SceneObject* sceneObject, SceneComponentId 
         return;
     }
 
-    for (int i=0;i<trailRendererComponent->nodeCount;i++)
-    {
+    trailRendererComponent->meshIsDirty = 1;
+    for (int i = 0; i < trailRendererComponent->nodeCount; i++) {
         TrailNode* node = &trailRendererComponent->nodes[i];
         node->time += deltaTime;
         if (node->time > trailRendererComponent->maxLifeTime) {
             trailRendererComponent->nodeCount = i;
             break;
-        }
-        else {
+        } else {
             node->position = Vector3Add(node->position, Vector3Scale(node->velocity, deltaTime));
         }
     }
@@ -129,112 +138,134 @@ void TrailRendererComponent_onUpdate(SceneObject* sceneObject, SceneComponentId 
         Vector3 spawnPoint = worldPosition;
         if (tRemaining > 0.0f) {
             float t = 1.0f - tRemaining / deltaTime;
-            if (t < 0.0f) t = 0.0f;
+            if (t < 0.0f)
+                t = 0.0f;
             spawnPoint = Vector3Lerp(prevPosition, worldPosition, t);
         }
         TrailRendererComponent_newNode(trailRendererComponent, spawnPoint, trailRendererComponent->emitterVelocity);
     }
     trailRendererComponent->lastPosition = worldPosition;
-    
-    // trail always starts at the current position and goes over its nodes - hence the +1
-    int trailElements = trailRendererComponent->nodeCount + 1;
-    if (trailElements < 2) {
-        return;
-    }
-
-    Mesh *mesh = &trailRendererComponent->mesh;
-    int vertexCount = trailElements * 2;
-    if (vertexCount > trailRendererComponent->maxVertexCount) {
-        trailRendererComponent->maxVertexCount *= 2;
-        if (trailRendererComponent->maxVertexCount < vertexCount) {
-            trailRendererComponent->maxVertexCount = vertexCount;
-        }
-        mesh->vertices = realloc(mesh->vertices, trailRendererComponent->maxVertexCount * sizeof(float) * 3);
-        mesh->texcoords = realloc(mesh->texcoords, trailRendererComponent->maxVertexCount * sizeof(float) * 2);
-        mesh->indices = realloc(mesh->indices, trailRendererComponent->maxVertexCount * sizeof(uint16_t) * 3 * 2);
-
-        uint16_t index = 0;
-        for (int i=0;i < trailRendererComponent->maxVertexCount * 3 * 2;i+=6)
-        {
-            mesh->indices[i] = index++; // 0
-            mesh->indices[i + 1] = index++; // 1
-            mesh->indices[i + 2] = index++; // 2
-
-            mesh->indices[i + 3] = index - 1; // 2
-            mesh->indices[i + 4] = index - 2; // 1
-            mesh->indices[i + 5] = index++;
-        }
-    }
-    mesh->vertexCount = vertexCount;
-    mesh->triangleCount = trailElements * 2 - 2;
-    float* vertices = mesh->vertices;
-    float* texcoords = mesh->texcoords;
-    
-    vertices[0] = worldPosition.x;
-    vertices[1] = worldPosition.y;
-    vertices[2] = worldPosition.z;
-
-    vertices[3] = worldPosition.x;
-    vertices[4] = worldPosition.y;
-    vertices[5] = worldPosition.z;
-    
-    texcoords[0] = 0.0f;
-    texcoords[1] = 0.0f;
-
-    texcoords[2] = 1.0f;
-    texcoords[3] = 0.0f;
-
-    for (int i=0;i<trailRendererComponent->nodeCount;i++)
-    {
-        TrailNode* node = &trailRendererComponent->nodes[i];
-        vertices[(i + 1) * 6] = node->position.x;
-        vertices[(i + 1) * 6 + 1] = node->position.y;
-        vertices[(i + 1) * 6 + 2] = node->position.z;
-
-        vertices[(i + 1) * 6 + 3] = node->position.x;
-        vertices[(i + 1) * 6 + 4] = node->position.y;
-        vertices[(i + 1) * 6 + 5] = node->position.z;
-
-        texcoords[(i + 1) * 4] = 0.0f;
-        texcoords[(i + 1) * 4 + 1] = 0.0f;
-
-        texcoords[(i + 1) * 4 + 2] = 1.0f;
-        texcoords[(i + 1) * 4 + 3] = 0.0f;
-    }
-
-    // the vertices are set, now update the widths
-    Vector3 prev = worldPosition;
-    Vector3 up = (Vector3) { 0, 1, 0 };
-    TrailRendererComponent_setWidth(up, worldPosition, *((Vector3*)&vertices[6]), 1.0f, vertices);
-    for (int i=0;i<trailRendererComponent->nodeCount - 1;i++)
-    {
-        Vector3 pos = *((Vector3*)&vertices[(i + 1) * 6]);
-        Vector3 next = *((Vector3*)&vertices[(i + 3) * 6]);
-        TrailRendererComponent_setWidth(up, prev, next, 1.0f, &vertices[(i + 1) * 6]);
-        prev = pos;
-    }
 }
 
-SceneComponentId AddTrailRendererComponent(SceneObjectId objectId, Mesh mesh, float emitterRate, float maxLifeTime, Vector3 emitterVelocity, int maxVertexCount)
+SceneComponentId AddTrailRendererComponent(SceneObjectId objectId, float emitterRate, float maxLifeTime, Vector3 emitterVelocity, int maxVertexCount, Material material)
 {
-    SceneComponentId componentId = SceneGraph_addComponent(psg.sceneGraph, objectId, psg.trailRendererComponentTypeId, &(ComponentInitializer) {
-        .memData = &(TrailRendererComponent) {
-            .mesh = mesh,
-            .emitterRate = emitterRate,
-            .maxLifeTime = maxLifeTime,
-            .emitterVelocity = emitterVelocity,
-            .maxVertexCount = maxVertexCount,
-            .nodeCount = 0,
-            .nodeCapacity = 0,
-            .nodes = NULL,
-            .trailWidths = NULL,
-            .trailWidthCount = 0,
-            .time = 0,
-            .lastEmitTime = 0,
-            .lastPosition = (Vector3) { 0, 0, 0 }
-        }
-    });
+    SceneComponentId componentId = SceneGraph_addComponent(psg.sceneGraph, objectId, 
+        psg.trailRendererComponentTypeId, &(ComponentInitializer) { 
+            .memData = &(TrailRendererComponent) 
+            {
+                .mesh = {0},
+                .material = material,
+                .emitterRate = emitterRate, 
+                .maxLifeTime = maxLifeTime, 
+                .emitterVelocity = emitterVelocity, 
+                .nodeCount = 0, 
+                .nodeCapacity = 0, 
+                .nodes = NULL, 
+                .trailWidths = NULL, 
+                .trailWidthCount = 0, 
+                .time = 0, 
+                .lastEmitTime = 0, 
+                .lastPosition = (Vector3) { 0, 0, 0 } 
+            } 
+        });
     return componentId;
+}
+
+void TrailRendererComponent_onDraw(Camera3D camera, SceneObject* sceneObject, SceneComponentId sceneComponentId, void* componentData, void* userdata)
+{
+    TrailRendererComponent* trailRendererComponent = (TrailRendererComponent*)componentData;
+    if (trailRendererComponent->meshIsDirty) {
+        Mesh* mesh = &trailRendererComponent->mesh;
+        trailRendererComponent->meshIsDirty = 0;
+
+        // trail always starts at the current position and goes over its nodes - hence the +1
+        int trailElements = trailRendererComponent->nodeCount + 1;
+        if (trailElements < 2) {
+            return;
+        }
+
+        int vertexCount = trailElements * 2;
+        if (trailRendererComponent->mesh.vertices == NULL) {
+            mesh->vertices = (float*) malloc(vertexCount * sizeof(float) * 3);
+            mesh->texcoords = (float*) malloc(vertexCount * sizeof(float) * 2);
+            mesh->indices = (uint16_t*) malloc(vertexCount * sizeof(uint16_t) * 3 * 2);
+
+            uint16_t index = 0;
+            for (int i = 0; i < vertexCount * 3 * 2; i += 6) {
+                mesh->indices[i] = index++; // 0
+                mesh->indices[i + 1] = index++; // 1
+                mesh->indices[i + 2] = index++; // 2
+
+                mesh->indices[i + 3] = index - 1; // 2
+                mesh->indices[i + 4] = index - 2; // 1
+                mesh->indices[i + 5] = index++;
+            }
+
+        }
+        mesh->vertexCount = vertexCount;
+        mesh->triangleCount = trailElements * 2 - 2;
+        float* vertices = mesh->vertices;
+        float* texcoords = mesh->texcoords;
+
+        Vector3 worldPosition = SceneGraph_getWorldPosition(sceneObject->graph, sceneObject->id);
+
+        vertices[0] = worldPosition.x;
+        vertices[1] = worldPosition.y;
+        vertices[2] = worldPosition.z;
+
+        vertices[3] = worldPosition.x;
+        vertices[4] = worldPosition.y;
+        vertices[5] = worldPosition.z;
+
+        texcoords[0] = 0.0f;
+        texcoords[1] = 0.0f;
+
+        texcoords[2] = 1.0f;
+        texcoords[3] = 0.0f;
+
+        for (int i = 0; i < trailRendererComponent->nodeCount; i++) {
+            TrailNode* node = &trailRendererComponent->nodes[i];
+            vertices[(i + 1) * 6] = node->position.x;
+            vertices[(i + 1) * 6 + 1] = node->position.y;
+            vertices[(i + 1) * 6 + 2] = node->position.z;
+
+            vertices[(i + 1) * 6 + 3] = node->position.x;
+            vertices[(i + 1) * 6 + 4] = node->position.y;
+            vertices[(i + 1) * 6 + 5] = node->position.z;
+
+            texcoords[(i + 1) * 4] = 0.0f;
+            texcoords[(i + 1) * 4 + 1] = 0.0f;
+
+            texcoords[(i + 1) * 4 + 2] = 1.0f;
+            texcoords[(i + 1) * 4 + 3] = 0.0f;
+        }
+
+        // the vertices are set, now update the widths
+        Vector3 prev = worldPosition;
+        Vector3 up = (Vector3) { 0, 1, 0 };
+        TrailRendererComponent_setWidth(up, worldPosition, *((Vector3*)&vertices[6]), 1.0f, vertices);
+        for (int i = 0; i < trailRendererComponent->nodeCount - 1; i++) {
+            Vector3 pos = *((Vector3*)&vertices[(i + 1) * 6]);
+            Vector3 next = *((Vector3*)&vertices[(i + 3) * 6]);
+            TrailRendererComponent_setWidth(up, prev, next, 1.0f, &vertices[(i + 1) * 6]);
+            prev = pos;
+        }
+
+        if (mesh->vaoId < 1) {
+            UploadMesh(mesh, 1);
+        } else {
+            UpdateMeshBuffer(*mesh, 0, mesh->vertices, mesh->vertexCount * 3 * sizeof(float), 0);
+            UpdateMeshBuffer(*mesh, 3, mesh->texcoords, mesh->vertexCount * 2 * sizeof(float), 0);
+        }
+    }
+    Vector3 pos = SceneGraph_getWorldPosition(sceneObject->graph, sceneObject->id);
+    DrawSphereWires(pos, 0.5f, 10, 10, RED);
+    if (trailRendererComponent->mesh.vboId != NULL)
+        DrawMesh(trailRendererComponent->mesh, trailRendererComponent->material, MatrixIdentity());
+    for (int i = 0; i < trailRendererComponent->nodeCount; i++) {
+        TrailNode* node = &trailRendererComponent->nodes[i];
+        DrawSphere(node->position, 0.5f, RED);
+    }
 }
 
 void TrailRendererComponentRegister()
@@ -244,5 +275,5 @@ void TrailRendererComponentRegister()
             .onInitialize = TrailRendererComponent_onInitialize,
             .onDestroy = TrailRendererComponent_onDestroy,
             .updateTick = TrailRendererComponent_onUpdate,
-        });
+            .draw = TrailRendererComponent_onDraw });
 }

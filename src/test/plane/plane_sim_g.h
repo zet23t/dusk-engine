@@ -146,6 +146,7 @@ typedef struct TrailWidthStep {
 
 typedef struct TrailRendererComponent {
     Mesh mesh;
+    Material material;
     int meshIsDirty;
     TrailNode *nodes;
     int nodeCount;
@@ -159,7 +160,6 @@ typedef struct TrailRendererComponent {
     float lastEmitTime;
     Vector3 emitterVelocity;
     Vector3 lastPosition;
-    int maxVertexCount;
 } TrailRendererComponent;
 
 typedef struct Action {
@@ -281,7 +281,7 @@ void AddLinearVelocityComponent(SceneObjectId objectId, Vector3 velocity, Vector
 void AddAutoDestroyComponent(SceneObjectId objectId, float lifeTime);
 void AddHealthComponent(SceneObjectId objectId, int health, int maxHealth);
 SceneComponentId AddTimerComponent(SceneObjectId objectId, float duration, int repeat);
-SceneComponentId AddTrailRendererComponent(SceneObjectId objectId, Mesh mesh, float emitterRate, float maxLifeTime, Vector3 emitterVelocity, int maxVertexCount);
+SceneComponentId AddTrailRendererComponent(SceneObjectId objectId, float emitterRate, float maxLifeTime, Vector3 emitterVelocity, int maxVertexCount, Material material);
 
 int ActionFromJSON(cJSON* actionCfg, Action* action);
 void TriggerActions(SceneGraph *sceneGraph, SceneObjectId objectId, Action *actions, int count);

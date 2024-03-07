@@ -221,6 +221,8 @@ SceneObjectId plane_instantiate(Vector3 position)
     SceneGraph_setLocalPosition(psg.sceneGraph, plane, position);
     AddMeshRendererComponent(plane, psg.meshPlane, 0.0f);
 
+    AddTrailRendererComponent(plane, 1.0f, 2.0f, (Vector3){0,0,-1}, 20, psg.model.materials[1]);
+
     SceneObjectId propeller = SceneGraph_createObject(psg.sceneGraph, "propeller");
     SceneGraph_setParent(psg.sceneGraph, propeller, plane);
     SceneGraph_setLocalPosition(psg.sceneGraph, propeller, (Vector3) { 0, 0.062696f, 0.795618f });
