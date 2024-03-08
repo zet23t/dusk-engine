@@ -271,13 +271,14 @@ int main(void)
     int showInfo = 0;
     int isPaused = 0;
     int isSlowmo = 0;
+    int step = 0;
     // Main game loop
     SetTraceLogLevel(LOG_INFO);
     while (!WindowShouldClose()) {
         // Update
 
         float t = GetTime();
-        plane_sim_update(isPaused ? 0.0f : GetFrameTime() * (isSlowmo ? .1f : 1.0f));
+        plane_sim_update(isPaused && !step ? 0.0f : GetFrameTime() * (isSlowmo ? .1f : 1.0f));
         float updateDt = GetTime() - t;
         updateTimes[trackIndex % trackCount] = updateDt;
 
@@ -294,6 +295,10 @@ int main(void)
         }
         if (IsKeyPressed(KEY_O)) {
             isSlowmo = !isSlowmo;
+        }
+        step = 0;
+        if (IsKeyPressed(KEY_N)) {
+            step = 1;
         }
         // update();
 

@@ -206,13 +206,34 @@ static void onShoot(SceneGraph* graph, SceneComponentId shooter, ShootingCompone
     forward = Vector3Scale(forward, shootingConfig->bulletSpeed);
     forward.y = 0;
     AddLinearVelocityComponent(bullet, forward, Vector3Zero(), Vector3Zero());
-    
+
     AddAutoDestroyComponent(bullet, shootingConfig->bulletLifetime);
     SceneGraph_addComponent(graph, bullet, psg.bulletComponentId,
         &(BulletComponent) {
             .radius = 0.01f,
             .colliderFlags = 1,
             .damage = 1 });
+}
+static Material _trailMaterial = { 0 };
+
+static void AddWingTrail(SceneObjectId parent, float speed)
+{
+    if (_trailMaterial.shader.id == 0) {
+        Texture2D texture = LoadTexture("assets/wing-trail.png");
+        _trailMaterial = LoadMaterialDefault();
+        SetMaterialTexture(&_trailMaterial, MATERIAL_MAP_DIFFUSE, texture);
+    }
+    SceneComponentId trailId = AddTrailRendererComponent(parent, 40.0f, 0.25f, (Vector3) { 0, 0, -speed }, 20, _trailMaterial);
+    TrailRendererComponent* trail = NULL;
+    SceneComponent* component = SceneGraph_getComponent(psg.sceneGraph, trailId, (void**)&trail);
+    if (component)
+    {
+        TrailRendererComponent_addTrailWidth(trail, 0.0f, 0.0f);
+        TrailRendererComponent_addTrailWidth(trail, 0.05f, 0.23f);
+        TrailRendererComponent_addTrailWidth(trail, 0.02f, 0.5f);
+        TrailRendererComponent_addTrailWidth(trail, 0.001f, 0.8f);
+
+    }
 }
 
 SceneObjectId plane_instantiate(Vector3 position)
@@ -221,7 +242,14 @@ SceneObjectId plane_instantiate(Vector3 position)
     SceneGraph_setLocalPosition(psg.sceneGraph, plane, position);
     AddMeshRendererComponent(plane, psg.meshPlane, 0.0f);
 
-    AddTrailRendererComponent(plane, 1.0f, 2.0f, (Vector3){0,0,-1}, 20, psg.model.materials[1]);
+    SceneObjectId wingTrailLeft = SceneGraph_createObject(psg.sceneGraph, "wing-trail-left");
+    SceneGraph_setParent(psg.sceneGraph, wingTrailLeft, plane);
+    SceneGraph_setLocalPosition(psg.sceneGraph, wingTrailLeft, (Vector3) { 0.95f, 0, 0.55f });
+    AddWingTrail(wingTrailLeft, 30);
+    SceneObjectId wingTrailRight = SceneGraph_createObject(psg.sceneGraph, "wing-trail-right");
+    SceneGraph_setParent(psg.sceneGraph, wingTrailRight, plane);
+    SceneGraph_setLocalPosition(psg.sceneGraph, wingTrailRight, (Vector3) { -0.95f, 0, 0.55f });
+    AddWingTrail(wingTrailRight, 30);
 
     SceneObjectId propeller = SceneGraph_createObject(psg.sceneGraph, "propeller");
     SceneGraph_setParent(psg.sceneGraph, propeller, plane);
@@ -234,6 +262,10 @@ SceneObjectId plane_instantiate(Vector3 position)
         SceneGraph_setLocalPosition(psg.sceneGraph, propellerBlade, (Vector3) { 0, 0, 0 });
         SceneGraph_setLocalRotation(psg.sceneGraph, propellerBlade, (Vector3) { 0, 0, 120 * i });
         AddMeshRendererComponent(propellerBlade, psg.meshPropellerBlade, 0.0f);
+        SceneObjectId propellerBladeTrail = SceneGraph_createObject(psg.sceneGraph, "propeller-blade-trail");
+        SceneGraph_setParent(psg.sceneGraph, propellerBladeTrail, propellerBlade);
+        SceneGraph_setLocalPosition(psg.sceneGraph, propellerBladeTrail, (Vector3) { 0.25f, 0, 0 });
+        AddWingTrail(propellerBladeTrail, 0);
     }
 
     SceneGraph_addComponent(psg.sceneGraph, plane, psg.planeBehaviorComponentId,
@@ -246,7 +278,7 @@ SceneObjectId plane_instantiate(Vector3 position)
         });
 
     const float drag = 5.0f;
-    AddLinearVelocityComponent(plane, Vector3Zero(), Vector3Zero(), (Vector3) {drag, drag, drag});
+    AddLinearVelocityComponent(plane, Vector3Zero(), Vector3Zero(), (Vector3) { drag, drag, drag });
 
     ShootingConfig shootingConfig = {
         .shotInterval = 0.15f,
@@ -410,8 +442,7 @@ void plane_sim_draw()
         reloadTimer = 0;
         SetTraceLogLevel(LOG_WARNING);
         shaderLoad(1);
-        if (levelConfigLoad(IsKeyPressed(KEY_F5)))
-        {
+        if (levelConfigLoad(IsKeyPressed(KEY_F5))) {
             initScene();
         }
         SetTraceLogLevel(LOG_INFO);

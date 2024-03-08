@@ -282,6 +282,7 @@ void AddAutoDestroyComponent(SceneObjectId objectId, float lifeTime);
 void AddHealthComponent(SceneObjectId objectId, int health, int maxHealth);
 SceneComponentId AddTimerComponent(SceneObjectId objectId, float duration, int repeat);
 SceneComponentId AddTrailRendererComponent(SceneObjectId objectId, float emitterRate, float maxLifeTime, Vector3 emitterVelocity, int maxVertexCount, Material material);
+void TrailRendererComponent_addTrailWidth(TrailRendererComponent* trailRendererComponent, float width, float percent);
 
 int ActionFromJSON(cJSON* actionCfg, Action* action);
 void TriggerActions(SceneGraph *sceneGraph, SceneObjectId objectId, Action *actions, int count);

@@ -67,7 +67,8 @@ void TrailRendererComponent_onInitialize(SceneObject* sceneObject, SceneComponen
 void TrailRendererComponent_onDestroy(SceneObject* sceneObject, SceneComponentId sceneComponentId, void* componentData)
 {
     TrailRendererComponent* trailRendererComponent = (TrailRendererComponent*)componentData;
-    UnloadMesh(trailRendererComponent->mesh);
+    if (trailRendererComponent->mesh.vertices != NULL)
+        UnloadMesh(trailRendererComponent->mesh);
     if (trailRendererComponent->trailWidths) {
         free(trailRendererComponent->trailWidths);
     }
@@ -84,7 +85,7 @@ static void TrailRendererComponent_newNode(TrailRendererComponent* trailRenderer
             : trailRendererComponent->nodeCapacity * 2;
         trailRendererComponent->nodes = realloc(
             trailRendererComponent->nodes, trailRendererComponent->nodeCapacity * sizeof(TrailNode));
-        if (trailRendererComponent->mesh.vboId != NULL)
+        if (trailRendererComponent->mesh.vertices != NULL)
         {
             UnloadMesh(trailRendererComponent->mesh);
             memset(&trailRendererComponent->mesh, 0, sizeof(Mesh));
@@ -101,12 +102,20 @@ static void TrailRendererComponent_newNode(TrailRendererComponent* trailRenderer
 
 static void TrailRendererComponent_setWidth(Vector3 vup, Vector3 prev, Vector3 next, float width, float* vertices)
 {
-    Vector3 dir = Vector3Normalize(Vector3Subtract(next, prev));
-    Vector3 right = Vector3CrossProduct(dir, vup);
-    Vector3 up = Vector3CrossProduct(right, dir);
-    Vector3 scale = Vector3Scale(up, width);
-    *((Vector3*)&vertices[0]) = Vector3Add(next, scale);
-    *((Vector3*)&vertices[3]) = Vector3Subtract(next, scale);
+    if (width < 0.0001f) {
+        return;
+    }
+    Vector3 pos = *(Vector3*)vertices;
+    float length = Vector3Length(Vector3Subtract(next, prev));
+    if (length < 0.0001f) {
+        return;
+    }
+    Vector3 dir = Vector3Scale(Vector3Subtract(next, prev), 1.0f / length);
+    Vector3 right = Vector3Normalize(Vector3CrossProduct(dir, vup));
+    // Vector3 up = Vector3CrossProduct(right, dir);
+    Vector3 scale = Vector3Scale(right, width);
+    *((Vector3*)&vertices[0]) = Vector3Subtract(pos, scale);
+    *((Vector3*)&vertices[3]) = Vector3Add(pos, scale);
 }
 
 void TrailRendererComponent_onUpdate(SceneObject* sceneObject, SceneComponentId sceneComponentId, float deltaTime, void* componentData)
@@ -174,12 +183,12 @@ SceneComponentId AddTrailRendererComponent(SceneObjectId objectId, float emitter
 void TrailRendererComponent_onDraw(Camera3D camera, SceneObject* sceneObject, SceneComponentId sceneComponentId, void* componentData, void* userdata)
 {
     TrailRendererComponent* trailRendererComponent = (TrailRendererComponent*)componentData;
+    Mesh* mesh = &trailRendererComponent->mesh;
     if (trailRendererComponent->meshIsDirty) {
-        Mesh* mesh = &trailRendererComponent->mesh;
         trailRendererComponent->meshIsDirty = 0;
 
         // trail always starts at the current position and goes over its nodes - hence the +1
-        int trailElements = trailRendererComponent->nodeCount + 1;
+        int trailElements = trailRendererComponent->nodeCapacity + 1;
         if (trailElements < 2) {
             return;
         }
@@ -187,85 +196,140 @@ void TrailRendererComponent_onDraw(Camera3D camera, SceneObject* sceneObject, Sc
         int vertexCount = trailElements * 2;
         if (trailRendererComponent->mesh.vertices == NULL) {
             mesh->vertices = (float*) malloc(vertexCount * sizeof(float) * 3);
+            memset(mesh->vertices, 0, vertexCount * sizeof(float) * 3);
+
             mesh->texcoords = (float*) malloc(vertexCount * sizeof(float) * 2);
-            mesh->indices = (uint16_t*) malloc(vertexCount * sizeof(uint16_t) * 3 * 2);
+            memset(mesh->texcoords, 0, vertexCount * sizeof(float) * 2);
+            
+            mesh->indices = (uint16_t*) malloc(trailElements * sizeof(uint16_t) * 3 * 2);
+            memset(mesh->indices, 0, trailElements * sizeof(uint16_t) * 3 * 2);
+
 
             uint16_t index = 0;
-            for (int i = 0; i < vertexCount * 3 * 2; i += 6) {
-                mesh->indices[i] = index++; // 0
-                mesh->indices[i + 1] = index++; // 1
-                mesh->indices[i + 2] = index++; // 2
+            for (int i = 0; i < trailElements * 3 * 2; i += 6) {
+                mesh->indices[i] = index;
+                mesh->indices[i + 1] = index + 1;
+                mesh->indices[i + 2] = index + 2;
 
-                mesh->indices[i + 3] = index - 1; // 2
-                mesh->indices[i + 4] = index - 2; // 1
-                mesh->indices[i + 5] = index++;
+                mesh->indices[i + 3] = index + 2;
+                mesh->indices[i + 4] = index + 1;
+                mesh->indices[i + 5] = index + 3;
+                index += 2;
+                // TraceLog(LOG_INFO, "indices: %d %d %d %d %d %d %d", i, 
+                //     mesh->indices[i], mesh->indices[i + 1], mesh->indices[i + 2], 
+                //     mesh->indices[i + 3], mesh->indices[i + 4], mesh->indices[i + 5]);
             }
 
         }
         mesh->vertexCount = vertexCount;
-        mesh->triangleCount = trailElements * 2 - 2;
-        float* vertices = mesh->vertices;
-        float* texcoords = mesh->texcoords;
-
-        Vector3 worldPosition = SceneGraph_getWorldPosition(sceneObject->graph, sceneObject->id);
-
-        vertices[0] = worldPosition.x;
-        vertices[1] = worldPosition.y;
-        vertices[2] = worldPosition.z;
-
-        vertices[3] = worldPosition.x;
-        vertices[4] = worldPosition.y;
-        vertices[5] = worldPosition.z;
-
-        texcoords[0] = 0.0f;
-        texcoords[1] = 0.0f;
-
-        texcoords[2] = 1.0f;
-        texcoords[3] = 0.0f;
-
-        for (int i = 0; i < trailRendererComponent->nodeCount; i++) {
-            TrailNode* node = &trailRendererComponent->nodes[i];
-            vertices[(i + 1) * 6] = node->position.x;
-            vertices[(i + 1) * 6 + 1] = node->position.y;
-            vertices[(i + 1) * 6 + 2] = node->position.z;
-
-            vertices[(i + 1) * 6 + 3] = node->position.x;
-            vertices[(i + 1) * 6 + 4] = node->position.y;
-            vertices[(i + 1) * 6 + 5] = node->position.z;
-
-            texcoords[(i + 1) * 4] = 0.0f;
-            texcoords[(i + 1) * 4 + 1] = 0.0f;
-
-            texcoords[(i + 1) * 4 + 2] = 1.0f;
-            texcoords[(i + 1) * 4 + 3] = 0.0f;
-        }
-
-        // the vertices are set, now update the widths
-        Vector3 prev = worldPosition;
-        Vector3 up = (Vector3) { 0, 1, 0 };
-        TrailRendererComponent_setWidth(up, worldPosition, *((Vector3*)&vertices[6]), 1.0f, vertices);
-        for (int i = 0; i < trailRendererComponent->nodeCount - 1; i++) {
-            Vector3 pos = *((Vector3*)&vertices[(i + 1) * 6]);
-            Vector3 next = *((Vector3*)&vertices[(i + 3) * 6]);
-            TrailRendererComponent_setWidth(up, prev, next, 1.0f, &vertices[(i + 1) * 6]);
-            prev = pos;
-        }
-
-        if (mesh->vaoId < 1) {
-            UploadMesh(mesh, 1);
-        } else {
-            UpdateMeshBuffer(*mesh, 0, mesh->vertices, mesh->vertexCount * 3 * sizeof(float), 0);
-            UpdateMeshBuffer(*mesh, 3, mesh->texcoords, mesh->vertexCount * 2 * sizeof(float), 0);
-        }
     }
-    Vector3 pos = SceneGraph_getWorldPosition(sceneObject->graph, sceneObject->id);
-    DrawSphereWires(pos, 0.5f, 10, 10, RED);
-    if (trailRendererComponent->mesh.vboId != NULL)
-        DrawMesh(trailRendererComponent->mesh, trailRendererComponent->material, MatrixIdentity());
+
+    mesh->triangleCount = (trailRendererComponent->nodeCount) * 2;
+    float* vertices = mesh->vertices;
+    float* texcoords = mesh->texcoords;
+
+    Vector3 worldPosition = SceneGraph_getWorldPosition(sceneObject->graph, sceneObject->id);
+
+    vertices[0] = worldPosition.x;
+    vertices[1] = worldPosition.y;
+    vertices[2] = worldPosition.z;
+
+    vertices[3] = worldPosition.x;
+    vertices[4] = worldPosition.y;
+    vertices[5] = worldPosition.z;
+
+    texcoords[0] = 0.0f;
+    texcoords[1] = 0.0f;
+
+    texcoords[2] = 1.0f;
+    texcoords[3] = 0.0f;
+
     for (int i = 0; i < trailRendererComponent->nodeCount; i++) {
         TrailNode* node = &trailRendererComponent->nodes[i];
-        DrawSphere(node->position, 0.5f, RED);
+        vertices[(i + 1) * 6] = node->position.x;
+        vertices[(i + 1) * 6 + 1] = node->position.y;
+        vertices[(i + 1) * 6 + 2] = node->position.z;
+
+        vertices[(i + 1) * 6 + 3] = node->position.x;
+        vertices[(i + 1) * 6 + 4] = node->position.y;
+        vertices[(i + 1) * 6 + 5] = node->position.z;
+
+        texcoords[(i + 1) * 4] = 0.0f;
+        texcoords[(i + 1) * 4 + 1] = 0.0f;
+
+        texcoords[(i + 1) * 4 + 2] = 1.0f;
+        texcoords[(i + 1) * 4 + 3] = 0.0f;
     }
+
+
+
+    // the vertices are set, now update the widths
+    Vector3 prev = *((Vector3*)&vertices[0]);
+    Vector3 up = Vector3Subtract(camera.position, camera.target);
+
+    int next = 6;
+    // the first point is attached to the emitting point and it can happen that it's 
+    // extremely close to the next point since it was just emitted; in that and for other cases
+    // let's just skip the first point for the width calculation and pick the next one. 
+    // sort of a smoothing for the first point
+    if (trailRendererComponent->nodeCount > 2) next = 12;
+    int widthIndex = 0;
+    TrailWidthStep currentStep = trailRendererComponent->trailWidths[widthIndex];
+    TrailWidthStep nextStep = trailRendererComponent->trailWidths[widthIndex + 1 < trailRendererComponent->trailWidthCount ? (widthIndex + 1) : widthIndex];
+    
+    TrailRendererComponent_setWidth(up, *((Vector3*)&vertices[0]), *((Vector3*)&vertices[next]), currentStep.width, vertices);
+    // there's 1 more vertex than nodes due to the attached first point
+    int last = trailRendererComponent->nodeCount;
+    for (int i = 1; i <= last; i++) {
+        Vector3 pos = *((Vector3*)&vertices[i * 6]);
+        Vector3 next = i < last ? *((Vector3*)&vertices[i * 6 + 6]) : pos;
+        TrailNode* node = &trailRendererComponent->nodes[i - 1];
+        float progress = node->time / trailRendererComponent->maxLifeTime;
+        if (progress > nextStep.percent && widthIndex < trailRendererComponent->trailWidthCount) {
+            widthIndex++;
+            currentStep = trailRendererComponent->trailWidths[widthIndex];
+            nextStep = trailRendererComponent->trailWidths[widthIndex + 1 < trailRendererComponent->trailWidthCount ? (widthIndex + 1) : widthIndex];
+        }
+        float width = nextStep.width;
+        if (progress < nextStep.percent) {
+            width = Lerp(currentStep.width, nextStep.width, (progress - currentStep.percent) / (nextStep.percent - currentStep.percent));
+        }
+        TrailRendererComponent_setWidth(up, prev, next, width, &vertices[i * 6]);
+        prev = pos;
+    }
+
+    if (mesh->vaoId < 1) {
+        UploadMesh(mesh, 1);
+    } else {
+        UpdateMeshBuffer(*mesh, 0, mesh->vertices, mesh->vertexCount * 3 * sizeof(float), 0);
+        UpdateMeshBuffer(*mesh, 3, mesh->texcoords, mesh->vertexCount * 2 * sizeof(float), 0);
+    }
+
+    if (trailRendererComponent->mesh.vboId != NULL)
+        DrawMesh(trailRendererComponent->mesh, trailRendererComponent->material, MatrixIdentity());
+
+    // Vector3 pos = SceneGraph_getWorldPosition(sceneObject->graph, sceneObject->id);
+    // for (int i=0;i<trailRendererComponent->mesh.triangleCount;i++)
+    // {
+    //     uint16_t ia = trailRendererComponent->mesh.indices[i*3];
+    //     uint16_t ib = trailRendererComponent->mesh.indices[i*3+1];
+    //     uint16_t ic = trailRendererComponent->mesh.indices[i*3+2];
+    //     Vector3 a = *((Vector3*)&trailRendererComponent->mesh.vertices[ia*3]);
+    //     Vector3 b = *((Vector3*)&trailRendererComponent->mesh.vertices[ib*3]);
+    //     Vector3 c = *((Vector3*)&trailRendererComponent->mesh.vertices[ic*3]);
+    //     // DrawTriangle3D(a, b, c, RED);
+    //     DrawLine3D(a, b, BLUE);
+    //     DrawLine3D(b, c, BLUE);
+    //     DrawLine3D(c, a, BLUE);
+    // }
+}
+
+void TrailRendererComponent_addTrailWidth(TrailRendererComponent* trailRendererComponent, float width, float percent)
+{
+    trailRendererComponent->trailWidthCount++;
+    trailRendererComponent->trailWidths = (TrailWidthStep*)realloc(trailRendererComponent->trailWidths, trailRendererComponent->trailWidthCount * sizeof(TrailWidthStep));
+    trailRendererComponent->trailWidths[trailRendererComponent->trailWidthCount - 1].width = width;
+    trailRendererComponent->trailWidths[trailRendererComponent->trailWidthCount - 1].percent = percent;
 }
 
 void TrailRendererComponentRegister()
