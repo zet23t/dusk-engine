@@ -27,6 +27,26 @@ void HandlePlayerInputUpdate()
     SceneGraph_getComponentByType(psg.sceneGraph, psg.playerPlane, psg.linearVelocityComponentId, (void**)&velocity, 0);
     if (velocity == NULL) return;
 
+    int cnt = GetTouchPointCount();
+
+    static int prevCnt = 0;
+    static int prevX = 0;
+    static int prevY = 0;
+    int touchX = cnt > 0 ? GetTouchX() : GetMouseX();
+    int touchY = cnt > 0 ? GetTouchY() : GetMouseY();
+    float div = GetScreenWidth() < GetScreenHeight() ? GetScreenHeight() : GetScreenWidth();
+    if ((prevCnt > 0 && cnt > 0) || (cnt == 0 && IsMouseButtonDown(MOUSE_LEFT_BUTTON)))
+    {
+        int dx = touchX - prevX;
+        int dy = touchY - prevY;
+
+        velocity->velocity.x -= dx * psg.deltaTime * 15000.0f / div;
+        velocity->velocity.z -= dy * psg.deltaTime * 15000.0f / div;
+    }
+    prevX = touchX;
+    prevY = touchY;
+    prevCnt = cnt;
+
     if (IsKeyDown(KEY_LEFT)) {
         velocity->velocity.x += psg.deltaTime * 50.0f;
     }
@@ -39,7 +59,7 @@ void HandlePlayerInputUpdate()
     if (IsKeyDown(KEY_DOWN)) {
         velocity->velocity.z -= psg.deltaTime * 50.0f;
     }
-    if (IsKeyDown(KEY_SPACE) || IsKeyDown(KEY_LEFT_CONTROL) || IsKeyDown(KEY_RIGHT_CONTROL)) {
+    if (IsKeyDown(KEY_SPACE) || IsKeyDown(KEY_LEFT_CONTROL) || IsKeyDown(KEY_RIGHT_CONTROL) || cnt > 1 ) {
         for (int i=0;1;i++)
         {
             ShootingComponent *shooting;

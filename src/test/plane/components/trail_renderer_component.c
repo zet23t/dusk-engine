@@ -204,7 +204,7 @@ void TrailRendererComponent_onDraw(Camera3D camera, SceneObject* sceneObject, Sc
             mesh->indices = (uint16_t*) malloc(trailElements * sizeof(uint16_t) * 3 * 2);
             memset(mesh->indices, 0, trailElements * sizeof(uint16_t) * 3 * 2);
 
-
+            // generate quad strip indices
             uint16_t index = 0;
             for (int i = 0; i < trailElements * 3 * 2; i += 6) {
                 mesh->indices[i] = index;
@@ -215,16 +215,12 @@ void TrailRendererComponent_onDraw(Camera3D camera, SceneObject* sceneObject, Sc
                 mesh->indices[i + 4] = index + 1;
                 mesh->indices[i + 5] = index + 3;
                 index += 2;
-                // TraceLog(LOG_INFO, "indices: %d %d %d %d %d %d %d", i, 
-                //     mesh->indices[i], mesh->indices[i + 1], mesh->indices[i + 2], 
-                //     mesh->indices[i + 3], mesh->indices[i + 4], mesh->indices[i + 5]);
             }
-
         }
         mesh->vertexCount = vertexCount;
     }
 
-    mesh->triangleCount = (trailRendererComponent->nodeCount) * 2;
+    mesh->triangleCount = (trailRendererComponent->nodeCapacity) * 2;
     float* vertices = mesh->vertices;
     float* texcoords = mesh->texcoords;
 
@@ -280,15 +276,16 @@ void TrailRendererComponent_onDraw(Camera3D camera, SceneObject* sceneObject, Sc
     TrailRendererComponent_setWidth(up, *((Vector3*)&vertices[0]), *((Vector3*)&vertices[next]), currentStep.width, vertices);
     // there's 1 more vertex than nodes due to the attached first point
     int last = trailRendererComponent->nodeCount;
+    int twcount = trailRendererComponent->trailWidthCount;
     for (int i = 1; i <= last; i++) {
         Vector3 pos = *((Vector3*)&vertices[i * 6]);
         Vector3 next = i < last ? *((Vector3*)&vertices[i * 6 + 6]) : pos;
         TrailNode* node = &trailRendererComponent->nodes[i - 1];
         float progress = node->time / trailRendererComponent->maxLifeTime;
-        if (progress > nextStep.percent && widthIndex < trailRendererComponent->trailWidthCount) {
+        if (progress > nextStep.percent && widthIndex < twcount) {
             widthIndex++;
-            currentStep = trailRendererComponent->trailWidths[widthIndex];
-            nextStep = trailRendererComponent->trailWidths[widthIndex + 1 < trailRendererComponent->trailWidthCount ? (widthIndex + 1) : widthIndex];
+            currentStep = trailRendererComponent->trailWidths[widthIndex < twcount ? widthIndex : twcount - 1];
+            nextStep = trailRendererComponent->trailWidths[widthIndex + 1 < twcount ? (widthIndex + 1) : twcount - 1];
         }
         float width = nextStep.width;
         if (progress < nextStep.percent) {
@@ -296,6 +293,11 @@ void TrailRendererComponent_onDraw(Camera3D camera, SceneObject* sceneObject, Sc
         }
         TrailRendererComponent_setWidth(up, prev, next, width, &vertices[i * 6]);
         prev = pos;
+    }
+    for (int i = last * 6; i < mesh->vertexCount * 3; i += 3) {
+        vertices[i] = prev.x;
+        vertices[i + 1] = prev.y;
+        vertices[i + 2] = prev.z;
     }
 
     if (mesh->vaoId < 1) {

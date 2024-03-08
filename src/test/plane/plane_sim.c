@@ -232,7 +232,6 @@ static void AddWingTrail(SceneObjectId parent, float speed)
         TrailRendererComponent_addTrailWidth(trail, 0.05f, 0.23f);
         TrailRendererComponent_addTrailWidth(trail, 0.02f, 0.5f);
         TrailRendererComponent_addTrailWidth(trail, 0.001f, 0.8f);
-
     }
 }
 
@@ -262,10 +261,10 @@ SceneObjectId plane_instantiate(Vector3 position)
         SceneGraph_setLocalPosition(psg.sceneGraph, propellerBlade, (Vector3) { 0, 0, 0 });
         SceneGraph_setLocalRotation(psg.sceneGraph, propellerBlade, (Vector3) { 0, 0, 120 * i });
         AddMeshRendererComponent(propellerBlade, psg.meshPropellerBlade, 0.0f);
-        SceneObjectId propellerBladeTrail = SceneGraph_createObject(psg.sceneGraph, "propeller-blade-trail");
-        SceneGraph_setParent(psg.sceneGraph, propellerBladeTrail, propellerBlade);
-        SceneGraph_setLocalPosition(psg.sceneGraph, propellerBladeTrail, (Vector3) { 0.25f, 0, 0 });
-        AddWingTrail(propellerBladeTrail, 0);
+        // SceneObjectId propellerBladeTrail = SceneGraph_createObject(psg.sceneGraph, "propeller-blade-trail");
+        // SceneGraph_setParent(psg.sceneGraph, propellerBladeTrail, propellerBlade);
+        // SceneGraph_setLocalPosition(psg.sceneGraph, propellerBladeTrail, (Vector3) { 0.25f, 0, 0 });
+        // AddWingTrail(propellerBladeTrail, 0);
     }
 
     SceneGraph_addComponent(psg.sceneGraph, plane, psg.planeBehaviorComponentId,
