@@ -25,7 +25,17 @@
             { "time": 0, "prefab": "enemy-plane-flyin-1", "position": [7,-35,-7.5] },
             { "time": 1, "showMessage": "ENEMIES SPOTED\nGET READY", "messageDuration": 2 },
             { "time": 7, "prefab": "formation-1", "position": [4,0,12.5] },
-            { "time": 9, "prefab": "formation-1", "position": [-5,0,12.5] }
+            { "time": 9, "prefab": "formation-1", "position": [-5,0,12.5] },
+            { "time": 12, "prefab": "enemy-plane-flyin-1", "position": [12,-35,-4] },
+            { "time": 13, "prefab": "enemy-plane-flyin-1", "position": [-12,-35,-4] },
+            { "time": 15, "prefab": "enemy-plane-flyin-1", "position": [6,-35,-9] },
+            { "time": 16, "prefab": "enemy-plane-flyin-1", "position": [-6,-35,-9] },
+            { "time": 20, "showMessage": "WATCH OUT!", "messageDuration": 2 },
+            { "time": 22, "prefab": "formation-1", "position": [4,0,12.5] },
+            { "time": 25, "prefab": "enemy-plane-flyin-1", "position": [0,-35,-10] },
+            { "time": 26, "prefab": "enemy-plane-flyin-1", "position": [9,-35,-6] },
+            { "time": 28, "prefab": "enemy-plane-flyin-1", "position": [7,-35,-7.5] },
+            { "time": 30, "prefab": "formation-1", "position": [-5,0,12.5] }
         ],
         "objects": {
             "formation-1":{
@@ -68,7 +78,9 @@
             "spark": {
                 "components": [
                     { "type": "MeshRendererComponent", "mesh": "hit-particle-1", "litAmount": 1 },
-                    { "type": "LinearVelocityComponent", "velocity": [0,0,0], "drag":[1, 1, 1], "acceleration": [0, -2, 0] },
+                    { "type": "TrailRendererComponent", "maxLifeTime": 0.25, "emitterRate": 20,
+                    "trailWidths": [0, 0.05, 0.8, 0]},
+                    { "type": "LinearVelocityComponent", "velocity": [0,0,0], "drag":[1, 1, 1], "acceleration": [0, -8, 0] },
                     { "type": "AutoDestroyComponent", "lifeTime": 0.5 }
                 ]
             }

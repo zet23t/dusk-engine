@@ -2,6 +2,18 @@
 #include <memory.h>
 #include <string.h>
 #include <stdlib.h>
+
+void TrailRendererComponent_setMaterial(TrailRendererComponent* trailRendererComponent, Material material, int ownsMaterial)
+{
+    if (trailRendererComponent->ownsMaterial && trailRendererComponent->material.shader.id > 0)
+    {
+        UnloadMaterial(trailRendererComponent->material);
+    }
+
+    trailRendererComponent->material = material;
+    trailRendererComponent->ownsMaterial = ownsMaterial;
+}
+
 void TrailRendererComponent_onInitialize(SceneObject* sceneObject, SceneComponentId sceneComponentId, void* componentData, void* initArg)
 {
     TrailRendererComponent* trailRendererComponent = (TrailRendererComponent*)componentData;
@@ -15,6 +27,7 @@ void TrailRendererComponent_onInitialize(SceneObject* sceneObject, SceneComponen
         trailRendererComponent->emitterRate = 10.0f;
         trailRendererComponent->emitterVelocity = (Vector3) { 0, 0, 0 };
         trailRendererComponent->maxLifeTime = 1.0f;
+        TrailRendererComponent_setMaterial(trailRendererComponent, LoadMaterialDefault(), 1);
         cJSON* cfg = initializer->config;
         MappedVariable mappedVariables[] = {
             { .name = "maxLifeTime", .type = VALUE_TYPE_FLOAT, .floatValue = &trailRendererComponent->maxLifeTime },
@@ -32,12 +45,12 @@ void TrailRendererComponent_onInitialize(SceneObject* sceneObject, SceneComponen
             }
             trailRendererComponent->trailWidthCount = n / 2;
             trailRendererComponent->trailWidths = (TrailWidthStep*)malloc(trailRendererComponent->trailWidthCount * sizeof(TrailWidthStep));
-            for (int i = 0; i < trailRendererComponent->trailWidthCount; i += 2) {
+            for (int i = 0; i < n; i += 2) {
                 cJSON* percent = cJSON_GetArrayItem(widths, i);
                 cJSON* width = cJSON_GetArrayItem(widths, i + 1);
                 if (cJSON_IsNumber(width) && cJSON_IsNumber(percent)) {
-                    trailRendererComponent->trailWidths[i].width = (float)width->valuedouble;
-                    trailRendererComponent->trailWidths[i].percent = (float)percent->valuedouble;
+                    trailRendererComponent->trailWidths[i>>1].width = (float)width->valuedouble;
+                    trailRendererComponent->trailWidths[i>>1].percent = (float)percent->valuedouble;
                 } else {
                     TraceLog(LOG_ERROR, "element at %d or %d aren't numbers", i, i + 1);
                     free(trailRendererComponent->trailWidths);
@@ -61,6 +74,9 @@ void TrailRendererComponent_onInitialize(SceneObject* sceneObject, SceneComponen
                 }
             }
         }
+        else {
+            TraceLog(LOG_ERROR, "a valid trailWidths array must be provided, otherwise the trail will not render");
+        }
     }
 }
 
@@ -74,6 +90,10 @@ void TrailRendererComponent_onDestroy(SceneObject* sceneObject, SceneComponentId
     }
     if (trailRendererComponent->nodes) {
         free(trailRendererComponent->nodes);
+    }
+    if (trailRendererComponent->ownsMaterial && trailRendererComponent->material.shader.id > 0)
+    {
+        UnloadMaterial(trailRendererComponent->material);
     }
 }
 
@@ -156,7 +176,7 @@ void TrailRendererComponent_onUpdate(SceneObject* sceneObject, SceneComponentId 
     trailRendererComponent->lastPosition = worldPosition;
 }
 
-SceneComponentId AddTrailRendererComponent(SceneObjectId objectId, float emitterRate, float maxLifeTime, Vector3 emitterVelocity, int maxVertexCount, Material material)
+SceneComponentId AddTrailRendererComponent(SceneObjectId objectId, float emitterRate, float maxLifeTime, Vector3 emitterVelocity, int maxVertexCount, Material material, int ownsMaterial)
 {
     SceneComponentId componentId = SceneGraph_addComponent(psg.sceneGraph, objectId, 
         psg.trailRendererComponentTypeId, &(ComponentInitializer) { 
@@ -164,6 +184,7 @@ SceneComponentId AddTrailRendererComponent(SceneObjectId objectId, float emitter
             {
                 .mesh = {0},
                 .material = material,
+                .ownsMaterial = ownsMaterial,
                 .emitterRate = emitterRate, 
                 .maxLifeTime = maxLifeTime, 
                 .emitterVelocity = emitterVelocity, 
@@ -218,6 +239,10 @@ void TrailRendererComponent_onDraw(Camera3D camera, SceneObject* sceneObject, Sc
             }
         }
         mesh->vertexCount = vertexCount;
+    }
+
+    if (mesh->vertices == NULL) {
+        return;
     }
 
     mesh->triangleCount = (trailRendererComponent->nodeCapacity) * 2;
@@ -310,20 +335,22 @@ void TrailRendererComponent_onDraw(Camera3D camera, SceneObject* sceneObject, Sc
     if (trailRendererComponent->mesh.vboId != NULL)
         DrawMesh(trailRendererComponent->mesh, trailRendererComponent->material, MatrixIdentity());
 
-    // Vector3 pos = SceneGraph_getWorldPosition(sceneObject->graph, sceneObject->id);
-    // for (int i=0;i<trailRendererComponent->mesh.triangleCount;i++)
-    // {
-    //     uint16_t ia = trailRendererComponent->mesh.indices[i*3];
-    //     uint16_t ib = trailRendererComponent->mesh.indices[i*3+1];
-    //     uint16_t ic = trailRendererComponent->mesh.indices[i*3+2];
-    //     Vector3 a = *((Vector3*)&trailRendererComponent->mesh.vertices[ia*3]);
-    //     Vector3 b = *((Vector3*)&trailRendererComponent->mesh.vertices[ib*3]);
-    //     Vector3 c = *((Vector3*)&trailRendererComponent->mesh.vertices[ic*3]);
-    //     // DrawTriangle3D(a, b, c, RED);
-    //     DrawLine3D(a, b, BLUE);
-    //     DrawLine3D(b, c, BLUE);
-    //     DrawLine3D(c, a, BLUE);
-    // }
+#if DEBUG
+    Vector3 pos = SceneGraph_getWorldPosition(sceneObject->graph, sceneObject->id);
+    for (int i=0;i<trailRendererComponent->mesh.triangleCount;i++)
+    {
+        uint16_t ia = trailRendererComponent->mesh.indices[i*3];
+        uint16_t ib = trailRendererComponent->mesh.indices[i*3+1];
+        uint16_t ic = trailRendererComponent->mesh.indices[i*3+2];
+        Vector3 a = *((Vector3*)&trailRendererComponent->mesh.vertices[ia*3]);
+        Vector3 b = *((Vector3*)&trailRendererComponent->mesh.vertices[ib*3]);
+        Vector3 c = *((Vector3*)&trailRendererComponent->mesh.vertices[ic*3]);
+        // DrawTriangle3D(a, b, c, RED);
+        DrawLine3D(a, b, BLUE);
+        DrawLine3D(b, c, BLUE);
+        DrawLine3D(c, a, BLUE);
+    }
+#endif
 }
 
 void TrailRendererComponent_addTrailWidth(TrailRendererComponent* trailRendererComponent, float width, float percent)

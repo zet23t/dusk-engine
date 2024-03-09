@@ -273,7 +273,6 @@ int main(void)
     int isSlowmo = 0;
     int step = 0;
     // Main game loop
-    SetTraceLogLevel(LOG_INFO);
     while (!WindowShouldClose()) {
         // Update
 

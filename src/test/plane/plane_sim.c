@@ -223,7 +223,7 @@ static void AddWingTrail(SceneObjectId parent, float speed)
         _trailMaterial = LoadMaterialDefault();
         SetMaterialTexture(&_trailMaterial, MATERIAL_MAP_DIFFUSE, texture);
     }
-    SceneComponentId trailId = AddTrailRendererComponent(parent, 40.0f, 0.25f, (Vector3) { 0, 0, -speed }, 20, _trailMaterial);
+    SceneComponentId trailId = AddTrailRendererComponent(parent, 40.0f, 0.25f, (Vector3) { 0, 0, -speed }, 20, _trailMaterial, 0);
     TrailRendererComponent* trail = NULL;
     SceneComponent* component = SceneGraph_getComponent(psg.sceneGraph, trailId, (void**)&trail);
     if (component)
@@ -444,7 +444,9 @@ void plane_sim_draw()
         if (levelConfigLoad(IsKeyPressed(KEY_F5))) {
             initScene();
         }
+        #if defined(DEBUG)
         SetTraceLogLevel(LOG_INFO);
+        #endif
     }
 #endif
 

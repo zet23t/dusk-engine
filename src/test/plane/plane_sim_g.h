@@ -3,12 +3,10 @@
 
 #include "external/cjson.h"
 #include "shared/scene_graph/scene_graph.h"
-#include <memory.h>
 #include <inttypes.h>
+#include <memory.h>
 #include <raylib.h>
 #include <raymath.h>
-
-
 
 #define VALUE_TYPE_FLOAT 0
 #define VALUE_TYPE_INT 1
@@ -41,7 +39,7 @@ typedef struct MappedVariable {
 
 } MappedVariable;
 
-void ReadMappedVariables(cJSON *map, MappedVariable *variables);
+void ReadMappedVariables(cJSON* map, MappedVariable* variables);
 
 typedef struct MeshTileConfig {
     Mesh* mesh;
@@ -55,7 +53,7 @@ typedef struct PSG {
 
     SceneGraph* sceneGraph;
 
-    cJSON *levelConfig;
+    cJSON* levelConfig;
 
     SceneComponentTypeId meshRendererComponentId;
     SceneComponentTypeId planeBehaviorComponentId;
@@ -74,7 +72,7 @@ typedef struct PSG {
     SceneComponentTypeId actionComponentTypeId;
     SceneComponentTypeId timerComponentTypeId;
     SceneComponentTypeId trailRendererComponentTypeId;
-    
+
     SceneComponentTypeId targetSpawnSystemId;
     SceneComponentTypeId levelSystemId;
     SceneComponentTypeId cloudSystemId;
@@ -91,7 +89,7 @@ typedef struct PSG {
     Mesh* meshTarget;
     Mesh* meshHitParticle1;
     Mesh* meshUiBorder;
-    
+
     Mesh** leafTreeList;
     int leafTreeCount;
 
@@ -132,7 +130,6 @@ typedef struct TextComponent {
 #define ACTION_TYPE_DISABLE_CHILD_COMPONENT 49
 #define ACTION_TYPE_DESTROY_CHILD_COMPONENT 50
 
-
 typedef struct TrailNode {
     Vector3 position;
     Vector3 velocity;
@@ -147,12 +144,13 @@ typedef struct TrailWidthStep {
 typedef struct TrailRendererComponent {
     Mesh mesh;
     Material material;
-    int meshIsDirty;
-    TrailNode *nodes;
-    int nodeCount;
-    int nodeCapacity;
+    TrailNode* nodes;
     TrailWidthStep* trailWidths;
-    int trailWidthCount;
+    uint16_t nodeCount;
+    uint16_t nodeCapacity;
+    uint8_t trailWidthCount;
+    unsigned int meshIsDirty : 1;
+    unsigned int ownsMaterial : 1;
 
     float emitterRate;
     float maxLifeTime;
@@ -164,25 +162,24 @@ typedef struct TrailRendererComponent {
 
 typedef struct Action {
     uint32_t actionType;
-    char *targetName;
+    char* targetName;
 } Action;
 
 typedef struct ActionComponent {
-    Action *actions;
+    Action* actions;
     int actionCount;
     int disableOnTrigger;
 } ActionComponent;
 
 typedef struct TimerComponent {
-    Action *actions;
+    Action* actions;
     int actionCount;
     int repeatCount;
     float time;
     float triggerTime;
 } TimerComponent;
 
-typedef struct CameraComponent
-{
+typedef struct CameraComponent {
     float fov;
     float nearPlane;
     float farPlane;
@@ -223,8 +220,7 @@ typedef struct ShootingConfig {
     OnShootFn onShoot;
 } ShootingConfig;
 
-typedef struct AutoDestroyComponent
-{
+typedef struct AutoDestroyComponent {
     float lifeTimeLeft;
 } AutoDestroyComponent;
 
@@ -250,7 +246,7 @@ typedef struct TargetComponent {
 
 typedef struct MeshRendererComponent {
     float litAmount;
-    Material *material;
+    Material* material;
     Mesh* mesh;
 } MeshRendererComponent;
 
@@ -281,10 +277,11 @@ void AddLinearVelocityComponent(SceneObjectId objectId, Vector3 velocity, Vector
 void AddAutoDestroyComponent(SceneObjectId objectId, float lifeTime);
 void AddHealthComponent(SceneObjectId objectId, int health, int maxHealth);
 SceneComponentId AddTimerComponent(SceneObjectId objectId, float duration, int repeat);
-SceneComponentId AddTrailRendererComponent(SceneObjectId objectId, float emitterRate, float maxLifeTime, Vector3 emitterVelocity, int maxVertexCount, Material material);
+SceneComponentId AddTrailRendererComponent(SceneObjectId objectId, float emitterRate, float maxLifeTime, Vector3 emitterVelocity, int maxVertexCount, Material material, int ownsMaterial);
 void TrailRendererComponent_addTrailWidth(TrailRendererComponent* trailRendererComponent, float width, float percent);
+void TrailRendererComponent_setMaterial(TrailRendererComponent* trailRendererComponent, Material material, int ownsMaterial);
 
 int ActionFromJSON(cJSON* actionCfg, Action* action);
-void TriggerActions(SceneGraph *sceneGraph, SceneObjectId objectId, Action *actions, int count);
+void TriggerActions(SceneGraph* sceneGraph, SceneObjectId objectId, Action* actions, int count);
 void TimerComponentAddAction(SceneComponentId componentId, int actionType, const char* targetName);
 #endif
