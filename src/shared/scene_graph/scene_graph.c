@@ -898,3 +898,71 @@ int SceneGraph_isObjectEnabled(SceneGraph* graph, SceneObjectId id)
     }
     return (object->flags & SCENE_OBJECT_FLAG_ENABLED) != 0;
 }
+
+
+int SceneGraph_getComponentValue(SceneGraph *graph, char* name, SceneComponentId componentId, int bufferSize, void* buffer)
+{
+    void *componentData;
+    SceneComponent* component = SceneGraph_getComponent(graph, componentId, &componentData);
+    if (component == NULL) {
+        return 0;
+    }
+    SceneComponentType* type = SceneGraph_getComponentType(graph, component->typeId);
+    if (type == NULL) {
+        return 0;
+    }
+    if (type->methods.getValue == NULL) {
+        return 0;
+    }
+
+    SceneObject* object = SceneGraph_getObject(graph, component->objectId);
+    if (object == NULL) {
+        return 0;
+    }
+
+    if (strcmp(name, "enabled") == 0) {
+        if (bufferSize != sizeof(int)) {
+            return 0;
+        }
+
+        int enabled = (component->flags & SCENE_COMPONENT_FLAG_ENABLED) != 0;
+        memcpy(buffer, &enabled, sizeof(int));
+        return 1;
+    }
+
+    return type->methods.getValue(object, component, componentData, name, bufferSize, buffer);
+}
+
+int SceneGraph_setComponentValue(SceneGraph *graph, char* name, SceneComponentId componentId, int bufferSize, void* buffer)
+{
+    void *componentData;
+    SceneComponent* component = SceneGraph_getComponent(graph, componentId, &componentData);
+    if (component == NULL) {
+        return 0;
+    }
+    SceneComponentType* type = SceneGraph_getComponentType(graph, component->typeId);
+    if (type == NULL) {
+        return 0;
+    }
+    if (type->methods.setValue == NULL) {
+        return 0;
+    }
+
+    SceneObject* object = SceneGraph_getObject(graph, component->objectId);
+    if (object == NULL) {
+        return 0;
+    }
+
+    if (strcmp(name, "enabled") == 0) {
+        if (bufferSize != sizeof(int)) {
+            return 0;
+        }
+
+        int enabled;
+        memcpy(&enabled, buffer, sizeof(int));
+        SceneGraph_setComponentEnabled(graph, componentId, enabled);
+        return 1;
+    }
+
+    return type->methods.setValue(object, component, componentData, name, bufferSize, buffer);
+}

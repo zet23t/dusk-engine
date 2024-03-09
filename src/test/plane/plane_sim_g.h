@@ -72,6 +72,7 @@ typedef struct PSG {
     SceneComponentTypeId actionComponentTypeId;
     SceneComponentTypeId timerComponentTypeId;
     SceneComponentTypeId trailRendererComponentTypeId;
+    SceneComponentTypeId tweenComponentId;
 
     SceneComponentTypeId targetSpawnSystemId;
     SceneComponentTypeId levelSystemId;
@@ -130,10 +131,37 @@ typedef struct TextComponent {
 #define ACTION_TYPE_DISABLE_CHILD_COMPONENT 49
 #define ACTION_TYPE_DESTROY_CHILD_COMPONENT 50
 
+typedef struct TweenComponent {
+    float time;
+    float maxTime;
+    unsigned int transitionFunctionType:7;
+    unsigned int targetIsObject:1;
+    char targetName[15];
+
+    union {
+        SceneComponentId componentId;
+        SceneObjectId objectId;
+    };
+
+    union {
+        Vector3 startVec3;
+        float startFloat;
+        Color startColor;
+    };
+    union 
+    {
+        Vector3 endVec3;
+        float endFloat;
+        Color endColor;
+    };
+    
+} TweenComponent;
+
 typedef struct TrailNode {
     Vector3 position;
     Vector3 velocity;
     float time;
+    float widthPercent;
 } TrailNode;
 
 typedef struct TrailWidthStep {
@@ -152,6 +180,8 @@ typedef struct TrailRendererComponent {
     unsigned int meshIsDirty : 1;
     unsigned int ownsMaterial : 1;
 
+    float currentWidthPercentage;
+    float widthDecayRate;
     float emitterRate;
     float maxLifeTime;
     float time;

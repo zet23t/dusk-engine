@@ -21,10 +21,10 @@
     },
     "level": {
         "events": [
-            { "time": 0, "message": "and so it begins", "prefab": "enemy-plane-flyin-1", "position": [9,-35,-6] },
+            { "time": 0, "prefab": "enemy-plane-flyin-1", "position": [9,-35,-6] },
             { "time": 0, "prefab": "enemy-plane-flyin-1", "position": [7,-35,-7.5] },
             { "time": 1, "showMessage": "ENEMIES SPOTED\nGET READY", "messageDuration": 2 },
-            { "time": 7, "prefab": "formation-1", "position": [4,0,12.5] },
+            { "time": 2, "prefab": "formation-1", "position": [4,0,12.5] },
             { "time": 9, "prefab": "formation-1", "position": [-5,0,12.5] },
             { "time": 12, "prefab": "enemy-plane-flyin-1", "position": [12,-35,-4] },
             { "time": 13, "prefab": "enemy-plane-flyin-1", "position": [-12,-35,-4] },
@@ -77,11 +77,11 @@
             },
             "spark": {
                 "components": [
-                    { "type": "MeshRendererComponent", "mesh": "hit-particle-1", "litAmount": 1 },
-                    { "type": "TrailRendererComponent", "maxLifeTime": 0.25, "emitterRate": 20,
+                    { "type": "TrailRendererComponent", "maxLifeTime": 0.15, "emitterRate": 20,
+                    "widthDecayRate": 2.0,
                     "trailWidths": [0, 0.05, 0.8, 0]},
-                    { "type": "LinearVelocityComponent", "velocity": [0,0,0], "drag":[1, 1, 1], "acceleration": [0, -8, 0] },
-                    { "type": "AutoDestroyComponent", "lifeTime": 0.5 }
+                    { "type": "LinearVelocityComponent", "velocity": [0,0,0], "drag":[1, 1, 1], "acceleration": [0, -8, 30] },
+                    { "type": "AutoDestroyComponent", "lifeTime": 2.5 }
                 ]
             }
         }

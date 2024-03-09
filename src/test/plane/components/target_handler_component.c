@@ -68,7 +68,7 @@ static int TargetHandlerComponentOnHit(SceneGraph* graph, SceneObjectId target, 
         SceneGraph_destroyObject(graph, target);
     }
 
-    Vector3 position = SceneGraph_getLocalPosition(graph, bullet);
+    Vector3 position = SceneGraph_getWorldPosition(graph, bullet);
     Vector3 velocity = { 0, 0, 0 };
     Vector3 targetVelocity = { 0, 0, 0 };
     LinearVelocityComponent* velocityComponent;
@@ -83,7 +83,7 @@ static int TargetHandlerComponentOnHit(SceneGraph* graph, SceneObjectId target, 
     if (SceneGraph_getComponentByType(graph, target, psg.targetHandlerComponentId, (void**)&targetHandler, 0)) {
         HandleSpawnActions(graph, targetHandler->objects, position, velocity, targetHandler->onHitActionCount, targetHandler->onHitActions);
         if (isDestroyed) {
-            HandleSpawnActions(graph, targetHandler->objects, SceneGraph_getLocalPosition(graph, target), targetVelocity, targetHandler->onDestroyActionCount, targetHandler->onDestroyActions);
+            HandleSpawnActions(graph, targetHandler->objects, SceneGraph_getWorldPosition(graph, target), targetVelocity, targetHandler->onDestroyActionCount, targetHandler->onDestroyActions);
         }
     }
 

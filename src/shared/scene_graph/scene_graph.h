@@ -70,6 +70,9 @@ typedef struct SceneComponentTypeMethods {
     void (*sequentialDraw)(Camera3D camera, SceneObject* sceneObject, SceneComponentId sceneComponent,
         void* componentData, void* userdata);
     void (*onDestroy)(SceneObject* sceneObject, SceneComponentId sceneComponent, void* componentData);
+    
+    int (*getValue)(SceneObject* sceneObject, SceneComponent *sceneComponent, void* componentData, char *name, int bufferSize, void* buffer);
+    int (*setValue)(SceneObject* sceneObject, SceneComponent *sceneComponent, void* componentData, char *name, int bufferSize, void* buffer);
 } SceneComponentTypeMethods;
 
 typedef struct SceneComponent {
@@ -171,5 +174,8 @@ void SceneGraph_setComponentEnabled(SceneGraph* graph, SceneComponentId id, int 
 int SceneGraph_isComponentEnabled(SceneGraph* graph, SceneComponentId id);
 void SceneGraph_setObjectEnabled(SceneGraph* graph, SceneObjectId id, int enabled);
 int SceneGraph_isObjectEnabled(SceneGraph* graph, SceneObjectId id);
+
+int SceneGraph_getComponentValue(SceneGraph *graph, char* name, SceneComponentId componentId, int bufferSize, void* buffer);
+int SceneGraph_setComponentValue(SceneGraph *graph, char* name, SceneComponentId componentId, int bufferSize, void* buffer);
 
 #endif

@@ -27,12 +27,17 @@ void TrailRendererComponent_onInitialize(SceneObject* sceneObject, SceneComponen
         trailRendererComponent->emitterRate = 10.0f;
         trailRendererComponent->emitterVelocity = (Vector3) { 0, 0, 0 };
         trailRendererComponent->maxLifeTime = 1.0f;
+        trailRendererComponent->currentWidthPercentage = 1.0f;
+        trailRendererComponent->widthDecayRate = 0.0f;
+
         TrailRendererComponent_setMaterial(trailRendererComponent, LoadMaterialDefault(), 1);
         cJSON* cfg = initializer->config;
         MappedVariable mappedVariables[] = {
             { .name = "maxLifeTime", .type = VALUE_TYPE_FLOAT, .floatValue = &trailRendererComponent->maxLifeTime },
             { .name = "emitterRate", .type = VALUE_TYPE_FLOAT, .floatValue = &trailRendererComponent->emitterRate },
             { .name = "emitterVelocity", .type = VALUE_TYPE_VEC3, .vec3Value = &trailRendererComponent->emitterVelocity },
+            { .name = "currentWidthPercentage", .type = VALUE_TYPE_FLOAT, .floatValue = &trailRendererComponent->currentWidthPercentage },
+            { .name = "widthDecayRate", .type = VALUE_TYPE_FLOAT, .floatValue = &trailRendererComponent->widthDecayRate },
             { 0 }
         };
         ReadMappedVariables(cfg, mappedVariables);
@@ -116,6 +121,7 @@ static void TrailRendererComponent_newNode(TrailRendererComponent* trailRenderer
     node->position = spawnPoint;
     node->velocity = velocity;
     node->time = 0;
+    node->widthPercent = trailRendererComponent->currentWidthPercentage;
 
     trailRendererComponent->nodeCount++;
 }
@@ -172,6 +178,10 @@ void TrailRendererComponent_onUpdate(SceneObject* sceneObject, SceneComponentId 
             spawnPoint = Vector3Lerp(prevPosition, worldPosition, t);
         }
         TrailRendererComponent_newNode(trailRendererComponent, spawnPoint, trailRendererComponent->emitterVelocity);
+        trailRendererComponent->currentWidthPercentage -= emitterInterval * trailRendererComponent->widthDecayRate;
+        if (trailRendererComponent->currentWidthPercentage < 0.0f) {
+            trailRendererComponent->currentWidthPercentage = 0.0f;
+        }
     }
     trailRendererComponent->lastPosition = worldPosition;
 }
@@ -298,7 +308,7 @@ void TrailRendererComponent_onDraw(Camera3D camera, SceneObject* sceneObject, Sc
     TrailWidthStep currentStep = trailRendererComponent->trailWidths[widthIndex];
     TrailWidthStep nextStep = trailRendererComponent->trailWidths[widthIndex + 1 < trailRendererComponent->trailWidthCount ? (widthIndex + 1) : widthIndex];
     
-    TrailRendererComponent_setWidth(up, *((Vector3*)&vertices[0]), *((Vector3*)&vertices[next]), currentStep.width, vertices);
+    TrailRendererComponent_setWidth(up, *((Vector3*)&vertices[0]), *((Vector3*)&vertices[next]), currentStep.width * trailRendererComponent->currentWidthPercentage, vertices);
     // there's 1 more vertex than nodes due to the attached first point
     int last = trailRendererComponent->nodeCount;
     int twcount = trailRendererComponent->trailWidthCount;
@@ -316,6 +326,7 @@ void TrailRendererComponent_onDraw(Camera3D camera, SceneObject* sceneObject, Sc
         if (progress < nextStep.percent) {
             width = Lerp(currentStep.width, nextStep.width, (progress - currentStep.percent) / (nextStep.percent - currentStep.percent));
         }
+        width *= node->widthPercent;
         TrailRendererComponent_setWidth(up, prev, next, width, &vertices[i * 6]);
         prev = pos;
     }
@@ -336,7 +347,6 @@ void TrailRendererComponent_onDraw(Camera3D camera, SceneObject* sceneObject, Sc
         DrawMesh(trailRendererComponent->mesh, trailRendererComponent->material, MatrixIdentity());
 
 #if DEBUG
-    Vector3 pos = SceneGraph_getWorldPosition(sceneObject->graph, sceneObject->id);
     for (int i=0;i<trailRendererComponent->mesh.triangleCount;i++)
     {
         uint16_t ia = trailRendererComponent->mesh.indices[i*3];
