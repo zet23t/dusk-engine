@@ -573,18 +573,6 @@ SceneComponentId SceneGraph_addComponent(SceneGraph* graph, SceneObjectId id, Sc
     return component->id;
 }
 
-void SceneGraph_setComponentName(SceneGraph *graph, SceneComponentId id, const char *name)
-{
-    SceneComponent* component = SceneGraph_getComponent(graph, id, NULL);
-    if (component == NULL) {
-        return;
-    }
-    if (component->name) {
-        free(component->name);
-    }
-    component->name = strdup(name);
-}
-
 SceneComponentType* SceneGraph_getComponentType(SceneGraph* graph, SceneComponentTypeId componentType)
 {
     if (componentType.id < 0 || componentType.id >= graph->componentTypes_count) {
@@ -809,6 +797,19 @@ void SceneGraph_destroyComponent(SceneGraph* graph, SceneComponentId id)
         free(component->name);
         component->name = NULL;
     }
+}
+
+int SceneGraph_setComponentName(SceneGraph* graph, SceneComponentId id, const char* name)
+{
+    SceneComponent* component = SceneGraph_getComponent(graph, id, NULL);
+    if (component == NULL) {
+        return 0;
+    }
+    if (component->name) {
+        free(component->name);
+    }
+    component->name = strdup(name);
+    return 1;
 }
 
 void SceneGraph_printObject(SceneObject* object, const char* indent)

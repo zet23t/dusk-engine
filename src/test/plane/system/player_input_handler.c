@@ -94,3 +94,11 @@ void HandlePlayerInputUpdate()
     // SceneGraph_setLocalRotation(psg.sceneGraph, plane, (Vector3) { 0, t * 30, 0 });
 
 }
+
+void PlayerInputHandlerRegister()
+{
+    // psg.playerInputHandlerId = SceneGraph_registerSystemType(psg.sceneGraph, "PlayerInputHandler",
+    //     (SceneSystemTypeMethods) {
+    //         .update = HandlePlayerInputUpdate,
+    //     });
+}

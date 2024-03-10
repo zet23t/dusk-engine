@@ -66,10 +66,17 @@ void SceneObject_ApplyJSONValues(SceneGraph* sceneGraph, cJSON* objects, SceneOb
                 continue;
             }
 
-            SceneGraph_addComponent(psg.sceneGraph, nodeId, typeClass->id, &(ComponentInitializer) {
+            SceneComponentId cmp = SceneGraph_addComponent(psg.sceneGraph, nodeId, typeClass->id, &(ComponentInitializer) {
                 .config = component,
                 .objects = objects
             });
+
+            cJSON *jsName = cJSON_GetObjectItemCaseSensitive(component, "name");
+            const char* name = cJSON_IsString(jsName) ? jsName->valuestring : NULL;
+
+            if (name != NULL) {
+                SceneGraph_setComponentName(psg.sceneGraph, cmp, name);
+            }
         }
     }
 

@@ -12,6 +12,10 @@ void ReadMappedVariables(cJSON *map, MappedVariable *variables)
             continue;
         }
 
+        if (var->valuePresentCounter != NULL) {
+            *var->valuePresentCounter += 1;
+        }
+
         switch (var->type) {
         case VALUE_TYPE_FLOAT:
             *var->floatValue = value->valuedouble;

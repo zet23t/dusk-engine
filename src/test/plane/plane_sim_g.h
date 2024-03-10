@@ -36,7 +36,7 @@ typedef struct MappedVariable {
         Vector2* vec2Value;
         Vector3* vec3Value;
     };
-
+    int *valuePresentCounter;
 } MappedVariable;
 
 void ReadMappedVariables(cJSON* map, MappedVariable* variables);
@@ -73,10 +73,12 @@ typedef struct PSG {
     SceneComponentTypeId timerComponentTypeId;
     SceneComponentTypeId trailRendererComponentTypeId;
     SceneComponentTypeId tweenComponentId;
+    SceneComponentTypeId enemyBehaviorComponentId;
 
     SceneComponentTypeId targetSpawnSystemId;
     SceneComponentTypeId levelSystemId;
     SceneComponentTypeId cloudSystemId;
+    SceneComponentTypeId playerInputHandlerId;
 
     SceneObjectId camera;
     SceneObjectId uiRootId;
@@ -108,6 +110,17 @@ typedef struct PSG {
 
 typedef struct ShootingConfig ShootingConfig;
 typedef struct ShootingComponent ShootingComponent;
+
+typedef struct EnemyBehaviorComponent
+{
+    int32_t behaviorType;
+    int32_t phase;
+    float time, velocity, agility;
+    Vector3 points[4];
+    int8_t pointCount;
+    int8_t initialized;
+    SceneComponentId velocityComponentId;
+} EnemyBehaviorComponent;
 
 typedef struct TextComponent {
     char* text;

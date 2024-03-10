@@ -62,7 +62,7 @@ typedef struct SceneObjectTransform {
 } SceneObjectTransform;
 
 typedef struct SceneComponentTypeMethods {
-    void (*onInitialize)(SceneObject* sceneObject, SceneComponentId SceneComponent, void* componentData, void *initArg);
+    void (*onInitialize)(SceneObject* sceneObject, SceneComponentId SceneComponent, void* componentData, void* initArg);
     void (*updateTick)(SceneObject* sceneObject, SceneComponentId SceneComponent,
         float delta, void* componentData);
     void (*draw)(Camera3D camera, SceneObject* sceneObject, SceneComponentId sceneComponent,
@@ -70,16 +70,16 @@ typedef struct SceneComponentTypeMethods {
     void (*sequentialDraw)(Camera3D camera, SceneObject* sceneObject, SceneComponentId sceneComponent,
         void* componentData, void* userdata);
     void (*onDestroy)(SceneObject* sceneObject, SceneComponentId sceneComponent, void* componentData);
-    
-    int (*getValue)(SceneObject* sceneObject, SceneComponent *sceneComponent, void* componentData, char *name, int bufferSize, void* buffer);
-    int (*setValue)(SceneObject* sceneObject, SceneComponent *sceneComponent, void* componentData, char *name, int bufferSize, void* buffer);
+
+    int (*getValue)(SceneObject* sceneObject, SceneComponent* sceneComponent, void* componentData, char* name, int bufferSize, void* buffer);
+    int (*setValue)(SceneObject* sceneObject, SceneComponent* sceneComponent, void* componentData, char* name, int bufferSize, void* buffer);
 } SceneComponentTypeMethods;
 
 typedef struct SceneComponent {
     SceneComponentId id;
     SceneObjectId objectId;
     SceneComponentTypeId typeId;
-    char *name;
+    char* name;
     uint32_t flags;
 } SceneComponent;
 
@@ -128,12 +128,12 @@ void SceneGraph_destroyObject(SceneGraph* graph, SceneObjectId id);
 SceneComponentId SceneGraph_addComponent(SceneGraph* graph, SceneObjectId id, SceneComponentTypeId componentType,
     void* componentData);
 SceneObject* SceneGraph_getObject(SceneGraph* graph, SceneObjectId id);
-const char *SceneGraph_getObjectName(SceneGraph* graph, SceneObjectId id);
+const char* SceneGraph_getObjectName(SceneGraph* graph, SceneObjectId id);
 SceneComponent* SceneGraph_getComponent(SceneGraph* graph, SceneComponentId id, void** componentData);
 SceneComponent* SceneGraph_getComponentByType(SceneGraph* graph, SceneObjectId id, SceneComponentTypeId typeId, void** componentData, int atIndex);
 SceneComponent* SceneGraph_getComponentOrFindByType(SceneGraph* graph, SceneObjectId id, SceneComponentId* componentId, SceneComponentTypeId typeId, void** componentData);
 
-Vector3 SceneGraph_localToWorld(SceneGraph *graph, SceneObjectId id, Vector3 local);
+Vector3 SceneGraph_localToWorld(SceneGraph* graph, SceneObjectId id, Vector3 local);
 Vector3 SceneGraph_getWorldPosition(SceneGraph* graph, SceneObjectId id);
 Vector3 SceneGraph_getWorldForward(SceneGraph* graph, SceneObjectId id);
 Vector3 SceneGraph_getWorldUp(SceneGraph* graph, SceneObjectId id);
@@ -158,16 +158,17 @@ void SceneGraph_draw(SceneGraph* graph, Camera3D camera, void* userdata);
 // for root objects, but within a tree of objects, children are drawn after their parents and in the order they were added.
 // This form of iteration is most inefficient (memory wise) and should be used only for UI or other cases where draw order is important.
 // Certain optimizations can help: Any parent object without any child with a sequential draw component is be skipped. Therefore keeping
-// sequential draw components used only in certain tree branches can help (e.g. one UI canvas parent that has nothing to do with 
+// sequential draw components used only in certain tree branches can help (e.g. one UI canvas parent that has nothing to do with
 // the world object part of the scene graph).
 void SceneGraph_sequentialDraw(SceneGraph* graph, Camera3D camera, void* userdata);
 
-SceneObject* SceneGraph_findObjectByName(SceneGraph* graph, const char *name, int includeDisabled);
-SceneComponent* SceneGraph_findComponentByName(SceneGraph* graph, const char *name, int includeDisabled);
-SceneObject* SceneGraph_findChildByName(SceneGraph* graph, SceneObjectId parentId, const char *name, int includeDisabled);
-SceneComponent* SceneGraph_findChildComponentByName(SceneGraph* graph, SceneObjectId parentId, const char *name, int includeDisabled);
+SceneObject* SceneGraph_findObjectByName(SceneGraph* graph, const char* name, int includeDisabled);
+SceneComponent* SceneGraph_findComponentByName(SceneGraph* graph, const char* name, int includeDisabled);
+SceneObject* SceneGraph_findChildByName(SceneGraph* graph, SceneObjectId parentId, const char* name, int includeDisabled);
+SceneComponent* SceneGraph_findChildComponentByName(SceneGraph* graph, SceneObjectId parentId, const char* name, int includeDisabled);
 void SceneGraph_destroyComponent(SceneGraph* graph, SceneComponentId id);
-void SceneGraph_printObject(SceneObject *object, const char *indent);
+int SceneGraph_setComponentName(SceneGraph* graph, SceneComponentId id, const char* name);
+void SceneGraph_printObject(SceneObject* object, const char* indent);
 void SceneGraph_print(SceneGraph* graph);
 
 void SceneGraph_setComponentEnabled(SceneGraph* graph, SceneComponentId id, int enabled);
@@ -175,7 +176,7 @@ int SceneGraph_isComponentEnabled(SceneGraph* graph, SceneComponentId id);
 void SceneGraph_setObjectEnabled(SceneGraph* graph, SceneObjectId id, int enabled);
 int SceneGraph_isObjectEnabled(SceneGraph* graph, SceneObjectId id);
 
-int SceneGraph_getComponentValue(SceneGraph *graph, char* name, SceneComponentId componentId, int bufferSize, void* buffer);
-int SceneGraph_setComponentValue(SceneGraph *graph, char* name, SceneComponentId componentId, int bufferSize, void* buffer);
+int SceneGraph_getComponentValue(SceneGraph* graph, char* name, SceneComponentId componentId, int bufferSize, void* buffer);
+int SceneGraph_setComponentValue(SceneGraph* graph, char* name, SceneComponentId componentId, int bufferSize, void* buffer);
 
 #endif

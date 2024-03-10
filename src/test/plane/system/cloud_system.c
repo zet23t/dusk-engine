@@ -59,7 +59,7 @@ static void UpdateCloudSystem(SceneObject *object, SceneComponentId componentId,
             SceneGraph_setLocalRotation(psg.sceneGraph, cloudId, (Vector3) { GetRandomFloat(-10, 10), GetRandomFloat(0, 360), GetRandomFloat(-10, 10) });
         } else {
             Vector3 pos = SceneGraph_getLocalPosition(psg.sceneGraph, cloudId);
-            pos.z -= cloudSystem->cloudSpeed;
+            pos.z -= (cloudSystem->cloudSpeed + (i*0.1f)) * dt;
             SceneGraph_setLocalPosition(psg.sceneGraph, cloudId, pos);
             if (pos.z < cloudSystem->cloudDespawnZ) {
                 SceneGraph_destroyObject(psg.sceneGraph, cloudId);

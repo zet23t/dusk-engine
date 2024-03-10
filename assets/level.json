@@ -9,7 +9,7 @@
         "waterLineLevel": 0.25
     },
     "cloudCfg": {
-        "cloudSpeed": 0.025,
+        "cloudSpeed": 2.5,
         "cloudSpawnRangeX": 15,
         "cloudSpawnMinZ": 30,
         "cloudSpawnMaxZ": 50,
@@ -24,7 +24,11 @@
             { "time": 0, "prefab": "enemy-plane-flyin-1", "position": [9,-35,-6] },
             { "time": 0, "prefab": "enemy-plane-flyin-1", "position": [7,-35,-7.5] },
             { "time": 1, "showMessage": "ENEMIES SPOTED\nGET READY", "messageDuration": 2 },
-            { "time": 2, "prefab": "formation-1", "position": [4,0,12.5] },
+            { "time": 2, "prefab": "formation-1", "position": [4,0,12.5],
+                "overrides": {
+                    "enemyBehavior": { "p1": [0, 0, 10], "p2": [0,0,-20] }
+                }
+            },
             { "time": 9, "prefab": "formation-1", "position": [-5,0,12.5] },
             { "time": 12, "prefab": "enemy-plane-flyin-1", "position": [12,-35,-4] },
             { "time": 13, "prefab": "enemy-plane-flyin-1", "position": [-12,-35,-4] },
@@ -51,26 +55,29 @@
                     { "type": "AutoDestroyComponent", "lifeTime": 7 }
                 ]
             },
+            "target-handler": {
+                "type": "TargetHandlerComponent", "radius": 1.0, "colliderMask": 1, 
+                "onHit": [{
+                    "prefab": "spark",
+                    "spawnCount": 12,
+                    "bulletVelocityFactor": [-0.25, -0.5],
+                    "minRandomVelocityRange": [-2, -2, -2],
+                    "maxRandomVelocityRange": [2, 2, 2]
+                }],
+                "onDestroy": [{ 
+                    "prefab": "spark" ,
+                    "spawnCount": 24,
+                    "bulletVelocityFactor": [1, 2],
+                    "minRandomVelocityRange": [-4, -4, -4],
+                    "maxRandomVelocityRange": [4, 4, 4]
+                }]
+            },
             "enemy-plane-1": {
                 "components": [
                     { "type": "MeshRendererComponent", "mesh": "fighter-plane-2", "litAmount": 0 },
                     { "type": "LinearVelocityComponent", "velocity": [0,0,-5] },
-                    { "type": "TargetHandlerComponent", "radius": 1.0, "colliderMask": 1, 
-                        "onHit": [{
-                            "prefab": "spark",
-                            "spawnCount": 12,
-                            "bulletVelocityFactor": [-0.25, -0.5],
-                            "minRandomVelocityRange": [-2, -2, -2],
-                            "maxRandomVelocityRange": [2, 2, 2]
-                        }],
-                        "onDestroy": [{ 
-                            "prefab": "spark" ,
-                            "spawnCount": 24,
-                            "bulletVelocityFactor": [1, 2],
-                            "minRandomVelocityRange": [-4, -4, -4],
-                            "maxRandomVelocityRange": [4, 4, 4]
-                        }]
-                    },
+                    { "type": "EnemyBehaviorComponent", "name":"enemyBehavior",  "p1":[5, 0, 10], "p2":[10,0,-20] },
+                    "target-handler",
                     { "type": "HealthComponent", "maxHealth": 5, "health": 5 },
                     { "type": "AutoDestroyComponent", "lifeTime": 8 }
                 ]
