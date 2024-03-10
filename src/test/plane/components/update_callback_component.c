@@ -3,7 +3,7 @@
 static void UpdateCallbackComponentUpdate(SceneObject* node, SceneComponentId sceneComponentId, float dt, void* component)
 {
     UpdateCallbackComponent* updateCallback = (UpdateCallbackComponent*)component;
-    updateCallback->update(node->graph, node->id, sceneComponentId, dt, updateCallback->data);
+    updateCallback->update(node->graph, node->id, sceneComponentId, dt, updateCallback);
 }
 
 void UpdateCallbackComponentRegister()

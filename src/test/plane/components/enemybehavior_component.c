@@ -1,4 +1,5 @@
 #include "../plane_sim_g.h"
+#include <math.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -50,6 +51,18 @@ void EnemyBehaviorComponent_onUpdate(SceneObject* sceneObject, SceneComponentId 
         
         velocity->velocity = Vector3Lerp(velocity->velocity, Vector3Scale(direction, enemyBehaviorComponent->velocity), deltaTime * enemyBehaviorComponent->agility);
         velocity->velocity = Vector3Scale(Vector3Normalize(velocity->velocity), enemyBehaviorComponent->velocity);
+        float heading = atan2f(velocity->velocity.x, velocity->velocity.z) * RAD2DEG;
+        Vector3 localRot = SceneGraph_getLocalRotation(sceneObject->graph, sceneObject->id);
+        if (deltaTime > 0)
+        {
+
+            float roll = (localRot.y - heading);
+            while (roll > 180.0f) roll -= 360.0f;
+            while (roll < -180.0f) roll += 360.0f;
+            roll = roll / deltaTime / 60.0f;
+            SceneGraph_setLocalRotation(sceneObject->graph, sceneObject->id, 
+                (Vector3) { 0, heading, (roll * 40.0f) * .25f + localRot.z * .75f});
+        }
         if (Vector3Distance(position, enemyBehaviorComponent->points[enemyBehaviorComponent->phase]) < 1.0f)
         {
             enemyBehaviorComponent->phase++;
@@ -66,16 +79,17 @@ void EnemyBehaviorComponent_onDraw(Camera3D camera, SceneObject* sceneObject, Sc
     EnemyBehaviorComponent* enemyBehaviorComponent = (EnemyBehaviorComponent*)componentData;
     Vector3 position = SceneGraph_getWorldPosition(sceneObject->graph, sceneObject->id);
     DrawLine3D(enemyBehaviorComponent->points[0], position, RED);
-    DrawLine3D(enemyBehaviorComponent->points[0], enemyBehaviorComponent->points[1], RED);
-    DrawLine3D(enemyBehaviorComponent->points[1], enemyBehaviorComponent->points[2], RED);
-    DrawLine3D(enemyBehaviorComponent->points[2], enemyBehaviorComponent->points[3], RED);
+    for (int i = 1; i < enemyBehaviorComponent->pointCount; i++)
+    {
+        DrawLine3D(enemyBehaviorComponent->points[i-1], enemyBehaviorComponent->points[i], RED);
+    }
 }
 
 void EnemyBehaviorComponentRegister()
 {
     psg.enemyBehaviorComponentId = SceneGraph_registerComponentType(psg.sceneGraph, "EnemyBehaviorComponent", sizeof(EnemyBehaviorComponent),
         (SceneComponentTypeMethods) {
-            .onInitialize = EnemyBehaviorComponent_onInitialize,
+            // .onInitialize = EnemyBehaviorComponent_onInitialize,
             .draw = EnemyBehaviorComponent_onDraw,
             .onDestroy = NULL,
             .updateTick = EnemyBehaviorComponent_onUpdate,

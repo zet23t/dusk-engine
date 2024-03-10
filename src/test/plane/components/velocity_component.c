@@ -52,14 +52,14 @@ static void LinearVelocityComponentUpdateTick(SceneObject* sceneObject, SceneCom
     velocity->velocity.z += velocity->acceleration.z * psg.deltaTime * .5f;
 }
 
-void AddLinearVelocityComponent(SceneObjectId objectId, Vector3 velocity, Vector3 acceleration, Vector3 drag)
+SceneComponentId AddLinearVelocityComponent(SceneObjectId objectId, Vector3 velocity, Vector3 acceleration, Vector3 drag)
 {
     LinearVelocityComponent component = {
         .velocity = velocity,
         .acceleration = acceleration,
         .drag = drag,
     };
-    SceneGraph_addComponent(psg.sceneGraph, objectId, psg.linearVelocityComponentId, &(ComponentInitializer) {
+    return SceneGraph_addComponent(psg.sceneGraph, objectId, psg.linearVelocityComponentId, &(ComponentInitializer) {
         .memData = &component,
     });
 }

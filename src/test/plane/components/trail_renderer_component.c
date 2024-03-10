@@ -203,6 +203,7 @@ SceneComponentId AddTrailRendererComponent(SceneObjectId objectId, float emitter
                 .nodes = NULL, 
                 .trailWidths = NULL, 
                 .trailWidthCount = 0, 
+                .currentWidthPercentage = 1.0f,
                 .time = 0, 
                 .lastEmitTime = 0, 
                 .lastPosition = (Vector3) { 0, 0, 0 } 

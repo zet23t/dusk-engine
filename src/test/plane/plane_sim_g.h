@@ -109,6 +109,19 @@ typedef struct PSG {
     ShaderLocationIndex litAmountIndex;
 } PSG;
 
+
+typedef struct LevelEvent {
+    float time;
+    int triggered;
+    void (*onTrigger)(SceneGraph*, void* userData);
+    void *userData;
+} LevelEvent;
+
+typedef struct LevelSystem {
+    float time;
+    LevelEvent* events;
+} LevelSystem;
+
 typedef struct ShootingConfig ShootingConfig;
 typedef struct ShootingComponent ShootingComponent;
 
@@ -252,7 +265,15 @@ typedef struct MovementPatternComponent {
 
 typedef struct UpdateCallbackComponent {
     void (*update)(SceneGraph*, SceneObjectId, SceneComponentId, float dt, struct UpdateCallbackComponent*);
-    void* data;
+    union
+    {
+        void* data;
+        SceneObjectId objectId;
+        SceneComponentId componentId;
+        float floatValue;
+        Vector3 vec3Value;
+    };
+    
 } UpdateCallbackComponent;
 
 typedef void (*OnShootFn)(SceneGraph*, SceneComponentId shooter, ShootingComponent*, ShootingConfig* shootingComponent);
@@ -317,7 +338,7 @@ void SceneObject_ApplyJSONValues(SceneGraph* sceneGraph, cJSON* objects, SceneOb
 SceneObjectId InstantiateFromJSON(SceneGraph* sceneGraph, cJSON* objects, const char* rootId);
 
 SceneComponentId AddMeshRendererComponent(SceneObjectId id, Mesh* mesh, float litAmount);
-void AddLinearVelocityComponent(SceneObjectId objectId, Vector3 velocity, Vector3 acceleration, Vector3 drag);
+SceneComponentId AddLinearVelocityComponent(SceneObjectId objectId, Vector3 velocity, Vector3 acceleration, Vector3 drag);
 void AddAutoDestroyComponent(SceneObjectId objectId, float lifeTime);
 void AddHealthComponent(SceneObjectId objectId, int health, int maxHealth);
 SceneComponentId AddTimerComponent(SceneObjectId objectId, float duration, int repeat);
