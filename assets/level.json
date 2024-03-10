@@ -24,11 +24,7 @@
             { "time": 0, "prefab": "enemy-plane-flyin-1", "position": [9,-35,-6] },
             { "time": 0, "prefab": "enemy-plane-flyin-1", "position": [7,-35,-7.5] },
             { "time": 1, "showMessage": "ENEMIES SPOTED\nGET READY", "messageDuration": 2 },
-            { "time": 2, "prefab": "formation-1", "position": [4,0,12.5],
-                "overrides": {
-                    "enemyBehavior": { "p1": [0, 0, 10], "p2": [0,0,-20] }
-                }
-            },
+            { "time": 2, "prefab": "formation-1", "position": [4,0,12.5] },
             { "time": 9, "prefab": "formation-1", "position": [-5,0,12.5] },
             { "time": 12, "prefab": "enemy-plane-flyin-1", "position": [12,-35,-4] },
             { "time": 13, "prefab": "enemy-plane-flyin-1", "position": [-12,-35,-4] },

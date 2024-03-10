@@ -331,6 +331,8 @@ void EnemyBehaviorComponentRegister();
 void RegisterTargetSpawnSystem();
 void CloudSystemRegister();
 void LevelSystemRegister();
+void PlayerInputHandlerRegister();
+void GroundTileSystemRegister();
 
 #include <stdio.h>
 
@@ -341,6 +343,8 @@ static int initScene()
     // SceneGraph_addComponent(psg.sceneGraph, systemsId, psg.targetSpawnSystemId, NULL);
     SceneGraph_addComponent(psg.sceneGraph, systemsId, psg.cloudSystemId, NULL);
     SceneGraph_addComponent(psg.sceneGraph, systemsId, psg.levelSystemId, NULL);
+    SceneGraph_addComponent(psg.sceneGraph, systemsId, psg.playerInputHandlerId, NULL);
+    SceneGraph_addComponent(psg.sceneGraph, systemsId, psg.groundTileSystemId, NULL);
 
     psg.camera = SceneGraph_createObject(psg.sceneGraph, "camera");
     SceneGraph_setLocalPosition(psg.sceneGraph, psg.camera, (Vector3) { 0, 100, -25 });
@@ -405,6 +409,8 @@ int plane_sim_init()
     RegisterTargetSpawnSystem();
     CloudSystemRegister();
     LevelSystemRegister();
+    PlayerInputHandlerRegister();
+    GroundTileSystemRegister();
 
     MeshRendererComponentRegister();
     PlaneBehaviorComponentRegister();
@@ -490,9 +496,6 @@ void plane_sim_draw()
     }
 }
 
-void HandlePlayerInputUpdate();
-void UpdateGroundTileSystem();
-
 void plane_sim_update(float dt)
 {
     if (IsKeyPressed(KEY_R)) {
@@ -501,6 +504,4 @@ void plane_sim_update(float dt)
     psg.time += dt;
     psg.deltaTime = dt;
     SceneGraph_updateTick(psg.sceneGraph, dt);
-    HandlePlayerInputUpdate();
-    UpdateGroundTileSystem();
 }

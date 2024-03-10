@@ -6,7 +6,7 @@ static float planeOffsetZ = 0;
 
 static cJSON* playerInputConfigMarker = NULL;
 
-void HandlePlayerInputUpdate()
+void HandlePlayerInputUpdate(SceneObject *object, SceneComponentId componentId, float dt, void *userdata)
 {
     if (playerInputConfigMarker != psg.levelConfig) {
         playerInputConfigMarker = psg.levelConfig;
@@ -97,8 +97,9 @@ void HandlePlayerInputUpdate()
 
 void PlayerInputHandlerRegister()
 {
-    // psg.playerInputHandlerId = SceneGraph_registerSystemType(psg.sceneGraph, "PlayerInputHandler",
-    //     (SceneSystemTypeMethods) {
-    //         .update = HandlePlayerInputUpdate,
-    //     });
+    psg.playerInputHandlerId = SceneGraph_registerComponentType(psg.sceneGraph, "PlayerInputHandler",
+        0,
+        (SceneComponentTypeMethods) {
+            .updateTick = HandlePlayerInputUpdate,
+        });
 }

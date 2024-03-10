@@ -30,4 +30,5 @@
 #include "test/plane/system/level_system.c"
 #include "test/plane/plane_sim_g.c"
 #include "test/plane/plane_sim.c"
+#include "test/plane/game_state.c"
 #include "dusk-engine.c"

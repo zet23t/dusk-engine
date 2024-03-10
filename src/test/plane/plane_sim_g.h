@@ -79,6 +79,7 @@ typedef struct PSG {
     SceneComponentTypeId levelSystemId;
     SceneComponentTypeId cloudSystemId;
     SceneComponentTypeId playerInputHandlerId;
+    SceneComponentTypeId groundTileSystemId;
 
     SceneObjectId camera;
     SceneObjectId uiRootId;

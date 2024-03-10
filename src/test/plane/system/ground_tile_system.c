@@ -155,7 +155,7 @@ void readParsedCfg()
     ReadMappedVariables(groundTileCfg, mappedGroundVariables);
 }
 
-void UpdateGroundTileSystem()
+void UpdateGroundTileSystem(SceneObject *object, SceneComponentId componentId, float dt, void *userdata)
 {
     readParsedCfg();
     offset += psg.deltaTime * baseSpeed * (moveSpeedSetting == 0 ? 1.0f : 8.0f);
@@ -189,4 +189,12 @@ void UpdateGroundTileSystem()
             SceneGraph_setLocalPosition(psg.sceneGraph, id, position);
         }
     }
+}
+
+void GroundTileSystemRegister()
+{
+    psg.groundTileSystemId = SceneGraph_registerComponentType(psg.sceneGraph, "GroundTileSystem", 0,
+        (SceneComponentTypeMethods) {
+            .updateTick = UpdateGroundTileSystem
+        });
 }
