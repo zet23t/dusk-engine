@@ -16,6 +16,12 @@ static float offset = 0;
 static float waterLineLevel = 0.5f;
 static SceneObjectId groundTiles[ROW_COUNT * COLUMN_COUNT];
 
+void GroundTileSystem_onInitialize(SceneObject *object, SceneComponentId componentId, void *componentData, void *userdata)
+{
+    offset = 0;
+    memset(groundTiles, 0, sizeof(groundTiles));
+}
+
 static MeshTileConfig FindMatchingTile(uint32_t cornersToMatch, int* rotation)
 {
     MeshTileConfig matches[psg.meshTileCount];
@@ -195,6 +201,7 @@ void GroundTileSystemRegister()
 {
     psg.groundTileSystemId = SceneGraph_registerComponentType(psg.sceneGraph, "GroundTileSystem", 0,
         (SceneComponentTypeMethods) {
+            .onInitialize = GroundTileSystem_onInitialize,
             .updateTick = UpdateGroundTileSystem
         });
 }
