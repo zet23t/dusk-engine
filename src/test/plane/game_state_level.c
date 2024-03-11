@@ -1,11 +1,13 @@
+#include "game_state_level.h"
 #include "config.h"
 #include "math.h"
-#include "game_state_level.h"
 #include "plane_sim_g.h"
 #include <raymath.h>
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+
+static Material onShootTrailMaterial = { 0 };
 
 static void onShoot(SceneGraph* graph, SceneComponentId shooter, ShootingComponent* shootingComponent, ShootingConfig* shootingConfig)
 {
@@ -14,11 +16,29 @@ static void onShoot(SceneGraph* graph, SceneComponentId shooter, ShootingCompone
     if (shooting == NULL) {
         return;
     }
+    if (onShootTrailMaterial.shader.id == 0) {
+        // Texture2D texture = LoadTexture("assets/wing-trail.png");
+        // SetTextureFilter(texture, TEXTURE_FILTER_BILINEAR);
+        onShootTrailMaterial = LoadMaterialDefault();
+        // SetMaterialTexture(&onShootTrailMaterial, MATERIAL_MAP_DIFFUSE, texture);
+    }
+    Vector3 forward = SceneGraph_getWorldForward(psg.sceneGraph, shootingComponent->spawnPoint);
     SceneObjectId bullet = SceneGraph_createObject(graph, "bullet");
+    float angle = atan2f(forward.x, forward.z) * RAD2DEG;
     SceneGraph_setLocalPosition(psg.sceneGraph, bullet, SceneGraph_getWorldPosition(psg.sceneGraph, shootingComponent->spawnPoint));
+    SceneGraph_setLocalRotation(psg.sceneGraph, bullet, (Vector3) { 0, angle, 0 });
+    // SceneComponentId trail = AddTrailRendererComponent(bullet, 40, 0.125f, Vector3Zero(), 20, onShootTrailMaterial, 0);
+    // TrailRendererComponent* trailComponent;
+    // if (SceneGraph_getComponent(graph, trail, (void**)&trailComponent))
+    // {
+    //     trailComponent->widthDecayRate = 0.5f;
+    //     TrailRendererComponent_addTrailWidth(trailComponent, 0.0f, 0.0f);
+    //     TrailRendererComponent_addTrailWidth(trailComponent, 0.07f, 0.23f);
+    //     TrailRendererComponent_addTrailWidth(trailComponent, 0.03f, 0.5f);
+    //     TrailRendererComponent_addTrailWidth(trailComponent, 0.001f, 0.8f);
+    // }
     AddMeshRendererComponent(bullet, psg.meshPlayerBullet, 1.0f);
 
-    Vector3 forward = SceneGraph_getWorldForward(psg.sceneGraph, shootingComponent->spawnPoint);
     forward = Vector3Scale(forward, shootingConfig->bulletSpeed);
     forward.y = 0;
     AddLinearVelocityComponent(bullet, forward, Vector3Zero(), Vector3Zero());
@@ -27,7 +47,7 @@ static void onShoot(SceneGraph* graph, SceneComponentId shooter, ShootingCompone
     SceneGraph_addComponent(graph, bullet, psg.bulletComponentId,
         &(BulletComponent) {
             .radius = 0.01f,
-            .colliderFlags = 1,
+            .colliderFlags = shootingConfig->bulletMask,
             .damage = 1 });
 }
 static Material _trailMaterial = { 0 };
@@ -43,12 +63,11 @@ static void AddWingTrail(SceneObjectId parent, float x, float y, float speed, fl
     SceneObjectId wingTrail = SceneGraph_createObject(psg.sceneGraph, "wing-trail-left");
     SceneGraph_setParent(psg.sceneGraph, wingTrail, parent);
     SceneGraph_setLocalPosition(psg.sceneGraph, wingTrail, (Vector3) { x, 0, y });
-    
+
     SceneComponentId trailId = AddTrailRendererComponent(wingTrail, 10 / lifetime, lifetime, (Vector3) { 0, 0, -speed }, 20, _trailMaterial, 0);
     TrailRendererComponent* trail = NULL;
     SceneComponent* component = SceneGraph_getComponent(psg.sceneGraph, trailId, (void**)&trail);
-    if (component)
-    {
+    if (component) {
         TrailRendererComponent_addTrailWidth(trail, 0.0f, 0.0f);
         TrailRendererComponent_addTrailWidth(trail, 0.05f, 0.23f);
         TrailRendererComponent_addTrailWidth(trail, 0.02f, 0.5f);
@@ -60,7 +79,7 @@ SceneObjectId add_propeller(SceneObjectId plane, float x, float y, float z)
 {
     SceneObjectId propeller = SceneGraph_createObject(psg.sceneGraph, "propeller");
     SceneGraph_setParent(psg.sceneGraph, propeller, plane);
-    SceneGraph_setLocalPosition(psg.sceneGraph, propeller, (Vector3) { x,y,z });
+    SceneGraph_setLocalPosition(psg.sceneGraph, propeller, (Vector3) { x, y, z });
     AddMeshRendererComponent(propeller, psg.meshPropellerPin, 0.0f);
 
     for (int i = 0; i < 3; i += 1) {
@@ -70,7 +89,7 @@ SceneObjectId add_propeller(SceneObjectId plane, float x, float y, float z)
         SceneGraph_setLocalRotation(psg.sceneGraph, propellerBlade, (Vector3) { 0, 0, 120 * i });
         AddMeshRendererComponent(propellerBlade, psg.meshPropellerBlade, 0.0f);
     }
-    return propeller; 
+    return propeller;
 }
 
 SceneObjectId plane_instantiate(Vector3 position)
@@ -100,6 +119,7 @@ SceneObjectId plane_instantiate(Vector3 position)
         .shotInterval = 0.15f,
         .bulletSpeed = 20.0f,
         .bulletLifetime = .75f,
+        .bulletMask = 1,
         .onShoot = (OnShootFn)onShoot,
     };
 
@@ -126,45 +146,77 @@ SceneObjectId plane_instantiate(Vector3 position)
     return plane;
 }
 
-static void PropellerRotator(SceneGraph* graph, SceneObjectId objectId, SceneComponentId componentId, float dt, struct UpdateCallbackComponent *component)
+static void PropellerRotator(SceneGraph* graph, SceneObjectId objectId, SceneComponentId componentId, float dt, struct UpdateCallbackComponent* component)
 {
     float speed = component->floatValue;
     Vector3 rotation = SceneGraph_getLocalRotation(graph, objectId);
     SceneGraph_setLocalRotation(graph, objectId, (Vector3) { 0, 0, rotation.z + speed * dt });
 }
 
-static void SpawnEnemy(SceneGraph *g, float x, float y)
+int OnEnemyHit(SceneGraph* g, SceneObjectId target, SceneObjectId bullet)
+{
+    HealthComponent* health;
+    SceneGraph_getComponentByType(g, target, psg.healthComponentId, (void**)&health, 0);
+    if (health == NULL) {
+        return 0;
+    }
+    health->health -= 1;
+    if (health->health <= 0) {
+        SceneGraph_destroyObject(g, target);
+    }
+    SceneGraph_destroyObject(g, bullet);
+    return 1;
+}
+
+static void SpawnEnemy(SceneGraph* g, float x, float y, EnemyBehaviorComponent behavior)
 {
     SceneObjectId enemy = SceneGraph_createObject(g, "enemy");
     SceneGraph_setLocalPosition(g, enemy, (Vector3) { x, 0, y });
     SceneGraph_setLocalRotation(g, enemy, (Vector3) { 0, 180, 0 });
-    SceneGraph_addComponent(g, enemy, psg.enemyBehaviorComponentId,
-        &(EnemyBehaviorComponent) {
-            .agility = 2.0f,
-            .initialized = 1,
-            .behaviorType = 0,
-            .points[0] = (Vector3) { x + 1, 0, y - 5 },
-            .points[1] = (Vector3) { x + 2, 0, y + 5},
-            .points[2] = (Vector3) { x - 2, 0, y + 5},
-            .pointCount = 3,
-            .velocity = 3.50f,
-            .velocityComponentId = 
-                AddLinearVelocityComponent(enemy, Vector3Zero(), Vector3Zero(), Vector3Zero())
-        });
+    AddLinearVelocityComponent(enemy, Vector3Zero(), Vector3Zero(), Vector3Zero());
+    SceneGraph_addComponent(g, enemy, psg.enemyBehaviorComponentId, &behavior);
     SceneObjectId propeller = add_propeller(enemy, 0, 0.08f, 0.6f);
     SceneGraph_addComponent(g, propeller, psg.updateCallbackComponentId,
         &(UpdateCallbackComponent) {
             .update = PropellerRotator,
-            .floatValue = 3000.0f
-        });
+            .floatValue = 3000.0f });
     AddMeshRendererComponent(enemy, psg.meshPlane2, 1.0f);
+    AddHealthComponent(enemy, 3, 3);
+    SceneGraph_addComponent(g, enemy, psg.targetComponentId,
+        &(TargetComponent) {
+            .colliderMask = 1,
+            .radius = 0.5f,
+            .onHit = OnEnemyHit });
     AddWingTrail(enemy, 1.0f, 0.3f, 0, 2.0f);
     AddWingTrail(enemy, -1.0f, 0.3f, 0, 2.0f);
+
+    ShootingConfig shootingConfig = {
+        .shotInterval = 1.5f,
+        .bulletSpeed = 10.0f,
+        .bulletLifetime = 2.0f,
+        .bulletMask = 2,
+        .onShoot = (OnShootFn)onShoot,
+    };
+
+    SceneGraph_addComponent(psg.sceneGraph, enemy, psg.shootingComponentId,
+        &(ShootingComponent) {
+            .spawnPoint = enemy,
+            .shooting = 2,
+            .config = shootingConfig,
+        });
 }
 
-static void level1_e1(SceneGraph *g, void *)
+static void level1_e1(SceneGraph* g, struct LevelEvent* event)
 {
-    SpawnEnemy(g, 0, 5);
+    float x = event->levelEventData.x;
+    float y = event->levelEventData.y;
+    int n = event->levelEventData.n;
+    float xx;
+    Vector2* points = event->levelEventData.points;
+    for (int i = 0; i < n; i += 1) {
+        xx = x + i * event->levelEventData.formationStep;
+        SpawnEnemy(g, xx, y, (EnemyBehaviorComponent) { .agility = 2.0f, .initialized = 1, .behaviorType = 0, .autoDestroy = 1, .points[0] = (Vector3) { points[0].x + xx, 0, points[0].y + y }, .points[1] = (Vector3) { points[1].x + xx, 0, points[1].y + y }, .points[2] = (Vector3) { points[2].x + xx, 0, points[2].y + y }, .points[3] = (Vector3) { points[3].x + xx, 0, points[3].y + y }, .pointCount = event->levelEventData.pointCount, .velocity = 3.50f });
+    }
 }
 
 int GameStateLevel_Init()
@@ -173,14 +225,31 @@ int GameStateLevel_Init()
     SceneObjectId systemsId = SceneGraph_createObject(psg.sceneGraph, "systems");
     // SceneGraph_addComponent(psg.sceneGraph, systemsId, psg.targetSpawnSystemId, NULL);
     SceneGraph_addComponent(psg.sceneGraph, systemsId, psg.cloudSystemId, NULL);
-    static LevelEvent events[] = {
-        {.time = 1.0f, .onTrigger = level1_e1 },
-        {0}
+    LevelEvent events[128] = {
+        { .time = 1.0f, .onTrigger = level1_e1, .levelEventData = (LevelEventData) { 
+            .formationStep = 2.5f, .n = 2, .x = 7, .y = 15,
+            .pointCount = 3, 
+            .points[0]= (Vector2) { 0, -5 }, 
+            .points[1] = (Vector2){-10, -10},
+            .points[2] = (Vector2){-20, 10},
+        } },
+        { 0 }
     };
-    SceneGraph_addComponent(psg.sceneGraph, systemsId, psg.levelSystemId, &(LevelSystem){
-        .time = 0.0f,
-        .events = events
-    });
+    for (int i=0;i<127;i++)
+    {
+        LevelEventData eventData = { 0 };
+        eventData.x = GetRandomValue(-8, 8);
+        eventData.y = GetRandomValue(15, 20);
+        eventData.formationStep = 2.25f + GetRandomValue(0, 5) * .25f;
+        eventData.n = GetRandomValue(1, 3);
+        eventData.pointCount = 3;
+        eventData.points[0] = (Vector2) { 0, -5 };
+        eventData.points[1] = (Vector2) { (eventData.x > 0 ? -1 : 1) * GetRandomValue(0,4), GetRandomValue(-15,-9) };
+        eventData.points[2] = (Vector2) { GetRandomValue(-8,8), 8 };
+        events[i] = (LevelEvent) { .time = 1.5f * i + GetRandomValue(0,10)*.2f, .onTrigger = level1_e1, .levelEventData = eventData };
+    }
+    events[127] = (LevelEvent) { 0 };
+    SceneGraph_addComponent(psg.sceneGraph, systemsId, psg.levelSystemId, &(LevelSystem) { .time = 0.0f, .events = events });
     SceneGraph_addComponent(psg.sceneGraph, systemsId, psg.playerInputHandlerId, NULL);
     SceneGraph_addComponent(psg.sceneGraph, systemsId, psg.groundTileSystemId, NULL);
 

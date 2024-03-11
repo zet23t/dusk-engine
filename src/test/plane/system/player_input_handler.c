@@ -65,7 +65,7 @@ void HandlePlayerInputUpdate(SceneObject *object, SceneComponentId componentId, 
             ShootingComponent *shooting;
             SceneGraph_getComponentByType(psg.sceneGraph, psg.playerPlane, psg.shootingComponentId, (void**)&shooting, i);
             if (shooting == NULL) break;
-            shooting->shooting = true;
+            shooting->shooting = 1;
         }
     }
 

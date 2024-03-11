@@ -6,7 +6,7 @@ static void ShootingComponentUpdate(SceneObject* node, SceneComponentId sceneCom
     shooting->cooldown -= psg.deltaTime;
     if (shooting->cooldown <= 0 && shooting->shooting) {
         shooting->cooldown = shooting->config.shotInterval;
-        shooting->shooting = false;
+        shooting->shooting &= ~1;
         shooting->config.onShoot(node->graph, sceneComponentId, shooting, &shooting->config);
     }
 }

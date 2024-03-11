@@ -68,6 +68,10 @@ void EnemyBehaviorComponent_onUpdate(SceneObject* sceneObject, SceneComponentId 
             enemyBehaviorComponent->phase++;
             if (enemyBehaviorComponent->phase >= enemyBehaviorComponent->pointCount)
             {
+                if (enemyBehaviorComponent->autoDestroy)
+                {
+                    SceneGraph_destroyObject(sceneObject->graph, sceneObject->id);
+                }
                 enemyBehaviorComponent->phase = 0;
             }
         }
@@ -90,7 +94,7 @@ void EnemyBehaviorComponentRegister()
     psg.enemyBehaviorComponentId = SceneGraph_registerComponentType(psg.sceneGraph, "EnemyBehaviorComponent", sizeof(EnemyBehaviorComponent),
         (SceneComponentTypeMethods) {
             // .onInitialize = EnemyBehaviorComponent_onInitialize,
-            .draw = EnemyBehaviorComponent_onDraw,
+            // .draw = EnemyBehaviorComponent_onDraw,
             .onDestroy = NULL,
             .updateTick = EnemyBehaviorComponent_onUpdate,
         });

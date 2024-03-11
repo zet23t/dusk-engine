@@ -110,11 +110,27 @@ typedef struct PSG {
 } PSG;
 
 
+
+typedef struct LevelEventData {
+    float x;
+    float y;
+    float formationStep;
+    uint8_t n;
+    uint8_t pointCount;
+    Vector2 points[4];
+} LevelEventData;
+
 typedef struct LevelEvent {
     float time;
     int triggered;
-    void (*onTrigger)(SceneGraph*, void* userData);
-    void *userData;
+    void (*onTrigger)(SceneGraph*, struct LevelEvent* userData);
+
+    union {
+        void *userData;
+        Vector3 userDataVec3;
+        float userDataFloat;
+        LevelEventData levelEventData;
+    };
 } LevelEvent;
 
 typedef struct LevelSystem {
@@ -133,6 +149,7 @@ typedef struct EnemyBehaviorComponent
     Vector3 points[4];
     int8_t pointCount;
     int8_t initialized;
+    int8_t autoDestroy;
     SceneComponentId velocityComponentId;
 } EnemyBehaviorComponent;
 
@@ -282,6 +299,7 @@ typedef struct ShootingConfig {
     float shotInterval;
     float bulletSpeed;
     float bulletLifetime;
+    int bulletMask;
     OnShootFn onShoot;
 } ShootingConfig;
 
@@ -291,7 +309,7 @@ typedef struct AutoDestroyComponent {
 
 typedef struct ShootingComponent {
     float cooldown;
-    int32_t shooting;
+    int8_t shooting;
     ShootingConfig config;
     SceneObjectId spawnPoint;
 } ShootingComponent;

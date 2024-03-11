@@ -2,6 +2,25 @@
 #include <memory.h>
 #include <stdlib.h>
 
+static void LevelSystem_onInitialize(SceneObject* node, SceneComponentId sceneComponentId, void* component, void *initArg)
+{
+    LevelSystem* levelSystem = (LevelSystem*)component;
+    LevelSystem* initSystem = (LevelSystem*)initArg;
+    memcpy(levelSystem, initSystem, sizeof(LevelSystem));
+    int eventCount = 0;
+    for (LevelEvent *event = levelSystem->events; event->onTrigger != NULL; event++) {
+        eventCount++;
+    }
+    levelSystem->events = malloc(sizeof(LevelEvent) * (eventCount + 1));
+    memcpy(levelSystem->events, initSystem->events, sizeof(LevelEvent) * (eventCount + 1));
+}
+
+static void LevelSystem_onDestroy(SceneObject* node, SceneComponentId sceneComponentId, void* component)
+{
+    LevelSystem* levelSystem = (LevelSystem*)component;
+    free(levelSystem->events);
+}
+
 static void LevelSystemUpdate(SceneObject* node, SceneComponentId sceneComponentId, float dt, void* component)
 {
     LevelSystem* levelSystem = (LevelSystem*)component;
@@ -14,7 +33,7 @@ static void LevelSystemUpdate(SceneObject* node, SceneComponentId sceneComponent
         }
 
         event->triggered = 1;
-        event->onTrigger(node->graph, event->userData);
+        event->onTrigger(node->graph, event);
 
         // if (event->showMessage != NULL) {
         //     TraceLog(LOG_INFO, "Level event, show message: %s", event->showMessage);
@@ -49,6 +68,8 @@ void LevelSystemRegister()
 {
     psg.levelSystemId = SceneGraph_registerComponentType(psg.sceneGraph, "LevelSystem", sizeof(LevelSystem),
         (SceneComponentTypeMethods) {
+            .onInitialize = LevelSystem_onInitialize,
+            .onDestroy = LevelSystem_onDestroy,
             .updateTick = LevelSystemUpdate,
         });
 }
