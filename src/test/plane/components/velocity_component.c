@@ -64,6 +64,18 @@ SceneComponentId AddLinearVelocityComponent(SceneObjectId objectId, Vector3 velo
     });
 }
 
+Vector3 GetVelocity(SceneObjectId objectId)
+{
+    LinearVelocityComponent* velocity;
+    SceneComponent* component = SceneGraph_getComponentByType(psg.sceneGraph, objectId, psg.linearVelocityComponentId, (void**)&velocity, 0);
+    if (component == NULL)
+    {
+        return (Vector3) { 0, 0, 0 };
+    }
+    return velocity->velocity;
+
+}
+
 void LinearVelocityComponentRegister()
 {
     psg.linearVelocityComponentId = SceneGraph_registerComponentType(psg.sceneGraph, "LinearVelocityComponent", sizeof(LinearVelocityComponent),

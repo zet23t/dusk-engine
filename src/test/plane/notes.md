@@ -17,7 +17,9 @@ Rough idea:
 
 * implement game phases
   * main menu
+  * select map route
   * start level
   * level play
   * level end
+  * go to select map route
   * game over

@@ -367,4 +367,6 @@ void TrailRendererComponent_setMaterial(TrailRendererComponent* trailRendererCom
 int ActionFromJSON(cJSON* actionCfg, Action* action);
 void TriggerActions(SceneGraph* sceneGraph, SceneObjectId objectId, Action* actions, int count);
 void TimerComponentAddAction(SceneComponentId componentId, int actionType, const char* targetName);
+
+Vector3 GetVelocity(SceneObjectId objectId);
 #endif
