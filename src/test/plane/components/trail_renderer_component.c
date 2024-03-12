@@ -285,12 +285,6 @@ void TrailRendererComponent_onDraw(Camera3D camera, SceneObject* sceneObject, Sc
         vertices[(i + 1) * 6 + 3] = node->position.x;
         vertices[(i + 1) * 6 + 4] = node->position.y;
         vertices[(i + 1) * 6 + 5] = node->position.z;
-
-        texcoords[(i + 1) * 4] = 0.0f;
-        texcoords[(i + 1) * 4 + 1] = 0.0f;
-
-        texcoords[(i + 1) * 4 + 2] = 1.0f;
-        texcoords[(i + 1) * 4 + 3] = 0.0f;
     }
 
 
@@ -330,11 +324,20 @@ void TrailRendererComponent_onDraw(Camera3D camera, SceneObject* sceneObject, Sc
         width *= node->widthPercent;
         TrailRendererComponent_setWidth(up, prev, next, width, &vertices[i * 6]);
         prev = pos;
+
+        float v = (float)(i) / (last);
+
+        texcoords[(i) * 4] = 0.0f;
+        texcoords[(i) * 4 + 1] = v;
+
+        texcoords[(i) * 4 + 2] = 1.0f;
+        texcoords[(i) * 4 + 3] = v;
     }
-    for (int i = last * 6; i < mesh->vertexCount * 3; i += 3) {
-        vertices[i] = prev.x;
-        vertices[i + 1] = prev.y;
-        vertices[i + 2] = prev.z;
+    Vector3 lastP = *((Vector3*)&vertices[last * 6 - 6]);
+    for (int i = last * 6 - 6; i < mesh->vertexCount * 3; i += 3) {
+        vertices[i] = lastP.x;
+        vertices[i + 1] = lastP.y;
+        vertices[i + 2] = lastP.z;
     }
 
     if (mesh->vaoId < 1) {

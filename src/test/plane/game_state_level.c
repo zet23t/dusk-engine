@@ -155,11 +155,11 @@ static void PropellerRotator(SceneGraph* graph, SceneObjectId objectId, SceneCom
 }
 
 static Material _hitEffectMaterial = { 0 };
-void SpawnHitEffect(SceneGraph *g, Vector3 position, Vector3 initialVelocity)
+void SpawnHitEffect(SceneGraph *g, Vector3 position, Vector3 initialVelocity, float vSpread, int cnt, float lifetime)
 {
     if (_hitEffectMaterial.shader.id == 0) {
         Texture2D texture = LoadTexture("assets/spark.png");
-        SetTextureFilter(texture, TEXTURE_FILTER_BILINEAR);
+        // SetTextureFilter(texture, TEXTURE_FILTER_BILINEAR);
         _hitEffectMaterial = LoadMaterialDefault();
         SetMaterialTexture(&_hitEffectMaterial, MATERIAL_MAP_DIFFUSE, texture);
         _hitEffectMaterial.maps[MATERIAL_MAP_DIFFUSE].color = WHITE;
@@ -171,22 +171,21 @@ void SpawnHitEffect(SceneGraph *g, Vector3 position, Vector3 initialVelocity)
     if (fabsf(initialVelocity.z) > maxIniV) {
         maxIniV = fabsf(initialVelocity.z);
     }
-    for (int i=0;i<5;i+=1)
+    for (int i=0;i<cnt;i+=1)
     {
+        float drag = GetRandomFloat(0.5f, 3.5f);
         Vector3 rndVel = (Vector3) { GetRandomFloat(-1, 1), GetRandomFloat(-1, 1), GetRandomFloat(-1, 1) };
         SceneObjectId hitEffect = SceneGraph_createObject(g, "hit-effect");
         SceneGraph_setLocalPosition(g, hitEffect, position);
-        SceneComponentId trailId = AddTrailRendererComponent(hitEffect, 20, 0.5f, Vector3Zero(), 20, _hitEffectMaterial, 0);
-        
+        Vector3 vel = Vector3Add(initialVelocity, Vector3Scale(rndVel, vSpread));
+        SceneComponentId trailId = AddTrailRendererComponent(hitEffect, 80, 0.25f, Vector3Scale(vel, -1.0f), 20, _hitEffectMaterial, 0);
+        // AddMeshRendererComponent(hitEffect, psg.meshHitParticle1, 0.0f);
         TrailRendererComponent* trail = NULL;
         SceneGraph_getComponent(g, trailId, (void**)&trail);
-        TrailRendererComponent_addTrailWidth(trail, 0.0f, 0.0f);
-        TrailRendererComponent_addTrailWidth(trail, 0.25f, 0.1f);
-        TrailRendererComponent_addTrailWidth(trail, 0.02f, 0.5f);
-        TrailRendererComponent_addTrailWidth(trail, 0.001f, 0.8f);
-        trail->widthDecayRate = 2.0f;
-        AddLinearVelocityComponent(hitEffect, Vector3Add(initialVelocity, Vector3Scale(rndVel, maxIniV * .5f)), Vector3Zero(), Vector3Zero());
-        AddAutoDestroyComponent(hitEffect, 0.5f);
+        TrailRendererComponent_addTrailWidth(trail, 0.1f, 0.0f);
+        trail->widthDecayRate = 1.0f / lifetime;
+        AddLinearVelocityComponent(hitEffect, vel, (Vector3){0,0.0f,0}, (Vector3){drag,drag,drag});
+        AddAutoDestroyComponent(hitEffect, lifetime);
     }
 }
 
@@ -199,11 +198,12 @@ int OnEnemyHit(SceneGraph* g, SceneObjectId target, SceneObjectId bullet)
     }
     health->health -= 1;
     if (health->health <= 0) {
+        SpawnHitEffect(g, SceneGraph_getWorldPosition(g, bullet), Vector3Scale(GetVelocity(target), .5f), 2.0f, 32, 1.2f);
         SceneGraph_destroyObject(g, target);
 
     }
     else {
-        SpawnHitEffect(g, SceneGraph_getWorldPosition(g, bullet), Vector3Scale(GetVelocity(bullet), -.5f));
+        SpawnHitEffect(g, SceneGraph_getWorldPosition(g, bullet), Vector3Scale(GetVelocity(bullet), .05f), 2.0f, 16, 0.7f);
     }
     SceneGraph_destroyObject(g, bullet);
     return 1;
@@ -226,7 +226,7 @@ static void SpawnEnemy(SceneGraph* g, float x, float y, EnemyBehaviorComponent b
     SceneGraph_addComponent(g, enemy, psg.targetComponentId,
         &(TargetComponent) {
             .colliderMask = 1,
-            .radius = 0.5f,
+            .radius = 1.0f,
             .onHit = OnEnemyHit });
     AddWingTrail(enemy, 1.0f, 0.3f, 0, 2.0f);
     AddWingTrail(enemy, -1.0f, 0.3f, 0, 2.0f);

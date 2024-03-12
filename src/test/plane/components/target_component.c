@@ -7,6 +7,7 @@ static void TargetComponentUpdate(SceneObject* node, SceneComponentId sceneCompo
     SceneComponentType *bulletType = SceneGraph_getComponentType(psg.sceneGraph, psg.bulletComponentId);
     BulletComponent* bulletComponents = (BulletComponent*)bulletType->componentData;
     Vector3 pos = SceneGraph_getWorldPosition(psg.sceneGraph, node->id);
+
     for (int i=0; i < bulletType->components_count; i++) {
         SceneComponent *bulletComponent = &bulletType->components[i];
         if (bulletComponent->id.version == 0) continue;
@@ -27,10 +28,22 @@ static void TargetComponentUpdate(SceneObject* node, SceneComponentId sceneCompo
     }
 }
 
+#if defined(DEBUG)
+static void TargetComponent_draw(Camera3D camera, SceneObject* node, SceneComponentId sceneComponentId, void* component, void *userdata)
+{
+    TargetComponent* target = (TargetComponent*)component;
+    Vector3 pos = SceneGraph_getWorldPosition(psg.sceneGraph, node->id);
+    DrawSphereWires(pos, target->radius, 10, 10, WHITE);
+}
+#endif
+
 void TargetComponentRegister()
 {
     psg.targetComponentId = SceneGraph_registerComponentType(psg.sceneGraph, "Target", sizeof(TargetComponent),
         (SceneComponentTypeMethods) {
             .updateTick = TargetComponentUpdate,
+#if defined(DEBUG)
+            .draw = TargetComponent_draw,
+#endif
         });
 }
