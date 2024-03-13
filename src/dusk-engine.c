@@ -218,6 +218,11 @@ draw: 21.24 / 26.21 / 44.61ms
 #include "test/plane/plane_sim.h"
 #include "test/plane/plane_sim_g.h"
 
+#if PLATFORM_DESKTOP
+void InitializeGameCode(void *storedState);
+void* UnloadGameCode();
+#endif
+
 int main(void)
 {
 #if PLATFORM_WEB
@@ -260,6 +265,10 @@ int main(void)
     memset(drawTimes, 0, sizeof(drawTimes));
     memset(updateTimes, 0, sizeof(updateTimes));
 
+#if PLATFORM_DESKTOP
+    InitializeGameCode(NULL);
+#endif
+
     if (plane_sim_init()) {
         return 1;
     }
@@ -299,6 +308,16 @@ int main(void)
         if (IsKeyPressed(KEY_N)) {
             step = 1;
         }
+
+#if PLATFORM_DESKTOP
+        if (IsKeyPressed(KEY_F7))
+        {
+            TraceLog(LOG_WARNING, "Unloading game code\n");
+            void *storedState = UnloadGameCode();
+            TraceLog(LOG_WARNING, "Reloading game code\n");
+            InitializeGameCode(storedState);
+        }
+#endif
         // update();
 
         // BeginMode3D(camera);

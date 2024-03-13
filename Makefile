@@ -26,7 +26,8 @@ BUILDDIR := $(shell echo $(BUILDDIR) | tr A-Z a-z)
 # Source files
 # SRCS := $(shell find $(SRCDIR) -name '*.c')
 # SRCS := $(filter-out src/stu.c, $(SRCS))
-SRCS := src/stu.c
+SRCS := src/stu.c src/dll_win.c
+SRCS_DLL := src/stu_dll.c
 
 # Output file
 TARGET := $(BUILDDIR)/dusk-engine.exe
@@ -138,9 +139,12 @@ $(info $(SRCS))
 $(info $(OBJS))
 
 # Default target
-all: $(TARGET)
+all: dll $(TARGET)
 
-run: $(TARGET)
+dll: $(SRCS_DLL)
+	$(CC) $(CFLAGS) -shared -o $(BUILDDIR)/game.dll $^ -L$(LIBDIR) -lraylib $(LDLIBS)
+
+run: dll $(TARGET)
 	./$(TARGET)
 
 # Run target
