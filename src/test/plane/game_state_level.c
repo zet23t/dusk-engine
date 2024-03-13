@@ -155,7 +155,7 @@ static void PropellerRotator(SceneGraph* graph, SceneObjectId objectId, SceneCom
 }
 
 static Material _hitEffectMaterial = { 0 };
-void SpawnHitEffect(SceneGraph *g, Vector3 position, Vector3 initialVelocity, float vSpread, int cnt, float lifetime)
+void SpawnHitEffect(SceneGraph *g, Vector3 position, Vector3 initialVelocity, float vSpread, int cnt, float lifetime, float width)
 {
     if (_hitEffectMaterial.shader.id == 0) {
         Texture2D texture = LoadTexture("assets/spark.png");
@@ -182,7 +182,7 @@ void SpawnHitEffect(SceneGraph *g, Vector3 position, Vector3 initialVelocity, fl
         // AddMeshRendererComponent(hitEffect, psg.meshHitParticle1, 0.0f);
         TrailRendererComponent* trail = NULL;
         SceneGraph_getComponent(g, trailId, (void**)&trail);
-        TrailRendererComponent_addTrailWidth(trail, 0.1f, 0.0f);
+        TrailRendererComponent_addTrailWidth(trail, 0.1f * width, 0.0f);
         trail->widthDecayRate = 1.0f / lifetime;
         AddLinearVelocityComponent(hitEffect, vel, (Vector3){0,0.0f,0}, (Vector3){drag,drag,drag});
         AddAutoDestroyComponent(hitEffect, lifetime);
@@ -198,12 +198,12 @@ int OnEnemyHit(SceneGraph* g, SceneObjectId target, SceneObjectId bullet)
     }
     health->health -= 1;
     if (health->health <= 0) {
-        SpawnHitEffect(g, SceneGraph_getWorldPosition(g, bullet), Vector3Scale(GetVelocity(target), .5f), 2.0f, 32, 1.2f);
+        SpawnHitEffect(g, SceneGraph_getWorldPosition(g, bullet), Vector3Scale(GetVelocity(target), 1.0f), 4.0f, 32, 1.2f, 12.0f);
         SceneGraph_destroyObject(g, target);
 
     }
     else {
-        SpawnHitEffect(g, SceneGraph_getWorldPosition(g, bullet), Vector3Scale(GetVelocity(bullet), .05f), 2.0f, 16, 0.7f);
+        SpawnHitEffect(g, SceneGraph_getWorldPosition(g, bullet), Vector3Scale(GetVelocity(bullet), .05f), 2.0f, 16, 0.7f, 1.0f);
     }
     SceneGraph_destroyObject(g, bullet);
     return 1;

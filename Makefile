@@ -142,7 +142,8 @@ $(info $(OBJS))
 all: dll $(TARGET)
 
 dll: $(SRCS_DLL)
-	$(CC) $(CFLAGS) -shared -o $(BUILDDIR)/game.dll $^ -L$(LIBDIR) -lraylib $(LDLIBS)
+	mkdir -p $(BUILDDIR)
+	$(CC) $(CFLAGS) -shared -o $(BUILDDIR)/game.dll $^ -L$(LIBDIR) -lraylibdll $(LDLIBS)
 
 run: dll $(TARGET)
 	./$(TARGET)
@@ -154,7 +155,7 @@ run-node: $(OUTPUT)
 
 # Rule to build the target
 $(TARGET): $(OBJS)
-	$(CC) $(CFLAGS) -o $@ $^ -L$(LIBDIR) -lraylib $(LDLIBS)
+	$(CC) $(CFLAGS) -o $@ $^ -L$(LIBDIR) -lraylibdll $(LDLIBS)
 
 -include $(DEPS)
 
