@@ -1,20 +1,24 @@
-#include <stdio.h>
-#include <windows.h>
-
 typedef void (*InitializeGameCodeFn)(void* storedState);
 typedef void* (*UnloadGameCodeFn)();
 typedef void (*DrawGameCodeFn)();
 typedef void (*UpdateGameCodeFn)(float dt);
 
-static HMODULE GameCodeDLL;
 static DrawGameCodeFn dlDraw;
 static UpdateGameCodeFn dlUpdate;
+void TraceLog(int logType, const char *text, ...);
+
+#if PLATFORM_DESKTOP
+#include <stdio.h>
+#include <windows.h>
+
+
+static HMODULE GameCodeDLL;
 
 static char dllPath[MAX_PATH];
 double GetTime(void);
 
 
-void InitializeGameCode(void* storedState)
+void Host_InitializeGameCode(void* storedState)
 {
 #if !defined(DEBUG)
     if (dllPath[0] == 0)
@@ -84,7 +88,7 @@ void InitializeGameCode(void* storedState)
     }
 }
 
-void* UnloadGameCode()
+void* Host_UnloadGameCode()
 {
     if (!GameCodeDLL) {
         return NULL;
@@ -99,8 +103,27 @@ void* UnloadGameCode()
 
     return storedState;
 }
+#else
 
-void GameCodeDraw()
+
+void InitializeGameCode(void*);
+void GameCodeDraw();
+void GameCodeUpdate(float dt);
+
+void Host_InitializeGameCode(void* storedState)
+{
+    InitializeGameCode(0);
+    dlDraw = GameCodeDraw;
+    dlUpdate = GameCodeUpdate;
+}
+
+void* Host_UnloadGameCode()
+{
+    return 0;
+}
+#endif
+
+void Host_GameCodeDraw()
 {
     if (!dlDraw) {
         return;
@@ -108,7 +131,7 @@ void GameCodeDraw()
     dlDraw();
 }
 
-void GameCodeUpdate(float dt)
+void Host_GameCodeUpdate(float dt)
 {
     if (!dlUpdate) {
         return;

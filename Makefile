@@ -28,6 +28,7 @@ BUILDDIR := $(shell echo $(BUILDDIR) | tr A-Z a-z)
 # SRCS := $(filter-out src/stu.c, $(SRCS))
 SRCS := src/stu.c src/dll_win.c
 SRCS_DLL := src/stu_dll.c
+RAYLIB_LIB := raylibdll
 
 # Output file
 TARGET := $(BUILDDIR)/dusk-engine.exe
@@ -48,6 +49,9 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
     CC = emcc
     AR = emar
     TARGET := $(BUILDDIR)/dusk-engine.html
+    RAYLIB_LIB = raylib
+    SRCS := $(SRCS) $(SRCS_DLL)
+    SRCS_DLL =
 endif
 
 
@@ -144,8 +148,12 @@ all: dll main
 main: $(TARGET)
 
 dll: $(SRCS_DLL)
+ifeq ($(PLATFORM),PLATFORM_WEB)
+	@echo "Skipping dll target for PLATFORM_WEB"
+else
 	mkdir -p $(BUILDDIR)
-	$(CC) $(CFLAGS) -shared -o $(BUILDDIR)/game.dll $^ -L$(LIBDIR) -lraylibdll $(LDLIBS)
+	$(CC) $(CFLAGS) -shared -o $(BUILDDIR)/game.dll $^ -L$(LIBDIR) -l$(RAYLIB_LIB) $(LDLIBS)
+endif
 
 run: dll $(TARGET)
 	./$(TARGET)
@@ -157,7 +165,7 @@ run-node: $(OUTPUT)
 
 # Rule to build the target
 $(TARGET): $(OBJS)
-	$(CC) $(CFLAGS) -o $@ $^ -L$(LIBDIR) -lraylibdll $(LDLIBS)
+	$(CC) $(CFLAGS) -o $@ $^ -L$(LIBDIR) -l$(RAYLIB_LIB) $(LDLIBS)
 
 -include $(DEPS)
 

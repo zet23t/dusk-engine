@@ -34,10 +34,14 @@
 #include "test/plane/plane_sim_g.c"
 #include "test/plane/plane_sim.c"
 #include "test/plane/game_state_level.c"
+
+#if PLATFORM_WEB
+#define DLL_EXPORT
+#else
 #define STB_PERLIN_IMPLEMENTATION
 #include "test/plane/util/stb_perlin.h"
-
 #define DLL_EXPORT __declspec(dllexport)
+#endif
 
 DLL_EXPORT void InitializeGameCode(void *storedState)
 {

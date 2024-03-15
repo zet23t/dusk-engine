@@ -10,11 +10,11 @@
 #include <emscripten.h>
 #endif
 
-void InitializeGameCode(void *storedState);
-void* UnloadGameCode();
+void Host_InitializeGameCode(void *storedState);
+void* Host_UnloadGameCode();
 
-void GameCodeDraw();
-void GameCodeUpdate(float dt);
+void Host_GameCodeDraw();
+void Host_GameCodeUpdate(float dt);
 
 int main(void)
 {
@@ -58,7 +58,7 @@ int main(void)
     memset(drawTimes, 0, sizeof(drawTimes));
     memset(updateTimes, 0, sizeof(updateTimes));
 
-    InitializeGameCode(NULL);
+    Host_InitializeGameCode(NULL);
 
 #if PLATFORM_WEB
     DisableCursor();
@@ -76,7 +76,7 @@ int main(void)
         float dt = GetFrameTime();
         // assume 10fps is the minimum, after that we slow the game
         if (dt > 0.1f) dt = 0.1f;
-        GameCodeUpdate(isPaused && !step ? 0.0f : dt * (isSlowmo ? .1f : 1.0f));
+        Host_GameCodeUpdate(isPaused && !step ? 0.0f : dt * (isSlowmo ? .1f : 1.0f));
         float updateDt = GetTime() - t;
         updateTimes[trackIndex % trackCount] = updateDt;
 
@@ -84,7 +84,7 @@ int main(void)
         BeginDrawing();
         ClearBackground((Color) { 120, 140, 160, 255 });
         t = GetTime();
-        GameCodeDraw();
+        Host_GameCodeDraw();
         float drawDt = GetTime() - t;
         drawTimes[trackIndex % trackCount] = drawDt;
 
@@ -103,10 +103,10 @@ int main(void)
         {
             float reloadStart = GetTime();
             TraceLog(LOG_WARNING, "Unloading game code\n");
-            void *storedState = UnloadGameCode();
+            void *storedState = Host_UnloadGameCode();
             float unloadTime = GetTime();
             TraceLog(LOG_WARNING, "Reloading game code\n");
-            InitializeGameCode(storedState);
+            Host_InitializeGameCode(storedState);
             float loadedTime = GetTime();
 
             TraceLog(LOG_WARNING, "Reloaded game code in %.2fms (unloaded in %.2fms)\n", (loadedTime - reloadStart) * 1000.0f, (unloadTime - reloadStart) * 1000.0f);
