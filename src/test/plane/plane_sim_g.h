@@ -224,6 +224,8 @@ typedef struct TrailRendererComponent {
     uint16_t nodeCount;
     uint16_t nodeCapacity;
     uint8_t trailWidthCount;
+    // if 0 = stretch texture over entire.
+    float uvDistanceFactor;
     unsigned int meshIsDirty : 1;
     unsigned int ownsMaterial : 1;
 

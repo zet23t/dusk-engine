@@ -155,11 +155,12 @@ static void PropellerRotator(SceneGraph* graph, SceneObjectId objectId, SceneCom
 }
 
 static Material _hitEffectMaterial = { 0 };
-void SpawnHitEffect(SceneGraph *g, Vector3 position, Vector3 initialVelocity, float vSpread, int cnt, float lifetime, float width)
+void SpawnHitEffect(SceneGraph *g, Vector3 position, Vector3 initialVelocity, float vSpread, int cnt, float lifetime, float width, float uvLength, float nodeVelFac)
 {
     if (_hitEffectMaterial.shader.id == 0) {
         Texture2D texture = ResourceManager_loadTexture(&psg.resourceManager, "assets/spark.png");
         SetTextureFilter(texture, TEXTURE_FILTER_BILINEAR);
+        SetTextureWrap(texture, TEXTURE_WRAP_CLAMP);
         _hitEffectMaterial = LoadMaterialDefault();
         SetMaterialTexture(&_hitEffectMaterial, MATERIAL_MAP_DIFFUSE, texture);
         _hitEffectMaterial.maps[MATERIAL_MAP_DIFFUSE].color = WHITE;
@@ -178,11 +179,12 @@ void SpawnHitEffect(SceneGraph *g, Vector3 position, Vector3 initialVelocity, fl
         SceneObjectId hitEffect = SceneGraph_createObject(g, "hit-effect");
         SceneGraph_setLocalPosition(g, hitEffect, position);
         Vector3 vel = Vector3Add(initialVelocity, Vector3Scale(rndVel, vSpread));
-        SceneComponentId trailId = AddTrailRendererComponent(hitEffect, 80, 0.25f, Vector3Scale(vel, -1.0f), 20, _hitEffectMaterial, 0);
+        SceneComponentId trailId = AddTrailRendererComponent(hitEffect, 20, lifetime * 0.25f, Vector3Scale(vel, nodeVelFac), 20, _hitEffectMaterial, 0);
         // AddMeshRendererComponent(hitEffect, psg.meshHitParticle1, 0.0f);
         TrailRendererComponent* trail = NULL;
         SceneGraph_getComponent(g, trailId, (void**)&trail);
         TrailRendererComponent_addTrailWidth(trail, 0.1f * width, 0.0f);
+        trail->uvDistanceFactor = width * uvLength;
         trail->widthDecayRate = 1.0f / lifetime;
         AddLinearVelocityComponent(hitEffect, vel, (Vector3){0,0.0f,0}, (Vector3){drag,drag,drag});
         AddAutoDestroyComponent(hitEffect, lifetime);
@@ -198,12 +200,12 @@ int OnEnemyHit(SceneGraph* g, SceneObjectId target, SceneObjectId bullet)
     }
     health->health -= 1;
     if (health->health <= 0) {
-        SpawnHitEffect(g, SceneGraph_getWorldPosition(g, bullet), Vector3Scale(GetVelocity(target), 1.0f), 4.0f, 32, 1.2f, 12.0f);
+        SpawnHitEffect(g, SceneGraph_getWorldPosition(g, bullet), Vector3Scale(GetVelocity(target), .5f), 5.0f, 32, 0.8f, 6.0f, 0.2f, -10.0f);
         SceneGraph_destroyObject(g, target);
 
     }
     else {
-        SpawnHitEffect(g, SceneGraph_getWorldPosition(g, bullet), Vector3Scale(GetVelocity(bullet), .05f), 2.0f, 16, 0.7f, 1.0f);
+        SpawnHitEffect(g, SceneGraph_getWorldPosition(g, bullet), Vector3Scale(GetVelocity(bullet), .05f), 2.0f, 16, 0.7f, 1.0f, 0.5f, 0.0f);
     }
     SceneGraph_destroyObject(g, bullet);
     return 1;

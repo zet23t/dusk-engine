@@ -287,7 +287,15 @@ void TrailRendererComponent_onDraw(Camera3D camera, SceneObject* sceneObject, Sc
         vertices[(i + 1) * 6 + 5] = node->position.z;
     }
 
-
+    float totalDistance = 0.0f;
+    float distances[trailRendererComponent->nodeCount];
+    distances[0] = 0.0f;
+    for (int i = 1; i < trailRendererComponent->nodeCount; i++) {
+        Vector3 a = *((Vector3*)&vertices[i * 6 - 6]);
+        Vector3 b = *((Vector3*)&vertices[i * 6]);
+        totalDistance += Vector3Distance(a, b);
+        distances[i] = totalDistance;
+    }
 
     // the vertices are set, now update the widths
     Vector3 prev = *((Vector3*)&vertices[0]);
@@ -307,6 +315,8 @@ void TrailRendererComponent_onDraw(Camera3D camera, SceneObject* sceneObject, Sc
     // there's 1 more vertex than nodes due to the attached first point
     int last = trailRendererComponent->nodeCount;
     int twcount = trailRendererComponent->trailWidthCount;
+    float progressedDistance = 0;
+    float uvMul = trailRendererComponent->uvDistanceFactor > 0.0f ? 1.0f / trailRendererComponent->uvDistanceFactor : 1.0f / totalDistance;
     for (int i = 1; i <= last; i++) {
         Vector3 pos = *((Vector3*)&vertices[i * 6]);
         Vector3 next = i < last ? *((Vector3*)&vertices[i * 6 + 6]) : pos;
@@ -325,16 +335,19 @@ void TrailRendererComponent_onDraw(Camera3D camera, SceneObject* sceneObject, Sc
         TrailRendererComponent_setWidth(up, prev, next, width, &vertices[i * 6]);
         prev = pos;
 
-        float v = (float)(i) / (last);
+        progressedDistance = distances[i];
+        float v = progressedDistance * uvMul;
 
         texcoords[(i) * 4] = 0.0f;
         texcoords[(i) * 4 + 1] = v;
 
         texcoords[(i) * 4 + 2] = 1.0f;
         texcoords[(i) * 4 + 3] = v;
+
     }
-    Vector3 lastP = *((Vector3*)&vertices[last * 6 - 6]);
-    for (int i = last * 6 - 6; i < mesh->vertexCount * 3; i += 3) {
+    int lastV = last * 6; 
+    Vector3 lastP = *((Vector3*)&vertices[lastV - 3]);
+    for (int i = lastV; i < mesh->vertexCount * 3; i += 3) {
         vertices[i] = lastP.x;
         vertices[i + 1] = lastP.y;
         vertices[i + 2] = lastP.z;
@@ -344,11 +357,15 @@ void TrailRendererComponent_onDraw(Camera3D camera, SceneObject* sceneObject, Sc
         UploadMesh(mesh, 1);
     } else {
         UpdateMeshBuffer(*mesh, 0, mesh->vertices, mesh->vertexCount * 3 * sizeof(float), 0);
-        UpdateMeshBuffer(*mesh, 3, mesh->texcoords, mesh->vertexCount * 2 * sizeof(float), 0);
+        UpdateMeshBuffer(*mesh, 1, mesh->texcoords, mesh->vertexCount * 2 * sizeof(float), 0);
     }
 
     if (trailRendererComponent->mesh.vboId != NULL)
+    {
+        rlDisableDepthMask();
         DrawMesh(trailRendererComponent->mesh, trailRendererComponent->material, MatrixIdentity());
+        rlEnableDepthMask();
+    }
 
 #if DEBUG
     for (int i=0;i<trailRendererComponent->mesh.triangleCount;i++)
