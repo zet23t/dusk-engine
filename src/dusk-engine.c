@@ -73,7 +73,10 @@ int main(void)
         // Update
 
         float t = GetTime();
-        GameCodeUpdate(isPaused && !step ? 0.0f : GetFrameTime() * (isSlowmo ? .1f : 1.0f));
+        float dt = GetFrameTime();
+        // assume 10fps is the minimum, after that we slow the game
+        if (dt > 0.1f) dt = 0.1f;
+        GameCodeUpdate(isPaused && !step ? 0.0f : dt * (isSlowmo ? .1f : 1.0f));
         float updateDt = GetTime() - t;
         updateTimes[trackIndex % trackCount] = updateDt;
 
@@ -101,9 +104,12 @@ int main(void)
             float reloadStart = GetTime();
             TraceLog(LOG_WARNING, "Unloading game code\n");
             void *storedState = UnloadGameCode();
+            float unloadTime = GetTime();
             TraceLog(LOG_WARNING, "Reloading game code\n");
             InitializeGameCode(storedState);
-            TraceLog(LOG_WARNING, "Reloaded game code in %.2fms\n", (GetTime() - reloadStart) * 1000.0f);
+            float loadedTime = GetTime();
+
+            TraceLog(LOG_WARNING, "Reloaded game code in %.2fms (unloaded in %.2fms)\n", (loadedTime - reloadStart) * 1000.0f, (unloadTime - reloadStart) * 1000.0f);
         }
 
         // update();

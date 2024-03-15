@@ -29,7 +29,7 @@ int loadMeshes()
 {
     const char* gltfMeshFile = "assets/meshes.glb";
 
-    psg.model = LoadModel(gltfMeshFile);
+    psg.model = ResourceManager_loadModel(&psg.resourceManager, gltfMeshFile);
     psg.meshPlane = NULL;
     struct MeshMapping meshMappings[] = {
         { "fighter-plane-1", { .mesh = &psg.meshPlane }, 0 },

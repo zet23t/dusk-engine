@@ -10,46 +10,66 @@ static HMODULE GameCodeDLL;
 static DrawGameCodeFn dlDraw;
 static UpdateGameCodeFn dlUpdate;
 
+static char dllPath[MAX_PATH];
+double GetTime(void);
+
+
 void InitializeGameCode(void* storedState)
 {
 #if !defined(DEBUG)
-    HMODULE test = LoadLibraryA("game.dll");
-    if (!test) {
-        printf("Failed to load DLL: %lu\n", GetLastError());
-        return;
-    }
-    // Get the full path of the loaded DLL
-    char dllPath[MAX_PATH];
-    if (GetModuleFileNameA(test, dllPath, sizeof(dllPath)) == 0) {
-        printf("Failed to get DLL path: %lu\n", GetLastError());
+    if (dllPath[0] == 0)
+    {
+        float testStart = GetTime();
+        HMODULE test = LoadLibraryA("game.dll");
+        if (!test) {
+            printf("Failed to load DLL: %lu\n", GetLastError());
+            return;
+        }
+        // Get the full path of the loaded DLL
+        if (GetModuleFileNameA(test, dllPath, sizeof(dllPath)) == 0) {
+            printf("Failed to get DLL path: %lu\n", GetLastError());
+            FreeLibrary(test);
+            return;
+        } else {
+            printf("Loaded DLL from: %s\n", dllPath);
+        }
         FreeLibrary(test);
-        return;
-    } else {
-        printf("Loaded DLL from: %s\n", dllPath);
+        float testStartDt = GetTime() - testStart;
+        printf("Found DLL path in %.2fms\n", testStartDt * 1000.0f);
     }
-    FreeLibrary(test);
 
-// compile the DLL
+    float compileStart = GetTime();
+    // compile the DLL
 #if defined(DEBUG)
     int compileResult = system("make dll BUILD=debug");
 #else
     int compileResult = system("make dll");
 #endif
+    float compileDt = GetTime() - compileStart;
+    printf("Compiled DLL in %.2fms\n", compileDt * 1000.0f);
+
     if (compileResult != 0) {
         printf("Failed to compile DLL: %d\n", compileResult);
         return;
     }
 
+    float copyStart = GetTime();
     if (!CopyFileA(dllPath, "game_copy.dll", FALSE)) {
         printf("Failed to copy DLL: %lu\n", GetLastError());
         return;
     }
+    float copyDt = GetTime() - copyStart;
+    printf("Copied DLL in %.2fms\n", copyDt * 1000.0f);
 
+    float loadStart = GetTime();
     GameCodeDLL = LoadLibraryA("game_copy.dll");
+    float loadDt = GetTime() - loadStart;
+    printf("Loaded DLL in %.2fms\n", loadDt * 1000.0f);
 #else
     GameCodeDLL = LoadLibraryA("game.dll");
 #endif
     if (GameCodeDLL) {
+        float initStart = GetTime();
         InitializeGameCodeFn init = (InitializeGameCodeFn)GetProcAddress(GameCodeDLL, "InitializeGameCode");
         if (init) {
             init(storedState);
@@ -59,6 +79,8 @@ void InitializeGameCode(void* storedState)
         }
         dlDraw = (DrawGameCodeFn)GetProcAddress(GameCodeDLL, "GameCodeDraw");
         dlUpdate = (UpdateGameCodeFn)GetProcAddress(GameCodeDLL, "GameCodeUpdate");
+        float initDt = GetTime() - initStart;
+        printf("Initialized game code in %.2fms\n", initDt * 1000.0f);
     }
 }
 

@@ -139,7 +139,9 @@ $(info $(SRCS))
 $(info $(OBJS))
 
 # Default target
-all: dll $(TARGET)
+all: dll main
+
+main: $(TARGET)
 
 dll: $(SRCS_DLL)
 	mkdir -p $(BUILDDIR)

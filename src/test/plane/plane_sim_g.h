@@ -3,6 +3,7 @@
 
 #include "external/cjson.h"
 #include "shared/scene_graph/scene_graph.h"
+#include "resource_manager.h"
 #include <inttypes.h>
 #include <memory.h>
 #include <raylib.h>
@@ -50,6 +51,8 @@ typedef struct MeshTileConfig {
 typedef struct PSG {
     float time;
     float deltaTime;
+
+    ResourceManager resourceManager;
 
     SceneGraph* sceneGraph;
 

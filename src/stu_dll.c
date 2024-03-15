@@ -7,6 +7,7 @@
 #include "test/plane/util/prefab.c"
 #include "test/plane/util/actions.c"
 #include "test/plane/util/mapped_variables.c"
+#include "test/plane/resource_manager.c"
 #include "test/plane/components/bullet_component.c"
 #include "test/plane/components/camera_component.c"
 #include "test/plane/components/health_component.c"
@@ -33,11 +34,18 @@
 #include "test/plane/plane_sim_g.c"
 #include "test/plane/plane_sim.c"
 #include "test/plane/game_state_level.c"
+#define STB_PERLIN_IMPLEMENTATION
+#include "test/plane/util/stb_perlin.h"
 
 #define DLL_EXPORT __declspec(dllexport)
 
 DLL_EXPORT void InitializeGameCode(void *storedState)
 {
+    if (storedState)
+    {
+        memcpy(&psg, storedState, sizeof(PSG));
+        free(storedState);
+    }
     if (plane_sim_init()) {
         printf("InitializeGameCode failed\n");
         return;
@@ -49,7 +57,9 @@ DLL_EXPORT void InitializeGameCode(void *storedState)
 DLL_EXPORT void* UnloadGameCode()
 {
     printf("UnloadGameCode successfully\n");
-    return NULL;
+    PSG* psgCopy = malloc(sizeof(PSG));
+    memcpy(psgCopy, &psg, sizeof(PSG));
+    return psgCopy;
 }
 
 DLL_EXPORT void GameCodeDraw()

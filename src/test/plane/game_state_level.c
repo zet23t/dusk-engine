@@ -56,7 +56,7 @@ static Material _trailMaterial = { 0 };
 static void AddWingTrail(SceneObjectId parent, float x, float y, float speed, float lifetime)
 {
     if (_trailMaterial.shader.id == 0) {
-        Texture2D texture = LoadTexture("assets/wing-trail.png");
+        Texture2D texture = ResourceManager_loadTexture(&psg.resourceManager, "assets/wing-trail.png");
         SetTextureFilter(texture, TEXTURE_FILTER_BILINEAR);
         _trailMaterial = LoadMaterialDefault();
         SetMaterialTexture(&_trailMaterial, MATERIAL_MAP_DIFFUSE, texture);
@@ -158,8 +158,8 @@ static Material _hitEffectMaterial = { 0 };
 void SpawnHitEffect(SceneGraph *g, Vector3 position, Vector3 initialVelocity, float vSpread, int cnt, float lifetime, float width)
 {
     if (_hitEffectMaterial.shader.id == 0) {
-        Texture2D texture = LoadTexture("assets/spark.png");
-        // SetTextureFilter(texture, TEXTURE_FILTER_BILINEAR);
+        Texture2D texture = ResourceManager_loadTexture(&psg.resourceManager, "assets/spark.png");
+        SetTextureFilter(texture, TEXTURE_FILTER_BILINEAR);
         _hitEffectMaterial = LoadMaterialDefault();
         SetMaterialTexture(&_hitEffectMaterial, MATERIAL_MAP_DIFFUSE, texture);
         _hitEffectMaterial.maps[MATERIAL_MAP_DIFFUSE].color = WHITE;
@@ -323,6 +323,7 @@ int GameStateLevel_Init()
         TraceLog(LOG_ERROR, "No 'ui' object in level config");
         return 0;
     }
+    
     cJSON* uiRootName = cJSON_GetObjectItemCaseSensitive(uiConfig, "root");
     if (!cJSON_IsString(uiRootName)) {
         TraceLog(LOG_ERROR, "No 'root' string in 'ui' object in level config");
