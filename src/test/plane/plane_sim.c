@@ -237,7 +237,6 @@ int plane_sim_init()
 #define COMPONENT(t) t##Register();
 #include "component_list.h"
 #undef COMPONENT
-    PlaneBehaviorComponentRegister();
     LinearVelocityComponentRegister();
     ShootingComponentRegister();
     AutoDestroyComponentRegister();
@@ -256,8 +255,8 @@ int plane_sim_init()
     EnemyBehaviorComponentRegister();
 
     if (!isReload) {
-        GameUi_Init();
         GameStateLevel_Init();
+        GameUi_Init();
     }
 
     return 1;
@@ -270,6 +269,9 @@ void plane_sim_draw()
 {
 
 #if !defined(PLATFORM_WEB)
+    if (IsKeyPressed(KEY_F1)) {
+        SceneGraph_print(psg.sceneGraph, 1, 10);
+    }
     if (IsKeyPressed(KEY_F6)) {
         autoreload = !autoreload;
         TraceLog(LOG_INFO, "autoreload: %d", autoreload);
@@ -289,12 +291,6 @@ void plane_sim_draw()
 
     Camera3D camera = CameraComponent_getCamera3D(psg.sceneGraph, psg.camera);
 
-    camera.position = SceneGraph_getWorldPosition(psg.sceneGraph, psg.camera);
-    Vector3 forward = SceneGraph_getWorldForward(psg.sceneGraph, psg.camera);
-    Vector3 up = SceneGraph_getWorldUp(psg.sceneGraph, psg.camera);
-    camera.target = Vector3Add(camera.position, forward);
-    camera.up = up;
-    camera.fovy = 10;
     camera.far = 256.0f;
     camera.near = 64.0f;
 

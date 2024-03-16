@@ -4,6 +4,7 @@
 #include "external/cjson.h"
 #include "shared/scene_graph/scene_graph.h"
 #include "resource_manager.h"
+#include "messagehub.h"
 #include <inttypes.h>
 #include <memory.h>
 #include <raylib.h>
@@ -58,7 +59,6 @@ typedef struct PSG {
 
     cJSON* levelConfig;
 
-    SceneComponentTypeId planeBehaviorComponentId;
     SceneComponentTypeId linearVelocityComponentId;
     SceneComponentTypeId shootingComponentId;
     SceneComponentTypeId autoDestroyComponentId;

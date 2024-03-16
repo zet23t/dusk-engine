@@ -3,6 +3,7 @@
 
 #include "external/cjson.c"
 #include "shared/scene_graph/scene_graph.c"
+#include "test/plane/messagehub.h"
 #include "test/plane/util/util_math.c"
 #include "test/plane/util/prefab.c"
 #include "test/plane/util/actions.c"
@@ -14,7 +15,6 @@
 #include "test/plane/components/auto_destroy_component.c"
 #include "test/plane/components/update_callback_component.c"
 #include "test/plane/components/velocity_component.c"
-#include "test/plane/components/plane_behavior_component.c"
 #include "test/plane/components/shooting_component.c"
 #include "test/plane/components/target_component.c"
 #include "test/plane/components/enemy_plane_behavior_component.c"

@@ -1,3 +1,17 @@
+#undef COMPONENT_NAME
+#define COMPONENT_NAME PlaneBehaviorComponent
+
+#ifdef COMPONENT
+// === COMPONENT UTILITIES ===
+COMPONENT(PlaneBehaviorComponent)
+#elif defined(COMPONENT_DECLARATION)
+
+
+
+#else
+
+// === DEFINITIONS ===
+
 #include "../plane_sim_g.h"
 #include <raymath.h>
 
@@ -37,10 +51,10 @@ static void PlaneBehaviorComponentUpdateTick(SceneObject* sceneObject, SceneComp
     planeBehavior->prevVelocity = velocity->velocity;
 }
 
-void PlaneBehaviorComponentRegister()
-{
-    psg.planeBehaviorComponentId = SceneGraph_registerComponentType(psg.sceneGraph, "PlaneBehavior", sizeof(PlaneBehaviorComponent),
-        (SceneComponentTypeMethods) {
-            .updateTick = PlaneBehaviorComponentUpdateTick,
-        });
-}
+#include "../util/component_macros.h"
+
+BEGIN_COMPONENT_REGISTRATION {
+    .updateTick = PlaneBehaviorComponentUpdateTick,
+} END_COMPONENT_REGISTRATION
+
+#endif

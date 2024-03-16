@@ -104,7 +104,7 @@ SceneObjectId plane_instantiate(Vector3 position)
 
     SceneObjectId propeller = add_propeller(plane, 0, 0.062696f, 0.795618f);
 
-    SceneGraph_addComponent(psg.sceneGraph, plane, psg.planeBehaviorComponentId,
+    SceneGraph_addComponent(psg.sceneGraph, plane, psg.PlaneBehaviorComponentId,
         &(PlaneBehaviorComponent) {
             .phase = GetRandomValue(0, 1000),
             .rolling = 0,
@@ -308,10 +308,6 @@ int GameStateLevel_Init()
 
     psg.playerPlane = plane_instantiate((Vector3) { 0, 0, 0 });
 
-    SceneObjectId uiPlaneId = SceneGraph_createObject(psg.sceneGraph, "ui-plane");
-    psg.uiRootId = uiPlaneId;
-    SceneGraph_setParent(psg.sceneGraph, uiPlaneId, psg.camera);
-    SceneGraph_setLocalPosition(psg.sceneGraph, uiPlaneId, (Vector3) { 0, 0, 70.0f });
     // SceneGraph_addComponent(psg.sceneGraph, uiPlaneId, psg.textComponentId,
     //     &(TextComponent) {
     //         .text = "Hello, world!",

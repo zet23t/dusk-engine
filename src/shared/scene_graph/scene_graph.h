@@ -168,8 +168,8 @@ SceneObject* SceneGraph_findChildByName(SceneGraph* graph, SceneObjectId parentI
 SceneComponent* SceneGraph_findChildComponentByName(SceneGraph* graph, SceneObjectId parentId, const char* name, int includeDisabled);
 void SceneGraph_destroyComponent(SceneGraph* graph, SceneComponentId id);
 int SceneGraph_setComponentName(SceneGraph* graph, SceneComponentId id, const char* name);
-void SceneGraph_printObject(SceneObject* object, const char* indent);
-void SceneGraph_print(SceneGraph* graph);
+void SceneGraph_printObject(SceneObject* object, const char* indent, int printComponents);
+void SceneGraph_print(SceneGraph* graph, int printComponents, int maxRootCount);
 
 void SceneGraph_setComponentEnabled(SceneGraph* graph, SceneComponentId id, int enabled);
 int SceneGraph_isComponentEnabled(SceneGraph* graph, SceneComponentId id);

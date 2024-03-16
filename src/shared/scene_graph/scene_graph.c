@@ -661,7 +661,7 @@ SceneComponent* SceneGraph_getComponentByType(SceneGraph* graph, SceneObjectId i
             }
         }
     }
-    
+
     SceneObject* object = SceneGraph_getObject(graph, id);
     if (object == NULL) {
         if (componentData != NULL)
@@ -853,7 +853,7 @@ int SceneGraph_setComponentName(SceneGraph* graph, SceneComponentId id, const ch
     return 1;
 }
 
-void SceneGraph_printObject(SceneObject* object, const char* indent)
+void SceneGraph_printObject(SceneObject* object, const char* indent, int printComponents)
 {
     int indentLength = strlen(indent);
     char newIndent[indentLength + 3];
@@ -866,10 +866,30 @@ void SceneGraph_printObject(SceneObject* object, const char* indent)
     Vector3 rotation = object->transform.eulerRotationDegrees;
     Vector3 worldPos = SceneGraph_getWorldPosition(object->graph, object->id);
 
-    printf("%sObject %3d: %s (%.2f, %.2f, %.2f) @ (%.2f, %.2f, %.2f) | (%.2f, %.2f, %.2f)\n", indent, object->id.id, object->name,
+    printf("%sObject %3d [%s]: %s (%.2f, %.2f, %.2f) @ (%.2f, %.2f, %.2f) | (%.2f, %.2f, %.2f)\n", indent, object->id.id, 
+        object->flags & SCENE_OBJECT_FLAG_ENABLED ? "E" : " ",
+        object->name,
         position.x, position.y, position.z,
         rotation.x, rotation.y, rotation.z,
         worldPos.x, worldPos.y, worldPos.z);
+    if (printComponents)
+    {
+        for (int i = 0; i < object->components_count; i++) {
+            SceneComponent* component = SceneGraph_getComponent(object->graph, object->components[i], NULL);
+            if (component == NULL) {
+                printf("%s+Invalid component %3d\n", newIndent, object->components[i].id);
+                continue;
+            }
+            SceneComponentType* type = SceneGraph_getComponentType(object->graph, component->typeId);
+            if (type == NULL) {
+                printf("%s+Invalid type %3d\n", newIndent, component->typeId.id);
+                continue;
+            }
+            printf("%s+Component %3d [%s]: %s\n", newIndent, component->id.id, 
+                component->flags & SCENE_COMPONENT_FLAG_ENABLED ? "E" : " ",
+                type->name);
+        }
+    }
 
     for (int i = 0; i < object->children_count; i++) {
         SceneObject* child = SceneGraph_getObject(object->graph, object->children[i]);
@@ -880,20 +900,28 @@ void SceneGraph_printObject(SceneObject* object, const char* indent)
         if (child == NULL) {
             continue;
         }
-        SceneGraph_printObject(child, newIndent);
+        SceneGraph_printObject(child, newIndent, printComponents);
     }
 }
 
-void SceneGraph_print(SceneGraph* graph)
+void SceneGraph_print(SceneGraph* graph, int printComponents, int maxRootCount)
 {
     printf("SceneGraph: %d objects\n", graph->objects_count);
+    if (maxRootCount == 0)
+    {
+        maxRootCount = graph->objects_count;
+    }
     for (int i = 0; i < graph->objects_count; i++) {
         SceneObject* object = &graph->objects[i];
         if (object->id.version == 0 || SceneGraph_getObject(graph, object->parent) != NULL) {
             continue;
         }
 
-        SceneGraph_printObject(object, "");
+        SceneGraph_printObject(object, "", printComponents);
+        if (maxRootCount-- <= 0)
+        {
+            break;
+        }
     }
 }
 
