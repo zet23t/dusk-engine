@@ -20,7 +20,6 @@ double GetTime(void);
 
 void Host_InitializeGameCode(void* storedState)
 {
-#if !defined(DEBUG)
     if (dllPath[0] == 0)
     {
         float testStart = GetTime();
@@ -69,9 +68,6 @@ void Host_InitializeGameCode(void* storedState)
     GameCodeDLL = LoadLibraryA("game_copy.dll");
     float loadDt = GetTime() - loadStart;
     printf("Loaded DLL in %.2fms\n", loadDt * 1000.0f);
-#else
-    GameCodeDLL = LoadLibraryA("game.dll");
-#endif
     if (GameCodeDLL) {
         float initStart = GetTime();
         InitializeGameCodeFn init = (InitializeGameCodeFn)GetProcAddress(GameCodeDLL, "InitializeGameCode");

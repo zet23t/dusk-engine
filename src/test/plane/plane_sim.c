@@ -41,7 +41,6 @@ int loadMeshes()
         { "hit-particle-1", { .mesh = &psg.meshHitParticle1 }, 0 },
         { "leaftree-", { .meshList = &psg.leafTreeList, .count = &psg.leafTreeCount }, 1 },
         { "cloud.", { .meshList = &psg.cloudList, .count = &psg.cloudCount }, 1 },
-        { "ui-border", { .mesh = &psg.meshUiBorder }, 0 },
         { 0 }
     };
 
@@ -185,8 +184,6 @@ static void shaderLoad(int isReload)
     }
 }
 
-
-void MeshRendererComponentRegister();
 void PlaneBehaviorComponentRegister();
 void LinearVelocityComponentRegister();
 void ShootingComponentRegister();
@@ -211,8 +208,11 @@ void LevelSystemRegister();
 void PlayerInputHandlerRegister();
 void GroundTileSystemRegister();
 
+#define COMPONENT(t) void t##Register();
+#include "component_list.h"
+#undef COMPONENT
 
-
+void GameUi_Init();
 
 int plane_sim_init()
 {
@@ -222,7 +222,11 @@ int plane_sim_init()
     shaderLoad(0);
     levelConfigLoad(1);
 
-    psg.sceneGraph = SceneGraph_create();
+    int isReload = psg.sceneGraph != NULL;
+    if (!isReload)
+    {
+        psg.sceneGraph = SceneGraph_create();
+    }
 
     RegisterTargetSpawnSystem();
     CloudSystemRegister();
@@ -230,7 +234,9 @@ int plane_sim_init()
     PlayerInputHandlerRegister();
     GroundTileSystemRegister();
 
-    MeshRendererComponentRegister();
+#define COMPONENT(t) t##Register();
+#include "component_list.h"
+#undef COMPONENT
     PlaneBehaviorComponentRegister();
     LinearVelocityComponentRegister();
     ShootingComponentRegister();
@@ -249,7 +255,12 @@ int plane_sim_init()
     TrailRendererComponentRegister();
     EnemyBehaviorComponentRegister();
 
-    return GameStateLevel_Init();
+    if (!isReload) {
+        GameUi_Init();
+        GameStateLevel_Init();
+    }
+
+    return 1;
 }
 
 static int textIndex = 0;

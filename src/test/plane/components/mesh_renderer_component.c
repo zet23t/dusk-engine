@@ -1,3 +1,23 @@
+#undef COMPONENT_NAME
+#define COMPONENT_NAME MeshRendererComponent
+
+#ifdef COMPONENT
+// === COMPONENT UTILITIES ===
+COMPONENT(MeshRendererComponent)
+#elif defined(COMPONENT_DECLARATION)
+
+// === DECLARATIONS ===
+#include "../util/component_macros.h"
+BEGIN_COMPONENT_STRUCT {
+    float litAmount;
+    Material* material;
+    Mesh* mesh;
+} END_COMPONENT_STRUCT
+
+#else
+
+// === DEFINITIONS ===
+
 #include "../plane_sim_g.h"
 
 static void MeshRendererDraw(Camera3D camera, SceneObject* node, SceneComponentId sceneComponentId, void* component, void* userdata)
@@ -56,10 +76,33 @@ static void MeshRendererInitialize(SceneObject* node, SceneComponentId sceneComp
     }
 }
 
+Mesh* FindMesh(const char* name)
+{
+    for (int i = 0; i < psg.model.meshCount; i++)
+    {
+        if (strcmp(psg.model.meshes[i].name, name) == 0)
+        {
+            return &psg.model.meshes[i];
+        }
+    }
+    return NULL;
+}
+
+SceneComponentId AddMeshRendererComponentByName(SceneObjectId id, const char *name, float litAmount)
+{
+    Mesh* mesh = FindMesh(name);
+    if (mesh == NULL)
+    {
+        TraceLog(LOG_ERROR, "mesh not found: %s", name);
+        return (SceneComponentId){0};
+    }
+    return AddMeshRendererComponent(id, mesh, litAmount);
+}
+
 SceneComponentId AddMeshRendererComponent(SceneObjectId id, Mesh* mesh, float litAmount)
 {
     // return (SceneComponentId){0};
-    return SceneGraph_addComponent(psg.sceneGraph, id, psg.meshRendererComponentId, &(ComponentInitializer) {
+    return SceneGraph_addComponent(psg.sceneGraph, id, psg.MeshRendererComponentId, &(ComponentInitializer) {
         .memData = &(MeshRendererComponent) {
             .material = &psg.model.materials[1],
             .mesh = mesh,
@@ -68,11 +111,12 @@ SceneComponentId AddMeshRendererComponent(SceneObjectId id, Mesh* mesh, float li
     });
 }
 
-void MeshRendererComponentRegister()
-{
-    psg.meshRendererComponentId = SceneGraph_registerComponentType(psg.sceneGraph, "MeshRendererComponent", sizeof(MeshRendererComponent),
-        (SceneComponentTypeMethods) {
-            .draw = MeshRendererDraw,
-            .onInitialize = MeshRendererInitialize,
-        });
-}
+#include "../util/component_macros.h"
+
+BEGIN_COMPONENT_REGISTRATION {
+    .draw = MeshRendererDraw,
+    .onInitialize = MeshRendererInitialize,
+} END_COMPONENT_REGISTRATION
+
+#endif
+

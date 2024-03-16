@@ -320,29 +320,29 @@ int GameStateLevel_Init()
     //     });
     // SceneGraph_setLocalRotation(psg.sceneGraph, uiPlaneId, (Vector3) { 0, 0, 0 });
 
-    cJSON* uiConfig = cJSON_GetObjectItemCaseSensitive(psg.levelConfig, "ui");
-    if (!cJSON_IsObject(uiConfig)) {
-        TraceLog(LOG_ERROR, "No 'ui' object in level config");
-        return 0;
-    }
+    // cJSON* uiConfig = cJSON_GetObjectItemCaseSensitive(psg.levelConfig, "ui");
+    // if (!cJSON_IsObject(uiConfig)) {
+    //     TraceLog(LOG_ERROR, "No 'ui' object in level config");
+    //     return 0;
+    // }
     
-    cJSON* uiRootName = cJSON_GetObjectItemCaseSensitive(uiConfig, "root");
-    if (!cJSON_IsString(uiRootName)) {
-        TraceLog(LOG_ERROR, "No 'root' string in 'ui' object in level config");
-        return 0;
-    }
+    // cJSON* uiRootName = cJSON_GetObjectItemCaseSensitive(uiConfig, "root");
+    // if (!cJSON_IsString(uiRootName)) {
+    //     TraceLog(LOG_ERROR, "No 'root' string in 'ui' object in level config");
+    //     return 0;
+    // }
 
-    cJSON* objects = cJSON_GetObjectItemCaseSensitive(uiConfig, "objects");
+    // cJSON* objects = cJSON_GetObjectItemCaseSensitive(uiConfig, "objects");
 
-    SceneObjectId groupLeftId = SceneGraph_createObject(psg.sceneGraph, "group-left");
-    SceneGraph_setLocalPosition(psg.sceneGraph, groupLeftId, (Vector3) { 8, 0, 0 });
-    SceneGraph_setParent(psg.sceneGraph, groupLeftId, uiPlaneId);
-    SceneObjectId borderLeftId = SceneGraph_createObject(psg.sceneGraph, "border-left");
-    SceneGraph_setParent(psg.sceneGraph, borderLeftId, groupLeftId);
-    SceneGraph_setLocalPosition(psg.sceneGraph, borderLeftId, (Vector3) { 0, 5, 0 });
+    // SceneObjectId groupLeftId = SceneGraph_createObject(psg.sceneGraph, "group-left");
+    // SceneGraph_setLocalPosition(psg.sceneGraph, groupLeftId, (Vector3) { 8, 0, 0 });
+    // SceneGraph_setParent(psg.sceneGraph, groupLeftId, uiPlaneId);
+    // SceneObjectId borderLeftId = SceneGraph_createObject(psg.sceneGraph, "border-left");
+    // SceneGraph_setParent(psg.sceneGraph, borderLeftId, groupLeftId);
+    // SceneGraph_setLocalPosition(psg.sceneGraph, borderLeftId, (Vector3) { 0, 5, 0 });
 
-    SceneObjectId uiCanvas = InstantiateFromJSON(psg.sceneGraph, objects, uiRootName->valuestring);
-    SceneGraph_setParent(psg.sceneGraph, uiCanvas, uiPlaneId);
+    // SceneObjectId uiCanvas = InstantiateFromJSON(psg.sceneGraph, objects, uiRootName->valuestring);
+    // SceneGraph_setParent(psg.sceneGraph, uiCanvas, uiPlaneId);
 
     return 0;
 }

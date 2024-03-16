@@ -56,6 +56,30 @@ STRUCT_LIST_ACQUIRE_FN(SceneObject, SceneObjectId, children)
 SceneComponentTypeId SceneGraph_registerComponentType(SceneGraph* graph, const char* name,
     size_t dataSize, SceneComponentTypeMethods methods)
 {
+    for (int i=0;i<graph->componentTypes_count;i+=1)
+    {
+        if (strcmp(graph->componentTypes[i].name, name) == 0)
+        {
+            TraceLog(LOG_WARNING, "SceneGraph_registerComponentType(%s): component type already registered", name);
+            if (graph->componentTypes[i].dataSize != dataSize)
+            {
+                TraceLog(LOG_ERROR, "SceneGraph_registerComponentType(%s): component type already registered with different data size; invalidating existing components", name);
+                for (int j=0;j<graph->componentTypes[i].components_count;j+=1)
+                {
+                    SceneComponent* component = &graph->componentTypes[i].components[j];
+                    component->id.version = 0;
+                }
+                graph->componentTypes[i].dataSize = dataSize;
+                free(graph->componentTypes[i].componentData);
+                graph->componentTypes[i].componentData = NULL;
+                graph->componentTypes[i].componentData_capacity = 0;
+                graph->componentTypes[i].componentData_count = 0;
+            }
+            graph->componentTypes[i].methods = methods;
+            return graph->componentTypes[i].id;
+        }
+    }
+
     SceneComponentType* type = SceneGraph_acquire_componentTypes(graph);
     type->id.id = graph->componentTypes_count - 1;
     type->id.version = ++graph->versionCounter;
@@ -621,6 +645,23 @@ SceneComponent* SceneGraph_getComponent(SceneGraph* graph, SceneComponentId id, 
 
 SceneComponent* SceneGraph_getComponentByType(SceneGraph* graph, SceneObjectId id, SceneComponentTypeId typeId, void** componentData, int atIndex)
 {
+    if (id.version == 0) {
+        SceneComponentType *type = SceneGraph_getComponentType(graph, typeId);
+        if (type == NULL) {
+            if (componentData != NULL)
+                *componentData = NULL;
+            return NULL;
+        }
+        for (int i = 0; i < type->components_count; i++) {
+            SceneComponent* component = &type->components[i];
+            if (component->id.version != 0 && --atIndex < 0) {
+                if (componentData != NULL)
+                    *componentData = &type->componentData[i * type->dataSize];
+                return component;
+            }
+        }
+    }
+    
     SceneObject* object = SceneGraph_getObject(graph, id);
     if (object == NULL) {
         if (componentData != NULL)

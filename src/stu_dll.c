@@ -13,7 +13,6 @@
 #include "test/plane/components/health_component.c"
 #include "test/plane/components/auto_destroy_component.c"
 #include "test/plane/components/update_callback_component.c"
-#include "test/plane/components/mesh_renderer_component.c"
 #include "test/plane/components/velocity_component.c"
 #include "test/plane/components/plane_behavior_component.c"
 #include "test/plane/components/shooting_component.c"
@@ -26,12 +25,16 @@
 #include "test/plane/components/action_component.c"
 #include "test/plane/components/trail_renderer_component.c"
 #include "test/plane/components/enemybehavior_component.c"
+
+#include "test/plane/component_list.h"
+
 #include "test/plane/system/ground_tile_system.c"
 #include "test/plane/system/player_input_handler.c"
 #include "test/plane/system/target_spawn_system.c"
 #include "test/plane/system/cloud_system.c"
 #include "test/plane/system/level_system.c"
 #include "test/plane/plane_sim_g.c"
+#include "test/plane/game_ui.c"
 #include "test/plane/plane_sim.c"
 #include "test/plane/game_state_level.c"
 

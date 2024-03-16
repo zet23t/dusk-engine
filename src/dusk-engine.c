@@ -10,7 +10,7 @@
 #include <emscripten.h>
 #endif
 
-void Host_InitializeGameCode(void *storedState);
+void Host_InitializeGameCode(void* storedState);
 void* Host_UnloadGameCode();
 
 void Host_GameCodeDraw();
@@ -75,7 +75,8 @@ int main(void)
         float t = GetTime();
         float dt = GetFrameTime();
         // assume 10fps is the minimum, after that we slow the game
-        if (dt > 0.1f) dt = 0.1f;
+        if (dt > 0.1f)
+            dt = 0.1f;
         Host_GameCodeUpdate(isPaused && !step ? 0.0f : dt * (isSlowmo ? .1f : 1.0f));
         float updateDt = GetTime() - t;
         updateTimes[trackIndex % trackCount] = updateDt;
@@ -99,14 +100,17 @@ int main(void)
             step = 1;
         }
 
-        if (IsKeyPressed(KEY_F7))
-        {
+        if (IsKeyPressed(KEY_F7) || IsKeyPressed(KEY_F8)) {
             float reloadStart = GetTime();
             TraceLog(LOG_WARNING, "Unloading game code\n");
-            void *storedState = Host_UnloadGameCode();
+            void* storedState = Host_UnloadGameCode();
             float unloadTime = GetTime();
             TraceLog(LOG_WARNING, "Reloading game code\n");
-            Host_InitializeGameCode(storedState);
+            if (IsKeyPressed(KEY_F8)) {
+                Host_InitializeGameCode(NULL);
+            } else {
+                Host_InitializeGameCode(storedState);
+            }
             float loadedTime = GetTime();
 
             TraceLog(LOG_WARNING, "Reloaded game code in %.2fms (unloaded in %.2fms)\n", (loadedTime - reloadStart) * 1000.0f, (unloadTime - reloadStart) * 1000.0f);

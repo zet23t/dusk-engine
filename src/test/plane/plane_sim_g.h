@@ -58,7 +58,6 @@ typedef struct PSG {
 
     cJSON* levelConfig;
 
-    SceneComponentTypeId meshRendererComponentId;
     SceneComponentTypeId planeBehaviorComponentId;
     SceneComponentTypeId linearVelocityComponentId;
     SceneComponentTypeId shootingComponentId;
@@ -84,6 +83,10 @@ typedef struct PSG {
     SceneComponentTypeId playerInputHandlerId;
     SceneComponentTypeId groundTileSystemId;
 
+#define COMPONENT(t) SceneComponentTypeId t##Id;
+#include "component_list.h"
+#undef COMPONENT
+
     SceneObjectId camera;
     SceneObjectId uiRootId;
 
@@ -95,7 +98,6 @@ typedef struct PSG {
     Mesh* meshPlayerBullet;
     Mesh* meshTarget;
     Mesh* meshHitParticle1;
-    Mesh* meshUiBorder;
 
     Mesh** leafTreeList;
     int leafTreeCount;
@@ -332,12 +334,6 @@ typedef struct TargetComponent {
     OnHit onHit;
 } TargetComponent;
 
-typedef struct MeshRendererComponent {
-    float litAmount;
-    Material* material;
-    Mesh* mesh;
-} MeshRendererComponent;
-
 typedef struct PlaneBehaviorComponent {
     float phase;
     float rolling;
@@ -354,6 +350,10 @@ typedef struct LinearVelocityComponent {
     Vector3 drag;
 } LinearVelocityComponent;
 
+#define COMPONENT_DECLARATION
+#include "component_list.h"
+#undef COMPONENT_DECLARATION
+
 extern PSG psg;
 
 Camera3D CameraComponent_getCamera3D(SceneGraph* sceneGraph, SceneObjectId nodeId);
@@ -361,6 +361,7 @@ void SceneObject_ApplyJSONValues(SceneGraph* sceneGraph, cJSON* objects, SceneOb
 SceneObjectId InstantiateFromJSON(SceneGraph* sceneGraph, cJSON* objects, const char* rootId);
 
 SceneComponentId AddMeshRendererComponent(SceneObjectId id, Mesh* mesh, float litAmount);
+SceneComponentId AddMeshRendererComponentByName(SceneObjectId id, const char *name, float litAmount);
 SceneComponentId AddLinearVelocityComponent(SceneObjectId objectId, Vector3 velocity, Vector3 acceleration, Vector3 drag);
 void AddAutoDestroyComponent(SceneObjectId objectId, float lifeTime);
 void AddHealthComponent(SceneObjectId objectId, int health, int maxHealth);

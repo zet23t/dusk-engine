@@ -9,18 +9,14 @@
 #define ROW_COUNT 8
 #define TILE_SIZE 8.0f
 #define TILE_TYPE_COUNT 2
+Vector3 groundTileOffset = { -TILE_SIZE * (COLUMN_COUNT - 1) * .5f, -50, 0 };
+float waterLineLevel = 0.5f;
+
+typedef struct GroundTileConfigComponent {
+    float offset;
+    SceneObjectId groundTiles[ROW_COUNT * COLUMN_COUNT];
+} GroundTileConfigComponent;
 const char groundTypes[TILE_TYPE_COUNT] = { 'g', 'w' };
-
-static Vector3 groundTileOffset = { -TILE_SIZE * (COLUMN_COUNT - 1) * .5f, -50, 0 };
-static float offset = 0;
-static float waterLineLevel = 0.5f;
-static SceneObjectId groundTiles[ROW_COUNT * COLUMN_COUNT];
-
-void GroundTileSystem_onInitialize(SceneObject *object, SceneComponentId componentId, void *componentData, void *userdata)
-{
-    offset = 0;
-    memset(groundTiles, 0, sizeof(groundTiles));
-}
 
 static MeshTileConfig FindMatchingTile(uint32_t cornersToMatch, int* rotation)
 {
@@ -157,40 +153,46 @@ void readParsedCfg()
         TraceLog(LOG_ERROR, "groundTileCfg not found in level config");
         return;
     }
-    offset = 0;
+    GroundTileConfigComponent *groundTileCfgCmp;
+    if (SceneGraph_getComponentByType(psg.sceneGraph,(SceneObjectId){0}, psg.groundTileSystemId, (void**)&groundTileCfgCmp, 0))
+    {
+        groundTileCfgCmp->offset = 0;
+    }
+
     ReadMappedVariables(groundTileCfg, mappedGroundVariables);
 }
 
 void UpdateGroundTileSystem(SceneObject *object, SceneComponentId componentId, float dt, void *userdata)
 {
     readParsedCfg();
-    offset += psg.deltaTime * baseSpeed * (moveSpeedSetting == 0 ? 1.0f : 8.0f);
+    GroundTileConfigComponent *groundTileCfgCmp = (GroundTileConfigComponent*)userdata;
+    groundTileCfgCmp->offset += psg.deltaTime * baseSpeed * (moveSpeedSetting == 0 ? 1.0f : 8.0f);
     if (IsKeyPressed(KEY_Q)) {
         moveSpeedSetting = !moveSpeedSetting;
     }
-    while (offset > 1.0f) {
-        offset -= 1.0f;
+    while (groundTileCfgCmp->offset > 1.0f) {
+        groundTileCfgCmp->offset -= 1.0f;
         step++;
         for (int x = 0; x < COLUMN_COUNT; x += 1) {
-            SceneGraph_destroyObject(psg.sceneGraph, groundTiles[x]);
+            SceneGraph_destroyObject(psg.sceneGraph, groundTileCfgCmp->groundTiles[x]);
             for (int y = 0; y < ROW_COUNT - 1; y += 1) {
-                groundTiles[y * COLUMN_COUNT + x] = groundTiles[(y + 1) * COLUMN_COUNT + x];
+                groundTileCfgCmp->groundTiles[y * COLUMN_COUNT + x] = groundTileCfgCmp->groundTiles[(y + 1) * COLUMN_COUNT + x];
             }
-            groundTiles[(ROW_COUNT - 1) * COLUMN_COUNT + x] = spawnTile(x, step + ROW_COUNT - 1);
+            groundTileCfgCmp->groundTiles[(ROW_COUNT - 1) * COLUMN_COUNT + x] = spawnTile(x, step + ROW_COUNT - 1);
         }
     }
     for (int x = 0; x < COLUMN_COUNT; x += 1) {
         for (int y = 0; y < ROW_COUNT; y += 1) {
-            SceneObjectId id = groundTiles[y * COLUMN_COUNT + x];
+            SceneObjectId id = groundTileCfgCmp->groundTiles[y * COLUMN_COUNT + x];
             SceneObject* tile = SceneGraph_getObject(psg.sceneGraph, id);
             Vector3 position = {
                 TILE_SIZE * x + groundTileOffset.x,
                 groundTileOffset.y,
-                TILE_SIZE * y - offset * TILE_SIZE,
+                TILE_SIZE * y - groundTileCfgCmp->offset * TILE_SIZE,
             };
             if (tile == NULL) {
                 id = spawnTile(x, y);
-                groundTiles[y * COLUMN_COUNT + x] = id;
+                groundTileCfgCmp->groundTiles[y * COLUMN_COUNT + x] = id;
             }
             SceneGraph_setLocalPosition(psg.sceneGraph, id, position);
         }
@@ -199,9 +201,9 @@ void UpdateGroundTileSystem(SceneObject *object, SceneComponentId componentId, f
 
 void GroundTileSystemRegister()
 {
-    psg.groundTileSystemId = SceneGraph_registerComponentType(psg.sceneGraph, "GroundTileSystem", 0,
+    psg.groundTileSystemId = SceneGraph_registerComponentType(psg.sceneGraph, "GroundTileSystem", sizeof(GroundTileConfigComponent),
         (SceneComponentTypeMethods) {
-            .onInitialize = GroundTileSystem_onInitialize,
+            // .onInitialize = GroundTileSystem_onInitialize,
             .updateTick = UpdateGroundTileSystem
         });
 }
