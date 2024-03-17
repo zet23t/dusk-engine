@@ -29,8 +29,6 @@ static void AspectRatioMatcher(SceneObject* sceneObject, SceneComponentId sceneC
     if (cameraObject == NULL) {
         return;
     }
-    Vector3 position = SceneGraph_getWorldPosition(sceneObject->graph, cameraComponent->objectId);
-    Vector3 forward = SceneGraph_getWorldForward(sceneObject->graph, cameraComponent->objectId);
     float screenWidth = GetScreenWidth();
     float screenHeight = GetScreenHeight();
     // Assume these are given

@@ -16,6 +16,8 @@ Camera3D CameraComponent_getCamera3D(SceneGraph* sceneGraph, SceneObjectId nodeI
         .target = Vector3Add(position, forward),
         .up = up,
         .fovy = cameraComponent->fov,
+        .far = cameraComponent->farPlane,
+        .near = cameraComponent->nearPlane,
     };
 }
 

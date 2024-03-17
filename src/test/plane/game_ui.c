@@ -56,5 +56,15 @@ void GameUi_Init()
                                                                                     .color = (Color) { 255, 255, 255, 255 },
                                                                                 });
     
+    SceneObjectId clickableThing = SceneGraph_createObject(psg.sceneGraph, "clickable-thing");
+    SceneGraph_setParent(psg.sceneGraph, clickableThing, uiPlaneId);
+    SceneGraph_setLocalPosition(psg.sceneGraph, clickableThing, (Vector3) { 0, 0, 0 });
+    SceneGraph_addComponent(psg.sceneGraph, clickableThing, psg.PrimitiveRendererComponentId, &(PrimitiveRendererComponent) {
+                                                                                             .primitiveType = PRIMITIVE_TYPE_CUBE,
+                                                                                             .size = (Vector3) { 5, 5, 0 },
+                                                                                             .color = (Color) { 255, 255, 255, 255 },
+                                                                                             .isWireframe = 1,
+                                                                                         });
+    SceneGraph_addComponent(psg.sceneGraph, clickableThing, psg.ClickZoneComponentId, &(ClickZoneComponent) {.boxSize = (Vector3) { 5, 5, 0 }, .zoneId = 0});
     // SceneGraph_setLocalPosition(psg.sceneGraph, uiPlaneId, (Vector3) { 0, 0, 0 });
 }

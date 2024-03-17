@@ -219,6 +219,7 @@ int plane_sim_init()
     if (loadMeshes()) {
         return 1;
     }
+    MessageHub_init();
     shaderLoad(0);
     levelConfigLoad(1);
 
@@ -329,4 +330,5 @@ void plane_sim_update(float dt)
     psg.time += dt;
     psg.deltaTime = dt;
     SceneGraph_updateTick(psg.sceneGraph, dt);
+    MessageHub_process();
 }

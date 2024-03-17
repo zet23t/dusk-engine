@@ -3,7 +3,7 @@
 
 #include "external/cjson.c"
 #include "shared/scene_graph/scene_graph.c"
-#include "test/plane/messagehub.h"
+#include "test/plane/messagehub.c"
 #include "test/plane/util/util_math.c"
 #include "test/plane/util/prefab.c"
 #include "test/plane/util/actions.c"
