@@ -3,6 +3,7 @@
 
 #include "external/cjson.c"
 #include "shared/scene_graph/scene_graph.c"
+#include "shared/touch_util.c"
 #include "test/plane/messagehub.c"
 #include "test/plane/util/util_math.c"
 #include "test/plane/util/prefab.c"

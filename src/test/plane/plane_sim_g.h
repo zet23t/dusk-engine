@@ -3,6 +3,7 @@
 
 #include "external/cjson.h"
 #include "shared/scene_graph/scene_graph.h"
+#include "shared/touch_util.h"
 #include "resource_manager.h"
 #include "messagehub.h"
 #include <inttypes.h>
@@ -52,6 +53,7 @@ typedef struct MeshTileConfig {
 typedef struct PSG {
     float time;
     float deltaTime;
+    int hasMouse;
 
     ResourceManager resourceManager;
 

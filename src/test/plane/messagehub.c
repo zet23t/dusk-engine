@@ -38,6 +38,7 @@ MessageHubMessage* MessageHub_getMessage(int* messageId)
         *messageId = _messageIdCounter;
         return NULL;
     }
+    *messageId += 1;
     return &_messages[index];
 }
 
@@ -53,6 +54,7 @@ static MessageHubMessage* MessageHub_queue(int messageTypeId)
         .messageId = _messageIdCounter,
         .time = GetTime(),
     };
+    printf("Queued %d @%d\n", messageTypeId, _frame);
     _messageCount++;
     _messageIdCounter++;
     return &_messages[_messageCount - 1];
@@ -72,8 +74,10 @@ void MessageHub_process()
         _messageCount = 0;
         return;
     }
-
-    memmove(_messages, _messages + trimIndex, sizeof(MessageHubMessage) * (_messageCount - trimIndex));
+    for (int i= 0; i<_messageCount - trimIndex;i+=1)
+    {
+        _messages[i] = _messages[trimIndex + i];
+    }
     _messageCount -= trimIndex;
     _messageIdOffset += trimIndex;
 }

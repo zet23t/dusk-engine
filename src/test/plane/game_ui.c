@@ -2,6 +2,19 @@
 
 #include <stdio.h>
 
+int _gameUi_messageId;
+void GameUi_Update()
+{
+    while (1) {
+        MessageHubMessage *msg = MessageHub_getMessage(&_gameUi_messageId);
+        if (!msg) break;
+        if (msg->messageId == MessageId_ClickZoneMessage())
+        {
+            printf("msg!\n");
+        }
+    }
+}
+
 void GameUi_Init()
 {
     SceneObjectId uiPlaneId = SceneGraph_createObject(psg.sceneGraph, "ui-plane");

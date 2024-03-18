@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include "shared/touch_util.h"
 #include "game_state_level.h"
 
 #if defined(PLATFORM_DESKTOP)
@@ -213,6 +214,7 @@ void GroundTileSystemRegister();
 #undef COMPONENT
 
 void GameUi_Init();
+void GameUi_Update();
 
 int plane_sim_init()
 {
@@ -324,11 +326,19 @@ void plane_sim_draw()
 
 void plane_sim_update(float dt)
 {
+    ProcessTouches();
+
+    Vector2 mouseDelta = GetMouseDelta();
+    if (IsMouseButtonDown(MOUSE_BUTTON_LEFT) || IsMouseButtonDown(MOUSE_BUTTON_RIGHT) || mouseDelta.x != 0.0f || mouseDelta.y != 0.0f)
+    {
+        psg.hasMouse = 1;
+    }
     if (IsKeyPressed(KEY_R)) {
         psg.disableDrawMesh = !psg.disableDrawMesh;
     }
     psg.time += dt;
     psg.deltaTime = dt;
     SceneGraph_updateTick(psg.sceneGraph, dt);
+    GameUi_Update();
     MessageHub_process();
 }
