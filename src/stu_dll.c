@@ -27,7 +27,9 @@
 #include "test/plane/components/trail_renderer_component.c"
 #include "test/plane/components/enemybehavior_component.c"
 
+#define COMPONENT_IMPLEMENTATION
 #include "test/plane/component_list.h"
+#undef COMPONENT_IMPLEMENTATION
 
 #include "test/plane/system/ground_tile_system.c"
 #include "test/plane/system/player_input_handler.c"

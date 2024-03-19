@@ -5,7 +5,7 @@
 // === COMPONENT UTILITIES ===
 COMPONENT(AspectRatioMatcherComponent)
 #elif defined(COMPONENT_DECLARATION)
-
+// === COMPONENT DECLARATION ===
 typedef struct COMPONENT_NAME {
     SceneComponentId cameraComponentId;
     float canvasDistance;
@@ -13,8 +13,8 @@ typedef struct COMPONENT_NAME {
 } COMPONENT_NAME;
 
 #else
+// === COMPONENT IMPLEMENTATION ===
 #include "../plane_sim_g.h"
-
 static void AspectRatioMatcher(SceneObject* sceneObject, SceneComponentId sceneComponentId,
     float delta, void* componentData)
 {

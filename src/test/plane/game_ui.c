@@ -71,7 +71,7 @@ void GameUi_Init()
     
     SceneObjectId clickableThing = SceneGraph_createObject(psg.sceneGraph, "clickable-thing");
     SceneGraph_setParent(psg.sceneGraph, clickableThing, uiPlaneId);
-    SceneGraph_setLocalPosition(psg.sceneGraph, clickableThing, (Vector3) { -8, 5, 0 });
+    SceneGraph_setLocalPosition(psg.sceneGraph, clickableThing, (Vector3) { -7, 4.5f, 0 });
     SceneGraph_addComponent(psg.sceneGraph, clickableThing, psg.PrimitiveRendererComponentId, &(PrimitiveRendererComponent) {
                                                                                              .primitiveType = PRIMITIVE_TYPE_CUBE,
                                                                                              .size = (Vector3) { 1, 1, 0 },
@@ -79,5 +79,12 @@ void GameUi_Init()
                                                                                              .isWireframe = 1,
                                                                                          });
     SceneGraph_addComponent(psg.sceneGraph, clickableThing, psg.ClickZoneComponentId, &(ClickZoneComponent) {.boxSize = (Vector3) { 1, 1, 0 }, .zoneId = 0});
+    SceneGraph_addComponent(psg.sceneGraph, clickableThing, psg.SpriteRendererComponentId, &(SpriteRendererComponent) {
+                                                                                             .texture = ResourceManager_loadTexture(&psg.resourceManager, "assets/dbg_sprite.png"),
+                                                                                             .source = (Rectangle) { 0, 0, 16, 16 },
+                                                                                             .pivot = (Vector2) { 0.5f, 0.5f },
+                                                                                             .scale = (Vector2) { 1, 1 },
+                                                                                             .tint = (Color) { 255, 255, 255, 255 },
+                                                                                         });
     // SceneGraph_setLocalPosition(psg.sceneGraph, uiPlaneId, (Vector3) { 0, 0, 0 });
 }
