@@ -54,7 +54,6 @@ static MessageHubMessage* MessageHub_queue(int messageTypeId)
         .messageId = _messageIdCounter,
         .time = GetTime(),
     };
-    printf("Queued %d @%d\n", messageTypeId, _frame);
     _messageCount++;
     _messageIdCounter++;
     return &_messages[_messageCount - 1];
@@ -71,6 +70,7 @@ void MessageHub_process()
         return;
     }
     if (trimIndex == _messageCount) {
+        _messageIdOffset += _messageCount;
         _messageCount = 0;
         return;
     }

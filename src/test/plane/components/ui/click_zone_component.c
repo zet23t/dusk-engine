@@ -84,21 +84,25 @@ static void ClickZone_update(SceneObject* sceneObject, SceneComponentId sceneCom
     }
 
     int mouseButtonLock = clickZone->mouseButtonLock - 1;
-    if (IsMouseButtonReleased(mouseButtonLock) && clickZone->flags == CLICKZONECOMPONENT_FLAG_HOVER) {
-        clickZone->flags = CLICKZONECOMPONENT_FLAG_NONE;
+    if (IsMouseButtonReleased(mouseButtonLock)) {
         clickZone->mouseButtonLock = -1;
+        
         MessageHub_queueClickZoneMessage((ClickZoneMessage) {
             .buttonComponentId = sceneComponentId,
             .zoneId = ((ClickZoneComponent*)componentData)->zoneId,
             .flags = CLICK_ZONE_MESSAGE_FLAG_POINTER_WAS_RELEASED });
-        MessageHub_queueClickZoneMessage((ClickZoneMessage) {
-            .buttonComponentId = sceneComponentId,
-            .zoneId = ((ClickZoneComponent*)componentData)->zoneId,
-            .flags = CLICK_ZONE_MESSAGE_FLAG_CLICK });
+        if (clickZone->flags & CLICKZONECOMPONENT_FLAG_HOVER)
+        {
+            MessageHub_queueClickZoneMessage((ClickZoneMessage) {
+                .buttonComponentId = sceneComponentId,
+                .zoneId = ((ClickZoneComponent*)componentData)->zoneId,
+                .flags = CLICK_ZONE_MESSAGE_FLAG_CLICK });
+        }
+        clickZone->flags &= ~CLICKZONECOMPONENT_FLAG_ACTIVE;
         return;
     }
 
-    for (int i = 0; i < touchCount; i += 1) {
+    for (int i = 0; i < touchCount && mouseButtonLock == -1; i += 1) {
         Vector2 touchPos = GetTouchPosition(i);
         int touchId = GetTouchPointId(i);
         int phase = GetTouchPhase(touchId);
@@ -130,7 +134,7 @@ static void ClickZone_update(SceneObject* sceneObject, SceneComponentId sceneCom
         }
         return;
     }
-    if (!clickZone->flags & CLICKZONECOMPONENT_FLAG_HOVER) {
+    if ((clickZone->flags & CLICKZONECOMPONENT_FLAG_HOVER) == 0) {
         clickZone->flags |= CLICKZONECOMPONENT_FLAG_HOVER;
         MessageHub_queueClickZoneMessage((ClickZoneMessage) {
             .buttonComponentId = sceneComponentId,

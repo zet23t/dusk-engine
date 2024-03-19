@@ -8,7 +8,7 @@ void GameUi_Update()
     while (1) {
         MessageHubMessage *msg = MessageHub_getMessage(&_gameUi_messageId);
         if (!msg) break;
-        if (msg->messageId == MessageId_ClickZoneMessage())
+        if (msg->messageTypeId == MessageId_ClickZoneMessage() && msg->dataClickZoneMessage.flags & CLICK_ZONE_MESSAGE_FLAG_CLICK)
         {
             printf("msg!\n");
         }
@@ -71,13 +71,13 @@ void GameUi_Init()
     
     SceneObjectId clickableThing = SceneGraph_createObject(psg.sceneGraph, "clickable-thing");
     SceneGraph_setParent(psg.sceneGraph, clickableThing, uiPlaneId);
-    SceneGraph_setLocalPosition(psg.sceneGraph, clickableThing, (Vector3) { 0, 0, 0 });
+    SceneGraph_setLocalPosition(psg.sceneGraph, clickableThing, (Vector3) { -8, 5, 0 });
     SceneGraph_addComponent(psg.sceneGraph, clickableThing, psg.PrimitiveRendererComponentId, &(PrimitiveRendererComponent) {
                                                                                              .primitiveType = PRIMITIVE_TYPE_CUBE,
-                                                                                             .size = (Vector3) { 5, 5, 0 },
+                                                                                             .size = (Vector3) { 1, 1, 0 },
                                                                                              .color = (Color) { 255, 255, 255, 255 },
                                                                                              .isWireframe = 1,
                                                                                          });
-    SceneGraph_addComponent(psg.sceneGraph, clickableThing, psg.ClickZoneComponentId, &(ClickZoneComponent) {.boxSize = (Vector3) { 5, 5, 0 }, .zoneId = 0});
+    SceneGraph_addComponent(psg.sceneGraph, clickableThing, psg.ClickZoneComponentId, &(ClickZoneComponent) {.boxSize = (Vector3) { 1, 1, 0 }, .zoneId = 0});
     // SceneGraph_setLocalPosition(psg.sceneGraph, uiPlaneId, (Vector3) { 0, 0, 0 });
 }
