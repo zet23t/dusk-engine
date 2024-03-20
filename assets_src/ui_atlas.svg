@@ -59,33 +59,33 @@
        y="0.77339751"
        ry="1.5492948" />
     <ellipse
-       style="fill:#d40000;stroke:none;stroke-width:0.132292;stroke-linecap:square;stroke-linejoin:round;stroke-dasharray:none"
+       style="fill:#d40000;stroke:none;stroke-width:0.745095;stroke-linecap:square;stroke-linejoin:round;stroke-dasharray:none"
        id="path1900"
-       cx="0.92326593"
-       cy="1.2341616"
-       rx="0.26379028"
-       ry="0.27321133" />
+       cx="2.6002183"
+       cy="2.7792189"
+       rx="1.5262151"
+       ry="1.4979519" />
     <ellipse
-       style="fill:#ffff00;stroke:none;stroke-width:0.132292;stroke-linecap:square;stroke-linejoin:round;stroke-dasharray:none"
+       style="fill:#008000;stroke:none;stroke-width:0.795833;stroke-linecap:square;stroke-linejoin:round;stroke-dasharray:none"
        id="path1954"
-       cx="9.9957676"
-       cy="1.290688"
-       rx="0.25436917"
-       ry="0.27321133" />
+       cx="8.3941832"
+       cy="2.8640087"
+       rx="1.516794"
+       ry="1.6581101" />
     <ellipse
-       style="fill:#ffff00;stroke:none;stroke-width:0.132292;stroke-linecap:square;stroke-linejoin:round;stroke-dasharray:none"
+       style="fill:#808000;stroke:none;stroke-width:0.914469;stroke-linecap:square;stroke-linejoin:round;stroke-dasharray:none"
        id="path2060"
-       cx="10.212452"
-       cy="8.7050791"
-       rx="0.22610593"
-       ry="0.26379028" />
+       cx="8.4412889"
+       cy="7.1129169"
+       rx="1.7900053"
+       ry="1.5921627" />
     <ellipse
-       style="fill:#ff0000;stroke:none;stroke-width:0.132292;stroke-linecap:square;stroke-linejoin:round;stroke-dasharray:none"
+       style="fill:#0000ff;stroke:none;stroke-width:0.627114;stroke-linecap:square;stroke-linejoin:round;stroke-dasharray:none"
        id="path2062"
-       cx="0.92326593"
-       cy="9.1855536"
-       rx="0.30147457"
-       ry="0.36742213"
+       cx="2.5154285"
+       cy="7.2730742"
+       rx="1.6110048"
+       ry="1.5450573"
        inkscape:export-filename="..\assets\path2062.png"
        inkscape:export-xdpi="96"
        inkscape:export-ydpi="96" />

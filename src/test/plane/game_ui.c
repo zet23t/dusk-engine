@@ -71,7 +71,7 @@ void GameUi_Init()
     
     SceneObjectId clickableThing = SceneGraph_createObject(psg.sceneGraph, "clickable-thing");
     SceneGraph_setParent(psg.sceneGraph, clickableThing, uiPlaneId);
-    SceneGraph_setLocalPosition(psg.sceneGraph, clickableThing, (Vector3) { -7, 4.5f, 0 });
+    SceneGraph_setLocalPosition(psg.sceneGraph, clickableThing, (Vector3) { -6, 4.5f, 0 });
     // SceneGraph_addComponent(psg.sceneGraph, clickableThing, psg.PrimitiveRendererComponentId, &(PrimitiveRendererComponent) {
     //                                                                                          .primitiveType = PRIMITIVE_TYPE_CUBE,
     //                                                                                          .size = (Vector3) { 1, 1, 0 },
