@@ -53,7 +53,7 @@ static void PlaneBehaviorComponentUpdateTick(SceneObject* sceneObject, SceneComp
 
 #include "../util/component_macros.h"
 
-BEGIN_COMPONENT_REGISTRATION {
+BEGIN_COMPONENT_REGISTRATION(PlaneBehaviorComponent) {
     .updateTick = PlaneBehaviorComponentUpdateTick,
 } END_COMPONENT_REGISTRATION
 

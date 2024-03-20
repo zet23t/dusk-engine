@@ -1,23 +1,4 @@
-#undef COMPONENT_NAME
-#define COMPONENT_NAME SpriteRendererComponent
-
-#ifdef COMPONENT
-// === COMPONENT UTILITIES ===
-COMPONENT(SpriteRendererComponent)
-#elif defined(COMPONENT_DECLARATION)
-typedef struct COMPONENT_NAME {
-    Texture2D texture;
-    Rectangle source;
-    Color tint;
-    Vector2 pivot;
-    Vector2 scale;
-} COMPONENT_NAME;
-#endif
-
-#ifdef COMPONENT_IMPLEMENTATION
-// === COMPONENT IMPLEMENTATION ===
 #include "../plane_sim_g.h"
-#include "../util/component_macros.h"
 #include <rlgl.h>
 
 void SpriteRendererComponent_sequentialDraw(Camera3D camera, SceneObject* sceneObject, SceneComponentId sceneComponent,
@@ -39,24 +20,43 @@ void SpriteRendererComponent_sequentialDraw(Camera3D camera, SceneObject* sceneO
     rlColor4ub(tint.r, tint.g, tint.b, tint.a);
     rlNormal3f(m.m9, m.m10, m.m11);
 
-    rlTexCoord2f((source.x + source.width) / width, (source.y + source.height) / height);
-    rlVertex3f(p.x - r.x - u.x, p.y - r.y - u.y, p.z - r.z - u.z);
+    // draw scale 9
+    float ppu = spriteRenderer->pixelsPerUnit;
+    float left = spriteRenderer->scale9frame.x;
+    float top = spriteRenderer->scale9frame.y;
+    float right = spriteRenderer->scale9frame.z;
+    float bottom = spriteRenderer->scale9frame.w;
+    float w = spriteRenderer->size.x;
+    float h = spriteRenderer->size.y;
+    if (spriteRenderer->scale9frame.x > 0.0f) {
+        float colw = left / ppu;
+        float toph = top / ppu;
+        rlTexCoord2f((source.x + left) / width, source.y / height);
+        rlVertex3f(p.x + r.x * (w-colw) + u.x * h, p.y + r.y * (w-colw) + u.y * h, p.z + r.z * (w-colw) + u.z * h);
+        rlTexCoord2f(source.x / width, source.y / height);
+        rlVertex3f(p.x + r.x * w + u.x * h, p.y + r.y * w + u.y * h, p.z + r.z * w + u.z * h);
+        rlTexCoord2f(source.x / width, (source.y + top) / height);
+        rlVertex3f(p.x + r.x * w + u.x * (h-toph), p.y + r.y * w + u.y * (h-toph), p.z + r.z * w + u.z * (h-toph));
+        rlTexCoord2f((source.x + left) / width, (source.y + top) / height);
+        rlVertex3f(p.x + r.x * (w-colw) + u.x * (h-toph), p.y + r.y * (w-colw) + u.y * (h-toph), p.z + r.z * (w-colw) + u.z * (h-toph));
+    }
 
-    rlTexCoord2f((source.x + source.width) / width, source.y / height);
-    rlVertex3f(p.x - r.x + u.x, p.y - r.y + u.y, p.z - r.z + u.z);
+    w -= (left + right) / ppu * .5f;
+    h -= (top + bottom) / ppu * .5f;
+    
 
-    rlTexCoord2f(source.x / width, source.y / height);
-    rlVertex3f(p.x + r.x + u.x, p.y + r.y + u.y, p.z + r.z + u.z);
+    rlTexCoord2f((source.x + source.width - right) / width, (source.y + source.height - top) / height);
+    rlVertex3f(p.x - r.x * w - u.x * h, p.y - r.y * w - u.y * h, p.z - r.z * w - u.z * h);
 
-    rlTexCoord2f(source.x / width, (source.y + source.height) / height);
-    rlVertex3f(p.x + r.x - u.x, p.y + r.y - u.y, p.z + r.z - u.z);
+    rlTexCoord2f((source.x + source.width - right) / width, (source.y + bottom) / height);
+    rlVertex3f(p.x - r.x * w + u.x * h, p.y - r.y * w + u.y * h, p.z - r.z * w + u.z * h);
+
+    rlTexCoord2f((source.x + left) / width, (source.y + bottom) / height);
+    rlVertex3f(p.x + r.x * w + u.x * h, p.y + r.y * w + u.y * h, p.z + r.z * w + u.z * h);
+
+    rlTexCoord2f((source.x + left) / width, (source.y + source.height - top) / height);
+    rlVertex3f(p.x + r.x * w - u.x * h, p.y + r.y * w - u.y * h, p.z + r.z * w - u.z * h);
 
     rlEnd();
     rlSetTexture(0);
 }
-
-BEGIN_COMPONENT_REGISTRATION {
-    .sequentialDraw = SpriteRendererComponent_sequentialDraw,
-} END_COMPONENT_REGISTRATION
-
-#endif

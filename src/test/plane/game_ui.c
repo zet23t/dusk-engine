@@ -72,18 +72,20 @@ void GameUi_Init()
     SceneObjectId clickableThing = SceneGraph_createObject(psg.sceneGraph, "clickable-thing");
     SceneGraph_setParent(psg.sceneGraph, clickableThing, uiPlaneId);
     SceneGraph_setLocalPosition(psg.sceneGraph, clickableThing, (Vector3) { -7, 4.5f, 0 });
-    SceneGraph_addComponent(psg.sceneGraph, clickableThing, psg.PrimitiveRendererComponentId, &(PrimitiveRendererComponent) {
-                                                                                             .primitiveType = PRIMITIVE_TYPE_CUBE,
-                                                                                             .size = (Vector3) { 1, 1, 0 },
-                                                                                             .color = (Color) { 255, 255, 255, 255 },
-                                                                                             .isWireframe = 1,
-                                                                                         });
+    // SceneGraph_addComponent(psg.sceneGraph, clickableThing, psg.PrimitiveRendererComponentId, &(PrimitiveRendererComponent) {
+    //                                                                                          .primitiveType = PRIMITIVE_TYPE_CUBE,
+    //                                                                                          .size = (Vector3) { 1, 1, 0 },
+    //                                                                                          .color = (Color) { 255, 255, 255, 255 },
+    //                                                                                          .isWireframe = 1,
+    //                                                                                      });
     SceneGraph_addComponent(psg.sceneGraph, clickableThing, psg.ClickZoneComponentId, &(ClickZoneComponent) {.boxSize = (Vector3) { 1, 1, 0 }, .zoneId = 0});
     SceneGraph_addComponent(psg.sceneGraph, clickableThing, psg.SpriteRendererComponentId, &(SpriteRendererComponent) {
-                                                                                             .texture = ResourceManager_loadTexture(&psg.resourceManager, "assets/dbg_sprite.png"),
-                                                                                             .source = (Rectangle) { 0, 0, 16, 16 },
+                                                                                             .texture = ResourceManager_loadTexture(&psg.resourceManager, "assets/ui_atlas.png"),
+                                                                                             .source = (Rectangle) { 0, 0, 42, 42 },
                                                                                              .pivot = (Vector2) { 0.5f, 0.5f },
-                                                                                             .scale = (Vector2) { 1, 1 },
+                                                                                             .pixelsPerUnit = 64,
+                                                                                             .scale9frame = (Vector4) {12, 12, 12, 12},
+                                                                                             .size = (Vector2) {3, 1},
                                                                                              .tint = (Color) { 255, 255, 255, 255 },
                                                                                          });
     // SceneGraph_setLocalPosition(psg.sceneGraph, uiPlaneId, (Vector3) { 0, 0, 0 });

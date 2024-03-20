@@ -113,7 +113,7 @@ SceneComponentId AddMeshRendererComponent(SceneObjectId id, Mesh* mesh, float li
 
 #include "../util/component_macros.h"
 
-BEGIN_COMPONENT_REGISTRATION {
+BEGIN_COMPONENT_REGISTRATION(MeshRendererComponent) {
     .draw = MeshRendererDraw,
     .onInitialize = MeshRendererInitialize,
 } END_COMPONENT_REGISTRATION

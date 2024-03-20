@@ -49,7 +49,7 @@ void PrimitiveRenderComponent_draw(Camera3D camera, SceneObject* node, SceneComp
 
 #include "../util/component_macros.h"
 
-BEGIN_COMPONENT_REGISTRATION {
+BEGIN_COMPONENT_REGISTRATION(PrimitiveRendererComponent) {
     .draw = PrimitiveRenderComponent_draw,
 } END_COMPONENT_REGISTRATION
 

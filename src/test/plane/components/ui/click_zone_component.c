@@ -157,7 +157,7 @@ static void ClickZone_update(SceneObject* sceneObject, SceneComponentId sceneCom
     }
 }
 
-BEGIN_COMPONENT_REGISTRATION {
+BEGIN_COMPONENT_REGISTRATION(ClickZoneComponent) {
     .updateTick = ClickZone_update,
 } END_COMPONENT_REGISTRATION
 

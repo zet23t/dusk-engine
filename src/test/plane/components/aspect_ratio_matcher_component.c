@@ -58,7 +58,7 @@ static void AspectRatioMatcher(SceneObject* sceneObject, SceneComponentId sceneC
 
 #include "../util/component_macros.h"
 
-BEGIN_COMPONENT_REGISTRATION {
+BEGIN_COMPONENT_REGISTRATION(AspectRatioMatcherComponent) {
     .updateTick = AspectRatioMatcher,
 } END_COMPONENT_REGISTRATION
 
