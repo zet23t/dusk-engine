@@ -80,10 +80,10 @@ void GameUi_Init()
     //                                                                                      });
     SceneGraph_addComponent(psg.sceneGraph, clickableThing, psg.ClickZoneComponentId, &(ClickZoneComponent) {.boxSize = (Vector3) { 1, 1, 0 }, .zoneId = 0});
     SceneGraph_addComponent(psg.sceneGraph, clickableThing, psg.SpriteRendererComponentId, &(SpriteRendererComponent) {
-                                                                                             .texture = ResourceManager_loadTexture(&psg.resourceManager, "assets/ui_atlas.png"),
-                                                                                             .source = (Rectangle) { 0, 0, 42, 42 },
+                                                                                             .texture = ResourceManager_loadTexture(&psg.resourceManager, "assets/ui_atlas.png", TEXTURE_FILTER_BILINEAR),
+                                                                                             .source = (Rectangle) { 0, 0, 41, 41 },
                                                                                              .pivot = (Vector2) { 0.5f, 0.5f },
-                                                                                             .pixelsPerUnit = 64,
+                                                                                             .pixelsPerUnit = 32,
                                                                                              .scale9frame = (Vector4) {12, 12, 12, 12},
                                                                                              .size = (Vector2) {3, 1},
                                                                                              .tint = (Color) { 255, 255, 255, 255 },

@@ -56,8 +56,7 @@ static Material _trailMaterial = { 0 };
 static void AddWingTrail(SceneObjectId parent, float x, float y, float speed, float lifetime)
 {
     if (_trailMaterial.shader.id == 0) {
-        Texture2D texture = ResourceManager_loadTexture(&psg.resourceManager, "assets/wing-trail.png");
-        SetTextureFilter(texture, TEXTURE_FILTER_BILINEAR);
+        Texture2D texture = ResourceManager_loadTexture(&psg.resourceManager, "assets/wing-trail.png", TEXTURE_FILTER_BILINEAR);
         _trailMaterial = LoadMaterialDefault();
         SetMaterialTexture(&_trailMaterial, MATERIAL_MAP_DIFFUSE, texture);
     }
@@ -158,8 +157,7 @@ static Material _hitEffectMaterial = { 0 };
 void SpawnHitEffect(SceneGraph *g, Vector3 position, Vector3 initialVelocity, float vSpread, int cnt, float lifetime, float width, float uvLength, float nodeVelFac)
 {
     if (_hitEffectMaterial.shader.id == 0) {
-        Texture2D texture = ResourceManager_loadTexture(&psg.resourceManager, "assets/spark.png");
-        SetTextureFilter(texture, TEXTURE_FILTER_BILINEAR);
+        Texture2D texture = ResourceManager_loadTexture(&psg.resourceManager, "assets/spark.png", TEXTURE_FILTER_BILINEAR);
         SetTextureWrap(texture, TEXTURE_WRAP_CLAMP);
         _hitEffectMaterial = LoadMaterialDefault();
         SetMaterialTexture(&_hitEffectMaterial, MATERIAL_MAP_DIFFUSE, texture);

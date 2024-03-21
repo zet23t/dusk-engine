@@ -35,59 +35,65 @@ void SpriteRendererComponent_sequentialDraw(Camera3D camera, SceneObject* sceneO
     float w = spriteRenderer->size.x;
     float h = spriteRenderer->size.y;
 
-    // if (spriteRenderer->scale9frame.x > 0.0f) {
-    //     float colw = left / ppu;
-    //     if (top > 0)
-    //     {
-    //         // top left
-    //         float toph = top / ppu;
-    //         rlTexCoord2f((source.x + left) / width, source.y / height);
-    //         rlVertex3f(p.x + r.x * (w-colw) + u.x * h, p.y + r.y * (w-colw) + u.y * h, p.z + r.z * (w-colw) + u.z * h);
-    //         rlTexCoord2f(source.x / width, source.y / height);
-    //         rlVertex3f(p.x + r.x * w + u.x * h, p.y + r.y * w + u.y * h, p.z + r.z * w + u.z * h);
-    //         rlTexCoord2f(source.x / width, (source.y + top) / height);
-    //         rlVertex3f(p.x + r.x * w + u.x * (h-toph), p.y + r.y * w + u.y * (h-toph), p.z + r.z * w + u.z * (h-toph));
-    //         rlTexCoord2f((source.x + left) / width, (source.y + top) / height);
-    //         rlVertex3f(p.x + r.x * (w-colw) + u.x * (h-toph), p.y + r.y * (w-colw) + u.y * (h-toph), p.z + r.z * (w-colw) + u.z * (h-toph));
-    //     }
-
-    //     if (bottom > 0)
-    //     {
-    //         // bottom left
-    //         float bottomh = bottom / ppu;
-    //         rlTexCoord2f((source.x + left) / width, (source.y + source.height - bottom) / height);
-    //         rlVertex3f(p.x + r.x * (w-colw) + u.x * bottomh, p.y + r.y * (w-colw) + u.y * bottomh, p.z + r.z * (w-colw) + u.z * bottomh);
-    //         rlTexCoord2f((source.x + left) / width, (source.y + source.height) / height);
-    //         rlVertex3f(p.x + r.x * (w-colw) + u.x * h, p.y + r.y * (w-colw) + u.y * h, p.z + r.z * (w-colw) + u.z * h);
-    //         rlTexCoord2f(source.x / width, (source.y + source.height) / height);
-    //         rlVertex3f(p.x + r.x * w + u.x * h, p.y + r.y * w + u.y * h, p.z + r.z * w + u.z * h);
-    //         rlTexCoord2f(source.x / width, (source.y + source.height - bottom) / height);
-    //         rlVertex3f(p.x + r.x * w + u.x * bottomh, p.y + r.y * w + u.y * bottomh, p.z + r.z * w + u.z * bottomh);
-    //     }
-    // }
-
+    // inner width and height
     float iw = w - (left + right) / ppu * .5f;
     float ih = h - (top + bottom) / ppu * .5f;
 
+    Vector3 v00 = (Vector3) { p.x + r.x * w + u.x * h, p.y + r.y * w + u.y * h, p.z + r.z * w + u.z * h };
+    Vector3 t00 = (Vector3) { (source.x) / width, (source.y) / height };
+    Vector3 v10 = (Vector3) { p.x + r.x * iw + u.x * h, p.y + r.y * iw + u.y * h, p.z + r.z * iw + u.z * h };
+    Vector3 t10 = (Vector3) { (source.x + left) / width, (source.y) / height };
+    Vector3 v20 = (Vector3) { p.x - r.x * iw + u.x * h, p.y - r.y * iw + u.y * h, p.z - r.z * iw + u.z * h };
+    Vector2 t20 = (Vector2) { (source.x + source.width - right) / width, (source.y) / height };
+    Vector3 v30 = (Vector3) { p.x - r.x * w + u.x * h, p.y - r.y * w + u.y * h, p.z - r.z * w + u.z * h };
+    Vector2 t30 = (Vector2) { (source.x + source.width) / width, (source.y) / height };
+
+    Vector3 v01 = (Vector3) { p.x + r.x * w + u.x * ih, p.y + r.y * w + u.y * ih, p.z + r.z * w + u.z * ih };
+    Vector3 t01 = (Vector3) { (source.x) / width, (source.y + bottom) / height };
     Vector3 v11 = (Vector3) { p.x + r.x * iw + u.x * ih, p.y + r.y * iw + u.y * ih, p.z + r.z * iw + u.z * ih };
     Vector3 t11 = (Vector3) { (source.x + left) / width, (source.y + bottom) / height };
+    Vector3 v21 = (Vector3) { p.x - r.x * iw + u.x * ih, p.y - r.y * iw + u.y * ih, p.z - r.z * iw + u.z * ih };
+    Vector2 t21 = (Vector2) { (source.x + source.width - right) / width, (source.y + bottom) / height };
+    Vector3 v31 = (Vector3) { p.x - r.x * w + u.x * ih, p.y - r.y * w + u.y * ih, p.z - r.z * w + u.z * ih };
+    Vector2 t31 = (Vector2) { (source.x + source.width) / width, (source.y + bottom) / height };
+
+    Vector3 v02 = (Vector3) { p.x + r.x * w - u.x * ih, p.y + r.y * w - u.y * ih, p.z + r.z * w - u.z * ih };
+    Vector2 t02 = (Vector2) { (source.x) / width, (source.y + source.height - top) / height };
     Vector3 v12 = (Vector3) { p.x + r.x * iw - u.x * ih, p.y + r.y * iw - u.y * ih, p.z + r.z * iw - u.z * ih };
     Vector2 t12 = (Vector2) { (source.x + left) / width, (source.y + source.height - top) / height };
     Vector3 v22 = (Vector3) { p.x - r.x * iw - u.x * ih, p.y - r.y * iw - u.y * ih, p.z - r.z * iw - u.z * ih };
     Vector2 t22 = (Vector2) { (source.x + source.width - right) / width, (source.y + source.height - top) / height };
-    Vector3 v21 = (Vector3) { p.x - r.x * iw + u.x * ih, p.y - r.y * iw + u.y * ih, p.z - r.z * iw + u.z * ih };
-    Vector2 t21 = (Vector2) { (source.x + source.width - right) / width, (source.y + bottom) / height };
-    rlTexCoord2f(t22.x, t22.y);
-    rlVertex3f(v22.x, v22.y, v22.z);
+    Vector3 v32 = (Vector3) { p.x - r.x * w - u.x * ih, p.y - r.y * w - u.y * ih, p.z - r.z * w - u.z * ih };
+    Vector2 t32 = (Vector2) { (source.x + source.width) / width, (source.y + source.height - top) / height };
+    
+    Vector3 v03 = (Vector3) { p.x + r.x * w - u.x * h, p.y + r.y * w - u.y * h, p.z + r.z * w - u.z * h };
+    Vector2 t03 = (Vector2) { (source.x) / width, (source.y + source.height) / height };
+    Vector3 v13 = (Vector3) { p.x + r.x * iw - u.x * h, p.y + r.y * iw - u.y * h, p.z + r.z * iw - u.z * h };
+    Vector2 t13 = (Vector2) { (source.x + left) / width, (source.y + source.height) / height };
+    Vector3 v23 = (Vector3) { p.x - r.x * iw - u.x * h, p.y - r.y * iw - u.y * h, p.z - r.z * iw - u.z * h };
+    Vector2 t23 = (Vector2) { (source.x + source.width - right) / width, (source.y + source.height) / height };
+    Vector3 v33 = (Vector3) { p.x - r.x * w - u.x * h, p.y - r.y * w - u.y * h, p.z - r.z * w - u.z * h };
+    Vector2 t33 = (Vector2) { (source.x + source.width) / width, (source.y + source.height) / height };
+    
 
-    rlTexCoord2f(t21.x, t21.y);
-    rlVertex3f(v21.x, v21.y, v21.z);
+#define P(XY) rlTexCoord2f(t##XY.x, t##XY.y),rlVertex3f(v##XY.x, v##XY.y, v##XY.z);
+#define Q(A,B,C,D) P(A) P(B) P(C) P(D)
+    // 00 10 20 30
+    // 01 11 21 31
+    // 02 12 22 32
+    // 03 13 23 33
+    Q(11, 10, 00, 01)
+    Q(21, 20, 10, 11)
+    Q(31, 30, 20, 21)
 
-    rlTexCoord2f(t11.x, t11.y);
-    rlVertex3f(v11.x, v11.y, v11.z);
+    Q(12, 11, 01, 02)
+    Q(22, 21, 11, 12)
+    Q(32, 31, 21, 22)
 
-    rlTexCoord2f(t12.x, t12.y);
-    rlVertex3f(v12.x, v12.y, v12.z);
+    Q(13, 12, 02, 03)
+    Q(23, 22, 12, 13)
+    Q(33, 32, 22, 23)
+#undef P
 
     rlEnd();
     rlSetTexture(0);

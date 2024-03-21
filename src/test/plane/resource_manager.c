@@ -92,7 +92,7 @@ void freeTexture (void *data)
     free(data);
 }
 
-Texture2D ResourceManager_loadTexture(ResourceManager *resourceManager, const char* path)
+Texture2D ResourceManager_loadTexture(ResourceManager *resourceManager, const char* path, int filter)
 {
     Resource *resource = findEntry(resourceManager, path);
     if (resource == NULL)
@@ -103,6 +103,7 @@ Texture2D ResourceManager_loadTexture(ResourceManager *resourceManager, const ch
         resource->data = malloc(sizeof(Texture2D));
         memcpy(resource->data, &texture, sizeof(Texture2D));
         resource->freeData = freeTexture;
+        SetTextureFilter(texture, filter);
     }
 
     return *(Texture2D*)resource->data;

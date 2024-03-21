@@ -25,11 +25,11 @@
      inkscape:pageopacity="0"
      inkscape:pagecheckerboard="0"
      inkscape:deskcolor="#505050"
-     inkscape:document-units="mm"
+     inkscape:document-units="px"
      showgrid="false"
-     inkscape:zoom="14.04209"
-     inkscape:cx="7.9048061"
-     inkscape:cy="27.56"
+     inkscape:zoom="24.369137"
+     inkscape:cx="20.722933"
+     inkscape:cy="20.558791"
      inkscape:window-width="1920"
      inkscape:window-height="1129"
      inkscape:window-x="-8"
@@ -42,8 +42,12 @@
      inkscape:label="Ebene 1"
      inkscape:groupmode="layer"
      id="layer1">
+    <path
+       id="rect2182"
+       style="fill:none;stroke:#000000;stroke-width:0.396875;stroke-linecap:square;stroke-linejoin:round;stroke-dasharray:none"
+       d="M 2.0928955 0.77359619 C 1.234587 0.77359619 0.54363607 1.4645472 0.54363607 2.3228556 L 0.54363607 3.381189 L 0.54363607 7.4992839 L 0.54363607 8.5576172 C 0.54363607 9.4159257 1.234587 10.106877 2.0928955 10.106877 L 8.8785278 10.106877 C 9.7368363 10.106877 10.427787 9.4159257 10.427787 8.5576172 L 10.427787 7.4992839 L 10.427787 3.381189 L 10.427787 2.3228556 C 10.427787 1.4645472 9.7368363 0.77359619 8.8785278 0.77359619 L 2.0928955 0.77359619 z " />
     <rect
-       style="fill:#666666;stroke:#000000;stroke-width:0.132292;stroke-linecap:square;stroke-linejoin:round;stroke-dasharray:none"
+       style="fill:#666666;stroke:none;stroke-width:0.132292;stroke-linecap:square;stroke-linejoin:round;stroke-dasharray:none"
        id="rect171"
        width="9.8841629"
        height="8.2751131"
@@ -51,43 +55,20 @@
        y="1.8317308"
        ry="1.5492948" />
     <rect
-       style="fill:#e6e6e6;stroke:#000000;stroke-width:0.132292;stroke-linecap:square;stroke-linejoin:round;stroke-dasharray:none"
+       style="fill:#808080;stroke:none;stroke-width:0.132292;stroke-linecap:square;stroke-linejoin:round;stroke-dasharray:none"
+       id="rect2246"
+       width="9.8841629"
+       height="8.2751131"
+       x="0.54353327"
+       y="1.1312426"
+       ry="1.5492948" />
+    <rect
+       style="fill:#e6e6e6;stroke:none;stroke-width:0.132292;stroke-linecap:square;stroke-linejoin:round;stroke-dasharray:none"
        id="rect1114"
        width="9.8841629"
        height="8.2751131"
        x="0.54353327"
        y="0.77339751"
        ry="1.5492948" />
-    <ellipse
-       style="fill:#d40000;stroke:none;stroke-width:0.745095;stroke-linecap:square;stroke-linejoin:round;stroke-dasharray:none"
-       id="path1900"
-       cx="2.6002183"
-       cy="2.7792189"
-       rx="1.5262151"
-       ry="1.4979519" />
-    <ellipse
-       style="fill:#008000;stroke:none;stroke-width:0.795833;stroke-linecap:square;stroke-linejoin:round;stroke-dasharray:none"
-       id="path1954"
-       cx="8.3941832"
-       cy="2.8640087"
-       rx="1.516794"
-       ry="1.6581101" />
-    <ellipse
-       style="fill:#808000;stroke:none;stroke-width:0.914469;stroke-linecap:square;stroke-linejoin:round;stroke-dasharray:none"
-       id="path2060"
-       cx="8.4412889"
-       cy="7.1129169"
-       rx="1.7900053"
-       ry="1.5921627" />
-    <ellipse
-       style="fill:#0000ff;stroke:none;stroke-width:0.627114;stroke-linecap:square;stroke-linejoin:round;stroke-dasharray:none"
-       id="path2062"
-       cx="2.5154285"
-       cy="7.2730742"
-       rx="1.6110048"
-       ry="1.5450573"
-       inkscape:export-filename="..\assets\path2062.png"
-       inkscape:export-xdpi="96"
-       inkscape:export-ydpi="96" />
   </g>
 </svg>
