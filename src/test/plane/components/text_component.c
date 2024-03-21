@@ -175,9 +175,13 @@ static void TextComponentDraw(Camera3D camera, SceneObject* node, SceneComponent
     TextComponent* textComponent = (TextComponent*)component;
     Matrix m = SceneObject_getWorldMatrix(node);
     Font font = GetFontDefault();
-    char text[strlen(textComponent->text) + 1];
+    int textLen = strlen(textComponent->text) + 1;
+    char text[textLen];
     strcpy(text, textComponent->text);
     char *t = text;
+    int lineCount = 1;
+    for (int i=0;i<textLen;i+=1) lineCount += text[i] == '\n';
+    m.m13 += (textComponent->lineSpacing + textComponent->fontSize * .5f) * lineCount * textComponent->align.y * .5f;
     while (1)
     {
         char *next = NULL;
