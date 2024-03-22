@@ -1,7 +1,7 @@
 #include "../plane_sim_g.h"
 #include <rlgl.h>
 
-void SpriteRendererComponent_sequentialDraw(Camera3D camera, SceneObject* sceneObject, SceneComponentId sceneComponent,
+static void SpriteRendererComponent_sequentialDraw(Camera3D camera, SceneObject* sceneObject, SceneComponentId sceneComponent,
     void* componentData, void* userdata)
 {
     SpriteRendererComponent* spriteRenderer = (SpriteRendererComponent*)componentData;
@@ -11,10 +11,10 @@ void SpriteRendererComponent_sequentialDraw(Camera3D camera, SceneObject* sceneO
     Vector3 u = (Vector3) { m.m4 * .5f, m.m5 * .5f, m.m6 * .5f };
     Vector3 p = { m.m12, m.m13, m.m14 };
 
-    int width = spriteRenderer->texture.width;
-    int height = spriteRenderer->texture.height;
-    Rectangle source = spriteRenderer->source;
-    rlSetTexture(spriteRenderer->texture.id);
+    int width = spriteRenderer->spriteAsset.texture.width;
+    int height = spriteRenderer->spriteAsset.texture.height;
+    Rectangle source = spriteRenderer->spriteAsset.source;
+    rlSetTexture(spriteRenderer->spriteAsset.texture.id);
     rlBegin(RL_QUADS);
     Color tint = spriteRenderer->tint;
     rlColor4ub(tint.r, tint.g, tint.b, tint.a);
@@ -28,10 +28,10 @@ void SpriteRendererComponent_sequentialDraw(Camera3D camera, SceneObject* sceneO
     // 03 13 23 33
 
     float ppu = spriteRenderer->pixelsPerUnit;
-    float left = spriteRenderer->scale9frame.x;
-    float top = spriteRenderer->scale9frame.y;
-    float right = spriteRenderer->scale9frame.z;
-    float bottom = spriteRenderer->scale9frame.w;
+    float left = spriteRenderer->spriteAsset.scale9frame.x;
+    float top = spriteRenderer->spriteAsset.scale9frame.y;
+    float right = spriteRenderer->spriteAsset.scale9frame.z;
+    float bottom = spriteRenderer->spriteAsset.scale9frame.w;
     float w = spriteRenderer->size.x;
     float h = spriteRenderer->size.y;
 

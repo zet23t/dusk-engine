@@ -81,15 +81,19 @@ void GameUi_Init()
     //                                                                                          .color = (Color) { 255, 255, 255, 255 },
     //                                                                                          .isWireframe = 1,
     //                                                                                      });
-    SceneGraph_addComponent(psg.sceneGraph, clickableThing, psg.ClickZoneComponentId,
+    ButtonComponent buttonComponent = (ButtonComponent){0};
+    SpriteAsset buttonNormal = (SpriteAsset) {
+        .texture = ResourceManager_loadTexture(&psg.resourceManager, "assets/ui_atlas.png", TEXTURE_FILTER_BILINEAR),
+        .source = (Rectangle) { 0, 0, 41, 41 },
+        .scale9frame = (Vector4) { 12, 12, 12, 12 },
+    };
+    buttonComponent.clickZoneComponentId = SceneGraph_addComponent(psg.sceneGraph, clickableThing, psg.ClickZoneComponentId,
         &(ClickZoneComponent) { .boxSize = (Vector3) { 1, 1, 0 }, .zoneId = 0 });
-    SceneGraph_addComponent(psg.sceneGraph, clickableThing, psg.SpriteRendererComponentId,
+    buttonComponent.spriteRendererComponentId = SceneGraph_addComponent(psg.sceneGraph, clickableThing, psg.SpriteRendererComponentId,
         &(SpriteRendererComponent) {
-            .texture = ResourceManager_loadTexture(&psg.resourceManager, "assets/ui_atlas.png", TEXTURE_FILTER_BILINEAR),
-            .source = (Rectangle) { 0, 0, 41, 41 },
+            .spriteAsset = buttonNormal,
             .pivot = (Vector2) { 0.5f, 0.5f },
             .pixelsPerUnit = 32,
-            .scale9frame = (Vector4) { 12, 12, 12, 12 },
             .size = (Vector2) { 3, 1 },
             .tint = (Color) { 255, 255, 255, 255 },
         });
@@ -101,5 +105,6 @@ void GameUi_Init()
             .align = (Vector2){0.5f, 0.5f},
             .color = (Color) { 0, 0, 0, 255 },
         });
+    SceneGraph_addComponent(psg.sceneGraph, clickableThing, psg.ButtonComponentId, &buttonComponent);
     // SceneGraph_setLocalPosition(psg.sceneGraph, uiPlaneId, (Vector3) { 0, 0, 0 });
 }

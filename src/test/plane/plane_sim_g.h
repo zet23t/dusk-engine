@@ -116,7 +116,12 @@ typedef struct PSG {
     ShaderLocationIndex litAmountIndex;
 } PSG;
 
-
+typedef struct SpriteAsset
+{
+    Texture2D texture;
+    Rectangle source;
+    Vector4 scale9frame;
+} SpriteAsset;
 
 typedef struct LevelEventData {
     float x;

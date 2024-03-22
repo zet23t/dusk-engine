@@ -3,4 +3,5 @@
 #include "components/plane_behavior_component.c"
 #include "components/aspect_ratio_matcher_component.c"
 #include "components/sprite_renderer_component.h"
-#include "components/ui/click_zone_component.c"
+#include "components/ui/click_zone_component.h"
+#include "components/ui/button_component.h"
