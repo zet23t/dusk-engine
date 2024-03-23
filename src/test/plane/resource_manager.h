@@ -19,5 +19,6 @@ typedef struct ResourceManager{
 
 Model ResourceManager_loadModel(ResourceManager *resourceManager, const char* path);
 Texture2D ResourceManager_loadTexture(ResourceManager *resourceManager, const char* path, int filter);
+Font ResourceManager_loadFont(ResourceManager *ResourceManager, const char *path);
 
 #endif

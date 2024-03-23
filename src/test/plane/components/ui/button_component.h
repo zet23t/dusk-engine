@@ -2,11 +2,18 @@
 // === COMPONENT UTILITIES ===
 COMPONENT(ButtonComponent)
 #elif defined(COMPONENT_DECLARATION)
+typedef struct ButtonState {
+    SpriteAsset spriteAsset;
+    Vector2 textOffset;
+} ButtonState;
 
 typedef struct ButtonComponent {
     SceneComponentId clickZoneComponentId;
     SceneComponentId spriteRendererComponentId;
-
+    SceneComponentId textComponentId;
+    ButtonState normalState;
+    ButtonState hoverState;
+    ButtonState pressedState;
 } ButtonComponent;
 
 #else

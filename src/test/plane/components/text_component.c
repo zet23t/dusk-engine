@@ -165,8 +165,8 @@ static Vector2 MeasureText3D(Font font, const char* text, float fontSize, float 
 
     Vector2 vec = { 0 };
     vec.x = tempTextWidth + (float)((tempLen - 1) * fontSpacing / (float)font.baseSize * scale); // Adds chars spacing to measure
-    vec.y = textHeight;
-
+    vec.y = textHeight / (float)font.baseSize * scale;
+    
     return vec;
 }
 
@@ -174,14 +174,22 @@ static void TextComponentDraw(Camera3D camera, SceneObject* node, SceneComponent
 {
     TextComponent* textComponent = (TextComponent*)component;
     Matrix m = SceneObject_getWorldMatrix(node);
-    Font font = GetFontDefault();
+    Font font = textComponent->font;
+    if (font.texture.id == 0)
+    {
+        font = GetFontDefault();
+    }
     int textLen = strlen(textComponent->text) + 1;
     char text[textLen];
     strcpy(text, textComponent->text);
     char *t = text;
+    float scale = textComponent->fontSize / (float)font.baseSize;
+    float lineHeight = scale + textComponent->lineSpacing / (float)font.baseSize * scale;
     int lineCount = 1;
     for (int i=0;i<textLen;i+=1) lineCount += text[i] == '\n';
-    m.m13 += (textComponent->lineSpacing + textComponent->fontSize * .5f) * lineCount * textComponent->align.y * .5f;
+    m.m13 += (lineHeight) * lineCount * textComponent->align.y * 2.0f;
+    // m.m12 += textComponent->offset.x;
+    // m.m13 += textComponent->offset.y;
     while (1)
     {
         char *next = NULL;
@@ -197,10 +205,12 @@ static void TextComponentDraw(Camera3D camera, SceneObject* node, SceneComponent
         Vector2 dims = MeasureText3D(font, t, textComponent->fontSize, textComponent->fontSpacing, textComponent->lineSpacing);
         Matrix mm = m;
         mm.m12 += dims.x * textComponent->align.x;
+        mm.m12 += textComponent->offset.x;
+        mm.m14 += textComponent->offset.y;
         DrawText3D(font, t, mm, textComponent->fontSize, textComponent->fontSpacing, textComponent->lineSpacing, false, textComponent->color);
         if (next)
         {
-            m.m13 -= (textComponent->lineSpacing + textComponent->fontSize * .5f);// / (float) font.baseSize;
+            m.m14 -= (textComponent->lineSpacing + textComponent->fontSize * .5f);// / (float) font.baseSize;
             t = next;
         }
         else

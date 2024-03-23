@@ -108,3 +108,25 @@ Texture2D ResourceManager_loadTexture(ResourceManager *resourceManager, const ch
 
     return *(Texture2D*)resource->data;
 }
+
+static void freeFont(void *data)
+{
+    UnloadFont(*(Font*)data);
+    free(data);
+}
+
+Font ResourceManager_loadFont(ResourceManager *ResourceManager, const char *path)
+{
+    Resource *resource = findEntry(ResourceManager, path);
+    if (resource == NULL)
+    {
+        printf("Loading font: %s\n", path);
+        resource = addEntry(ResourceManager, path);
+        Font font = LoadFont(path);
+        resource->data = malloc(sizeof(Font));
+        memcpy(resource->data, &font, sizeof(Font));
+        resource->freeData = freeFont;
+    }
+
+    return *(Font*)resource->data;
+}

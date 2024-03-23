@@ -166,8 +166,10 @@ typedef struct EnemyBehaviorComponent
 } EnemyBehaviorComponent;
 
 typedef struct TextComponent {
+    Font font;
     char* text;
     Vector2 align;
+    Vector2 offset;
     float fontSize;
     float fontSpacing;
     float lineSpacing;
