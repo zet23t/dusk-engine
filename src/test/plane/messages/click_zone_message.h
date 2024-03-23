@@ -14,6 +14,5 @@ typedef struct ClickZoneMessage {
     int flags;
     SceneComponentId buttonComponentId;
     int zoneId;
-    Vector3 hitPoint;
 } ClickZoneMessage;
 #endif

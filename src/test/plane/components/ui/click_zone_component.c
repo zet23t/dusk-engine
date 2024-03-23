@@ -37,14 +37,16 @@ static void ClickZone_update(SceneObject* sceneObject, SceneComponentId sceneCom
             clickZone->touchIdLock = -1;
             clickZone->flags = CLICKZONECOMPONENT_FLAG_NONE;
             MessageHub_queueClickZoneMessage((ClickZoneMessage) {
+                .flags = CLICK_ZONE_MESSAGE_FLAG_POINTER_WAS_RELEASED,
                 .buttonComponentId = sceneComponentId,
                 .zoneId = ((ClickZoneComponent*)componentData)->zoneId,
-                .flags = CLICK_ZONE_MESSAGE_FLAG_POINTER_WAS_RELEASED });
+            });
             if (isClick) {
                 MessageHub_queueClickZoneMessage((ClickZoneMessage) {
+                    .flags = CLICK_ZONE_MESSAGE_FLAG_CLICK,
                     .buttonComponentId = sceneComponentId,
                     .zoneId = ((ClickZoneComponent*)componentData)->zoneId,
-                    .flags = CLICK_ZONE_MESSAGE_FLAG_CLICK });
+                });
             }
         }
 
@@ -65,17 +67,18 @@ static void ClickZone_update(SceneObject* sceneObject, SceneComponentId sceneCom
     int mouseButtonLock = clickZone->mouseButtonLock - 1;
     if (IsMouseButtonReleased(mouseButtonLock)) {
         clickZone->mouseButtonLock = -1;
-        
+
         MessageHub_queueClickZoneMessage((ClickZoneMessage) {
+            .flags = CLICK_ZONE_MESSAGE_FLAG_POINTER_WAS_RELEASED,
             .buttonComponentId = sceneComponentId,
             .zoneId = ((ClickZoneComponent*)componentData)->zoneId,
-            .flags = CLICK_ZONE_MESSAGE_FLAG_POINTER_WAS_RELEASED });
-        if (clickZone->flags & CLICKZONECOMPONENT_FLAG_HOVER)
-        {
+        });
+        if (clickZone->flags & CLICKZONECOMPONENT_FLAG_HOVER) {
             MessageHub_queueClickZoneMessage((ClickZoneMessage) {
+                .flags = CLICK_ZONE_MESSAGE_FLAG_CLICK,
                 .buttonComponentId = sceneComponentId,
                 .zoneId = ((ClickZoneComponent*)componentData)->zoneId,
-                .flags = CLICK_ZONE_MESSAGE_FLAG_CLICK });
+            });
         }
         clickZone->flags &= ~CLICKZONECOMPONENT_FLAG_ACTIVE;
         return;
@@ -94,9 +97,10 @@ static void ClickZone_update(SceneObject* sceneObject, SceneComponentId sceneCom
             clickZone->flags = CLICKZONECOMPONENT_FLAG_HOVER | CLICKZONECOMPONENT_FLAG_ACTIVE;
             clickZone->touchIdLock = touchId + 1;
             MessageHub_queueClickZoneMessage((ClickZoneMessage) {
+                .flags = CLICK_ZONE_MESSAGE_FLAG_POINTER_WAS_PRESSED,
                 .buttonComponentId = sceneComponentId,
                 .zoneId = ((ClickZoneComponent*)componentData)->zoneId,
-                .flags = CLICK_ZONE_MESSAGE_FLAG_POINTER_WAS_PRESSED });
+            });
             return;
         }
     }
@@ -106,8 +110,8 @@ static void ClickZone_update(SceneObject* sceneObject, SceneComponentId sceneCom
         if (clickZone->flags & CLICKZONECOMPONENT_FLAG_HOVER) {
             clickZone->flags &= ~CLICKZONECOMPONENT_FLAG_HOVER;
             MessageHub_queueClickZoneMessage((ClickZoneMessage) {
-                .buttonComponentId = sceneComponentId,
                 .flags = CLICK_ZONE_MESSAGE_FLAG_EXIT,
+                .buttonComponentId = sceneComponentId,
                 .zoneId = ((ClickZoneComponent*)componentData)->zoneId,
             });
         }
@@ -116,8 +120,8 @@ static void ClickZone_update(SceneObject* sceneObject, SceneComponentId sceneCom
     if ((clickZone->flags & CLICKZONECOMPONENT_FLAG_HOVER) == 0) {
         clickZone->flags |= CLICKZONECOMPONENT_FLAG_HOVER;
         MessageHub_queueClickZoneMessage((ClickZoneMessage) {
-            .buttonComponentId = sceneComponentId,
             .flags = CLICK_ZONE_MESSAGE_FLAG_ENTER,
+            .buttonComponentId = sceneComponentId,
             .zoneId = ((ClickZoneComponent*)componentData)->zoneId,
         });
     }
@@ -127,8 +131,8 @@ static void ClickZone_update(SceneObject* sceneObject, SceneComponentId sceneCom
             clickZone->flags |= CLICKZONECOMPONENT_FLAG_ACTIVE;
             clickZone->mouseButtonLock = i + 1;
             MessageHub_queueClickZoneMessage((ClickZoneMessage) {
-                .buttonComponentId = sceneComponentId,
                 .flags = CLICK_ZONE_MESSAGE_FLAG_POINTER_WAS_PRESSED,
+                .buttonComponentId = sceneComponentId,
                 .zoneId = ((ClickZoneComponent*)componentData)->zoneId,
             });
             return;
