@@ -81,7 +81,7 @@ static void AddButton(Font font, SceneObjectId parentId, float x, float y, const
             .fontSize = 10,
             .fontSpacing = 1,
             .align = (Vector2){0.5f, 0.5f},
-            .color = (Color) { 0, 0, 0, 255 },
+            .color = (Color) { 255, 255, 255, 255 },
         });
     SceneGraph_addComponent(psg.sceneGraph, clickableThing, psg.ButtonComponentId, &buttonComponent);
 }
@@ -134,7 +134,7 @@ void GameUi_Init()
     SceneObjectId landscapeText = SceneGraph_createObject(psg.sceneGraph, "landscape-text");
     SceneGraph_setParent(psg.sceneGraph, landscapeText, uiPlaneId);
     SceneGraph_setLocalPosition(psg.sceneGraph, landscapeText, (Vector3) { 0, 8.5f, 0 });
-    Font font = ResourceManager_loadFont(&psg.resourceManager, "assets/setback.png");
+    Font font = ResourceManager_loadFont(&psg.resourceManager, "assets/myfont.png");
     SetTextureFilter(font.texture, TEXTURE_FILTER_BILINEAR);
     SceneGraph_addComponent(psg.sceneGraph, landscapeText, psg.textComponentId,
         &(TextComponent) {
@@ -149,7 +149,7 @@ void GameUi_Init()
 
     SceneObjectId panel = AddPanel(uiPlaneId, 0, 0, 5, 5);
     AddButton(font, panel, 0,  1.0f, "Option 1");
-    AddButton(font, panel, 0, -0.0f, "Option 2");
+    AddButton(font, panel, 0, -0.0f, "OSTU 2");
     AddButton(font, panel, 0, -1.0f, "Option 3");
     // SceneGraph_setLocalPosition(psg.sceneGraph, uiPlaneId, (Vector3) { 0, 0, 0 });
 }
