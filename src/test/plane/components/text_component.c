@@ -170,6 +170,20 @@ static Vector2 MeasureText3D(Font font, const char* text, float fontSize, float 
     return vec;
 }
 
+
+static void TextComponent_initialize(SceneObject* sceneObject, SceneComponentId sceneComponentId, void* componentData, void* arg)
+{
+    TextComponent *src = (TextComponent*) arg;
+    TextComponent *dst = (TextComponent*) componentData;
+    memcpy(dst, src, sizeof(*src));
+    dst->text = strdup(src->text);
+}
+static void TextComponent_onDestroy(SceneObject* sceneObject, SceneComponentId sceneComponentId, void* componentData)
+{
+    TextComponent *textComponent = (TextComponent*) componentData;
+    free(textComponent->text);
+}
+
 static void TextComponentDraw(Camera3D camera, SceneObject* node, SceneComponentId sceneComponentId, void* component, void* userdata)
 {
     TextComponent* textComponent = (TextComponent*)component;
@@ -223,5 +237,7 @@ void TextComponentRegister()
     psg.textComponentId = SceneGraph_registerComponentType(psg.sceneGraph, "TextComponent", sizeof(TextComponent),
         (SceneComponentTypeMethods) {
             .sequentialDraw = TextComponentDraw,
+            .onInitialize = TextComponent_initialize,
+            .onDestroy = TextComponent_onDestroy,
         });
 }

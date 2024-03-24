@@ -8,9 +8,14 @@ static UpdateGameCodeFn dlUpdate;
 void TraceLog(int logType, const char *text, ...);
 
 #if PLATFORM_DESKTOP
+
 #include <stdio.h>
 #include <windows.h>
 
+void OSSleep(long duration)
+{
+    Sleep(duration);
+}
 
 static HMODULE GameCodeDLL;
 
@@ -116,6 +121,12 @@ void Host_InitializeGameCode(void* storedState)
 void* Host_UnloadGameCode()
 {
     return 0;
+}
+
+
+void OSSleep(long duration)
+{
+    
 }
 #endif
 

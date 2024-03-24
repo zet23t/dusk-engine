@@ -15,6 +15,7 @@ void* Host_UnloadGameCode();
 
 void Host_GameCodeDraw();
 void Host_GameCodeUpdate(float dt);
+void OSSleep(long duration);
 
 int main(void)
 {
@@ -71,7 +72,15 @@ int main(void)
     // Main game loop
     while (!WindowShouldClose()) {
         // Update
-
+        #if !PLATFORM_WEB
+        if (!IsWindowFocused())
+        {
+            OSSleep(100);
+            BeginDrawing();
+            EndDrawing();
+            continue;
+        }
+        #endif
         float t = GetTime();
         float dt = GetFrameTime();
         // assume 10fps is the minimum, after that we slow the game

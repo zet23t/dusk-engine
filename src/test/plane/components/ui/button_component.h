@@ -21,7 +21,7 @@ typedef struct ButtonComponent {
 #include "button_component.c"
 
 BEGIN_COMPONENT_REGISTRATION(ButtonComponent) {
-    .updateTick = Button_update,
+    .updateTick = ButtonComponent_update,
 } END_COMPONENT_REGISTRATION
 
 #endif

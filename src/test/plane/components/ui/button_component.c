@@ -1,6 +1,6 @@
 #include "../../plane_sim_g.h"
 
-static void Button_update(SceneObject* node, SceneComponentId id, float dt, void *componentData)
+static void ButtonComponent_update(SceneObject* node, SceneComponentId id, float dt, void *componentData)
 {
     ButtonComponent *buttonComponent = (ButtonComponent *)componentData;
     SpriteRendererComponent *spriteRendererComponent;

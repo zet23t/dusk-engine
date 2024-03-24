@@ -5,3 +5,4 @@
 #include "components/sprite_renderer_component.h"
 #include "components/ui/click_zone_component.h"
 #include "components/ui/button_component.h"
+#include "components/tween_component.h"

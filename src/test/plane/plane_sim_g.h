@@ -189,32 +189,6 @@ typedef struct TextComponent {
 #define ACTION_TYPE_DISABLE_CHILD_COMPONENT 49
 #define ACTION_TYPE_DESTROY_CHILD_COMPONENT 50
 
-typedef struct TweenComponent {
-    float time;
-    float maxTime;
-    unsigned int transitionFunctionType:7;
-    unsigned int targetIsObject:1;
-    char targetName[15];
-
-    union {
-        SceneComponentId componentId;
-        SceneObjectId objectId;
-    };
-
-    union {
-        Vector3 startVec3;
-        float startFloat;
-        Color startColor;
-    };
-    union 
-    {
-        Vector3 endVec3;
-        float endFloat;
-        Color endColor;
-    };
-    
-} TweenComponent;
-
 typedef struct TrailNode {
     Vector3 position;
     Vector3 velocity;

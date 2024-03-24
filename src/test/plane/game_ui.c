@@ -35,12 +35,18 @@ static SceneObjectId AddPanel(SceneObjectId parentId, float x, float y, float wi
     return panel;
 }
 
-static void AddButton(Font font, SceneObjectId parentId, float x, float y, const char *text)
+static void AddButton(Font font, uint32_t buttonRGBA, SceneObjectId parentId, float x, float y, float w, float h, const char* text, SpriteAsset* icon)
 {
+    Color tint = (Color) {
+        .r = (uint8_t)(buttonRGBA >> 24),
+        .g = (uint8_t)((buttonRGBA >> 16) & 0xff),
+        .b = (uint8_t)((buttonRGBA >> 8) & 0xff),
+        .a = (uint8_t)(buttonRGBA & 0xff),
+    };
     SceneObjectId clickableThing = SceneGraph_createObject(psg.sceneGraph, "clickable-thing");
     SceneGraph_setParent(psg.sceneGraph, clickableThing, parentId);
     SceneGraph_setLocalPosition(psg.sceneGraph, clickableThing, (Vector3) { x, y, 0 });
-    ButtonComponent buttonComponent = (ButtonComponent){0};
+    ButtonComponent buttonComponent = (ButtonComponent) { 0 };
     SpriteAsset buttonNormal = (SpriteAsset) {
         .texture = ResourceManager_loadTexture(&psg.resourceManager, "assets/ui_atlas.png", TEXTURE_FILTER_BILINEAR),
         .source = (Rectangle) { 0, 0, 82, 80 },
@@ -56,34 +62,47 @@ static void AddButton(Font font, SceneObjectId parentId, float x, float y, const
         .source = (Rectangle) { 168, 0, 82, 80 },
         .scale9frame = (Vector4) { 24, 24, 24, 24 },
     };
-    float yOffset = 0.075f;
+    float yOffset = 0.15f;
     buttonComponent.normalState.spriteAsset = buttonNormal;
-    buttonComponent.normalState.textOffset = (Vector2){0, 0 + yOffset};
+    buttonComponent.normalState.textOffset = (Vector2) { 0, 0 + yOffset };
     buttonComponent.hoverState.spriteAsset = buttonHover;
-    buttonComponent.hoverState.textOffset = (Vector2){0, 0 + yOffset};
+    buttonComponent.hoverState.textOffset = (Vector2) { 0, 0 + yOffset };
     buttonComponent.pressedState.spriteAsset = buttonPressed;
-    buttonComponent.pressedState.textOffset = (Vector2){0.0f, -0.05f + yOffset};
-    
+    buttonComponent.pressedState.textOffset = (Vector2) { 0.0f, -0.05f + yOffset };
+
     buttonComponent.clickZoneComponentId = SceneGraph_addComponent(psg.sceneGraph, clickableThing, psg.ClickZoneComponentId,
-        &(ClickZoneComponent) { .boxSize = (Vector3) { 3, 1, 0 }, .zoneId = 0 });
+        &(ClickZoneComponent) { .boxSize = (Vector3) { w, h, 0 }, .zoneId = 0 });
     buttonComponent.spriteRendererComponentId = SceneGraph_addComponent(psg.sceneGraph, clickableThing, psg.SpriteRendererComponentId,
         &(SpriteRendererComponent) {
             .spriteAsset = buttonNormal,
             .pivot = (Vector2) { 0.5f, 0.5f },
             .pixelsPerUnit = 40,
-            .size = (Vector2) { 3, 1 },
-            .tint = (Color) { 255, 255, 255, 255 },
+            .size = (Vector2) { w, h },
+            .tint = tint,
         });
     buttonComponent.textComponentId = SceneGraph_addComponent(psg.sceneGraph, clickableThing, psg.textComponentId,
         &(TextComponent) {
-            .text = text,
+            .text = (char*)text,
             .font = font,
             .fontSize = 10,
-            .fontSpacing = 1,
-            .align = (Vector2){0.5f, 0.5f},
+            .fontSpacing = -.5f,
+            .align = (Vector2) { 0.5f, 0.5f },
             .color = (Color) { 255, 255, 255, 255 },
         });
     SceneGraph_addComponent(psg.sceneGraph, clickableThing, psg.ButtonComponentId, &buttonComponent);
+
+    if (icon)
+    {
+        SceneObjectId iconId = SceneGraph_createObject(psg.sceneGraph, "icon");
+        SceneGraph_setParent(psg.sceneGraph, iconId, clickableThing);
+        SceneGraph_setLocalPosition(psg.sceneGraph, iconId, (Vector3){0,0.03f,0});
+        SceneGraph_addComponent(psg.sceneGraph, iconId, psg.SpriteRendererComponentId, &(SpriteRendererComponent){
+            .pixelsPerUnit = 10,
+            .size = (Vector2){w * .8f, h * .8f},
+            .tint = WHITE,
+            .spriteAsset = *icon,
+        });
+    }
 }
 
 void GameUi_Init()
@@ -141,15 +160,21 @@ void GameUi_Init()
             .text = "Play in Landscape",
             .font = font,
             .fontSize = 30,
-            .offset = (Vector2){0,0},
+            .offset = (Vector2) { 0, 0 },
             .fontSpacing = 1,
-            .align = (Vector2){0.5f, 0.5f},
+            .align = (Vector2) { 0.5f, 0.5f },
             .color = (Color) { 255, 255, 255, 255 },
         });
 
     SceneObjectId panel = AddPanel(uiPlaneId, 0, 0, 5, 5);
-    AddButton(font, panel, 0,  1.0f, "Option 1");
-    AddButton(font, panel, 0, -0.0f, "OSTU 2");
-    AddButton(font, panel, 0, -1.0f, "Option 3");
+    AddButton(font, 0xffffffff, panel, 0, 1.0f, 3.0f, 1.0f, "Option 1", NULL);
+    AddButton(font, 0xffffffff, panel, 0, -0.0f, 3.0f, 1.0f, "OSTU 2", NULL);
+    AddButton(font, 0xffffffff, panel, 0, -1.0f, 3.0f, 1.0f, "Option 3", NULL);
+
+    AddButton(font, 0xff8800ff, uiPlaneId, -7.0f, 4.5f, 1.0f, 1.0f, "", &(SpriteAsset){
+        .scale9frame = {0},
+        .source = (Rectangle){0, 160, 64, 64},
+        .texture = ResourceManager_loadTexture(&psg.resourceManager, "assets/ui_atlas.png", TEXTURE_FILTER_BILINEAR)
+    });
     // SceneGraph_setLocalPosition(psg.sceneGraph, uiPlaneId, (Vector3) { 0, 0, 0 });
 }
