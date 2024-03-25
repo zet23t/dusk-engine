@@ -64,11 +64,11 @@ static void AddButton(Font font, uint32_t buttonRGBA, SceneObjectId parentId, fl
     };
     float yOffset = 0.15f;
     buttonComponent.normalState.spriteAsset = buttonNormal;
-    buttonComponent.normalState.textOffset = (Vector2) { 0, 0 + yOffset };
+    buttonComponent.normalState.contentOffset = (Vector2) { 0, 0 + yOffset };
     buttonComponent.hoverState.spriteAsset = buttonHover;
-    buttonComponent.hoverState.textOffset = (Vector2) { 0, 0 + yOffset };
+    buttonComponent.hoverState.contentOffset = (Vector2) { 0, 0 + yOffset };
     buttonComponent.pressedState.spriteAsset = buttonPressed;
-    buttonComponent.pressedState.textOffset = (Vector2) { 0.0f, -0.05f + yOffset };
+    buttonComponent.pressedState.contentOffset = (Vector2) { 0.0f, -0.05f + yOffset };
 
     buttonComponent.clickZoneComponentId = SceneGraph_addComponent(psg.sceneGraph, clickableThing, psg.ClickZoneComponentId,
         &(ClickZoneComponent) { .boxSize = (Vector3) { w, h, 0 }, .zoneId = 0 });
@@ -80,7 +80,11 @@ static void AddButton(Font font, uint32_t buttonRGBA, SceneObjectId parentId, fl
             .size = (Vector2) { w, h },
             .tint = tint,
         });
-    buttonComponent.textComponentId = SceneGraph_addComponent(psg.sceneGraph, clickableThing, psg.textComponentId,
+    SceneObjectId contentId = SceneGraph_createObject(psg.sceneGraph, "content");
+    SceneGraph_setParent(psg.sceneGraph, contentId, clickableThing);
+    SceneGraph_setLocalPosition(psg.sceneGraph, contentId, (Vector3){0,0.0f,0});
+    buttonComponent.contentId = contentId;
+    SceneGraph_addComponent(psg.sceneGraph, contentId, psg.textComponentId,
         &(TextComponent) {
             .text = (char*)text,
             .font = font,
@@ -94,8 +98,8 @@ static void AddButton(Font font, uint32_t buttonRGBA, SceneObjectId parentId, fl
     if (icon)
     {
         SceneObjectId iconId = SceneGraph_createObject(psg.sceneGraph, "icon");
-        SceneGraph_setParent(psg.sceneGraph, iconId, clickableThing);
-        SceneGraph_setLocalPosition(psg.sceneGraph, iconId, (Vector3){0,0.03f,0});
+        SceneGraph_setParent(psg.sceneGraph, iconId, contentId);
+        SceneGraph_setLocalPosition(psg.sceneGraph, iconId, (Vector3){0.0f, -0.1f, 0});
         SceneGraph_addComponent(psg.sceneGraph, iconId, psg.SpriteRendererComponentId, &(SpriteRendererComponent){
             .pixelsPerUnit = 10,
             .size = (Vector2){w * .8f, h * .8f},

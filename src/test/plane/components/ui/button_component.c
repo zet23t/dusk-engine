@@ -13,27 +13,24 @@ static void ButtonComponent_update(SceneObject* node, SceneComponentId id, float
     {
         return;
     }
-    TextComponent *textComponent;
-    if (!SceneGraph_getComponent(node->graph, buttonComponent->textComponentId, (void*) &textComponent))
-    {
-        return;
-    }
     int flags = clickZoneComponent->flags;
     int isActive = flags & CLICKZONECOMPONENT_FLAG_ACTIVE;
     int isHovered = flags & CLICKZONECOMPONENT_FLAG_HOVER;
+    Vector2 offset;
     if (isActive && isHovered)
     {
         spriteRendererComponent->spriteAsset = buttonComponent->pressedState.spriteAsset;
-        textComponent->offset = buttonComponent->pressedState.textOffset;
+        offset = buttonComponent->pressedState.contentOffset;
     }
     else if (isActive || isHovered)
     {
         spriteRendererComponent->spriteAsset = buttonComponent->hoverState.spriteAsset;
-        textComponent->offset = buttonComponent->hoverState.textOffset;
+        offset = buttonComponent->hoverState.contentOffset;
     }
     else
     {
         spriteRendererComponent->spriteAsset = buttonComponent->normalState.spriteAsset;
-        textComponent->offset = buttonComponent->normalState.textOffset;
+        offset = buttonComponent->normalState.contentOffset;
     }
+    SceneGraph_setLocalPosition(node->graph, buttonComponent->contentId, (Vector3) { offset.x, offset.y, 0 });
 }
