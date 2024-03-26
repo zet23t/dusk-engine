@@ -84,6 +84,7 @@ typedef struct PSG {
     SceneComponentTypeId cloudSystemId;
     SceneComponentTypeId playerInputHandlerId;
     SceneComponentTypeId groundTileSystemId;
+    SceneComponentTypeId gameUiSystemId;
 
 #define COMPONENT(t) SceneComponentTypeId t##Id;
 #include "component_list.h"

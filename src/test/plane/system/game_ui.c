@@ -1,16 +1,25 @@
-#include "plane_sim_g.h"
+#include "../plane_sim_g.h"
 
 #include <stdio.h>
 
-int _gameUi_messageId;
-void GameUi_Update()
+typedef struct GameUiSystem {
+    SceneObjectId uiRootId;
+    SceneComponentId menuButtonId;
+} GameUiSystem;
+
+static int _gameUi_messageId;
+static void GameUi_Update(SceneObject* sceneObject, SceneComponentId SceneComponent,
+        float delta, void* componentData)
 {
+    GameUiSystem* gameUiSystem = (GameUiSystem*)componentData;
     while (1) {
         MessageHubMessage* msg = MessageHub_getMessage(&_gameUi_messageId);
         if (!msg)
             break;
         if (msg->messageTypeId == MessageId_ClickZoneMessage() && msg->dataClickZoneMessage.flags & CLICK_ZONE_MESSAGE_FLAG_CLICK) {
-            printf("msg!\n");
+            if (msg->dataClickZoneMessage.buttonComponentId.id == gameUiSystem->menuButtonId.id) {
+                printf("menu button clicked\n");
+            }
         }
     }
 }
@@ -109,8 +118,10 @@ static void AddButton(Font font, uint32_t buttonRGBA, SceneObjectId parentId, fl
     }
 }
 
-void GameUi_Init()
+void GameUiSystem_onInitialize(SceneObject* sceneObject, SceneComponentId SceneComponent, void* componentData, void* initArg)
 {
+    GameUiSystem* gameUiSystem = (GameUiSystem*)componentData;
+    memset(gameUiSystem, 0, sizeof(GameUiSystem));
     SceneObjectId uiPlaneId = SceneGraph_createObject(psg.sceneGraph, "ui-plane");
     psg.uiRootId = uiPlaneId;
     SceneGraph_setParent(psg.sceneGraph, uiPlaneId, psg.camera);
@@ -181,4 +192,13 @@ void GameUi_Init()
         .texture = ResourceManager_loadTexture(&psg.resourceManager, "assets/ui_atlas.png", TEXTURE_FILTER_BILINEAR)
     });
     // SceneGraph_setLocalPosition(psg.sceneGraph, uiPlaneId, (Vector3) { 0, 0, 0 });
+}
+
+void GameUiSystemRegister()
+{
+    psg.gameUiSystemId = SceneGraph_registerComponentType(psg.sceneGraph, "GameUiSystem", sizeof(GameUiSystem),
+        (SceneComponentTypeMethods) {
+            .onInitialize = GameUiSystem_onInitialize,
+            .updateTick = GameUi_Update
+        });
 }

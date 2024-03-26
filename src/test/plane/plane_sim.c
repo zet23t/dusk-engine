@@ -208,13 +208,12 @@ void CloudSystemRegister();
 void LevelSystemRegister();
 void PlayerInputHandlerRegister();
 void GroundTileSystemRegister();
+void GameUiSystemRegister();
 
 #define COMPONENT(t) void t##Register();
 #include "component_list.h"
 #undef COMPONENT
 
-void GameUi_Init();
-void GameUi_Update();
 
 int plane_sim_init()
 {
@@ -257,9 +256,11 @@ int plane_sim_init()
     TrailRendererComponentRegister();
     EnemyBehaviorComponentRegister();
 
+    // Game ui should run last
+    GameUiSystemRegister();
+
     if (!isReload) {
         GameStateLevel_Init();
-        GameUi_Init();
     }
 
     return 1;
@@ -339,6 +340,5 @@ void plane_sim_update(float dt)
     psg.time += dt;
     psg.deltaTime = dt;
     SceneGraph_updateTick(psg.sceneGraph, dt);
-    GameUi_Update();
     MessageHub_process();
 }

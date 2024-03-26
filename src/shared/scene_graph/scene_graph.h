@@ -1,3 +1,11 @@
+// Scene graph library
+// This library provides a scene graph implementation with support for components and objects.
+// It takes inspiration from ECS systems but focuses on components being managed as dense arrays.
+// Iteration over component functions is done in the order of component type registration, 
+// however the fast iteration over components is done without any respective order of the object
+// hierarchy. This is done to allow for efficient iteration over all components of a type. A separate
+// function is provided for iterating over components in the order of object hierarchy which is
+// to be used where this trait is needed.
 #ifndef __SCENE_GRAPH_H__
 #define __SCENE_GRAPH_H__
 

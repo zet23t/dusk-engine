@@ -304,6 +304,16 @@ void SceneGraph_sequentialDraw(SceneGraph* graph, Camera3D camera, void* userdat
 {
     int marker = ++graph->markerCounter;
     int maxDepth = 0;
+    // setting object markers to 0 should not be needed...
+    // for (int i=0;i<graph->objects_count;i++)
+    // {
+    //     SceneObject* object = &graph->objects[i];
+    //     if (object->id.version == 0 || (object->flags & SCENE_OBJECT_FLAG_ENABLED) == 0)
+    //     {
+    //         continue;
+    //     }
+    //     object->marker = 0;
+    // }
 
     // Phase 1: Mark all objects (and parents) with components that have a sequentialDraw method
     for (int i = 0; i < graph->componentTypes_count; i++) {
@@ -349,9 +359,6 @@ void SceneGraph_sequentialDraw(SceneGraph* graph, Camera3D camera, void* userdat
             while (object->parent.version != 0) {
                 object = SceneGraph_getObject(graph, object->parent);
                 if (object == NULL) {
-                    break;
-                }
-                if (object->marker == marker) {
                     break;
                 }
                 object->marker = marker;
@@ -577,8 +584,14 @@ SceneComponentId SceneGraph_addComponent(SceneGraph* graph, SceneObjectId id, Sc
         type->componentData = realloc(type->componentData, type->componentData_capacity * type->dataSize);
     }
 
-    if (type->methods.onInitialize != NULL)
+    if (type->methods.onInitialize != NULL) {
         type->methods.onInitialize(object, component->id, &type->componentData[dataIndex * type->dataSize], componentData);
+        object = SceneGraph_getObject(graph, id);
+        if (object == NULL) {
+            component->id.version = 0;
+            return (SceneComponentId) { 0 };
+        }
+    }
     else if (componentData != NULL && type->dataSize > 0)
         memcpy(&type->componentData[dataIndex * type->dataSize], componentData, type->dataSize);
     else if (type->dataSize > 0) 

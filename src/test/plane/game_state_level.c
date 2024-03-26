@@ -305,6 +305,8 @@ int GameStateLevel_Init()
         });
 
     psg.playerPlane = plane_instantiate((Vector3) { 0, 0, 0 });
+    
+    SceneGraph_addComponent(psg.sceneGraph, systemsId, psg.gameUiSystemId, NULL);
 
     // SceneGraph_addComponent(psg.sceneGraph, uiPlaneId, psg.textComponentId,
     //     &(TextComponent) {

@@ -36,8 +36,8 @@
 #include "test/plane/system/target_spawn_system.c"
 #include "test/plane/system/cloud_system.c"
 #include "test/plane/system/level_system.c"
+#include "test/plane/system/game_ui.c"
 #include "test/plane/plane_sim_g.c"
-#include "test/plane/game_ui.c"
 #include "test/plane/plane_sim.c"
 #include "test/plane/game_state_level.c"
 
