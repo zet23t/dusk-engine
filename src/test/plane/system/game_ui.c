@@ -4,6 +4,7 @@
 
 typedef struct GameUiSystem {
     SceneObjectId uiRootId;
+    SceneObjectId menuPanelId;
     SceneComponentId menuButtonId;
 } GameUiSystem;
 
@@ -17,8 +18,9 @@ static void GameUi_Update(SceneObject* sceneObject, SceneComponentId SceneCompon
         if (!msg)
             break;
         if (msg->messageTypeId == MessageId_ClickZoneMessage() && msg->dataClickZoneMessage.flags & CLICK_ZONE_MESSAGE_FLAG_CLICK) {
-            if (msg->dataClickZoneMessage.buttonComponentId.id == gameUiSystem->menuButtonId.id) {
-                printf("menu button clicked\n");
+            if (SceneComponentIdEquals(msg->dataClickZoneMessage.buttonComponentId, gameUiSystem->menuButtonId)) {
+                SceneGraph_setObjectEnabled(sceneObject->graph, gameUiSystem->menuPanelId, 
+                    !SceneGraph_isObjectEnabled(sceneObject->graph, gameUiSystem->menuPanelId));
             }
         }
     }
@@ -44,7 +46,7 @@ static SceneObjectId AddPanel(SceneObjectId parentId, float x, float y, float wi
     return panel;
 }
 
-static void AddButton(Font font, uint32_t buttonRGBA, SceneObjectId parentId, float x, float y, float w, float h, const char* text, SpriteAsset* icon)
+static SceneComponentId AddButton(Font font, uint32_t buttonRGBA, SceneObjectId parentId, float x, float y, float w, float h, const char* text, SpriteAsset* icon)
 {
     Color tint = (Color) {
         .r = (uint8_t)(buttonRGBA >> 24),
@@ -116,6 +118,8 @@ static void AddButton(Font font, uint32_t buttonRGBA, SceneObjectId parentId, fl
             .spriteAsset = *icon,
         });
     }
+
+    return buttonComponent.clickZoneComponentId;
 }
 
 void GameUiSystem_onInitialize(SceneObject* sceneObject, SceneComponentId SceneComponent, void* componentData, void* initArg)
@@ -186,11 +190,12 @@ void GameUiSystem_onInitialize(SceneObject* sceneObject, SceneComponentId SceneC
     AddButton(font, 0xffffffff, panel, 0, -0.0f, 3.0f, 1.0f, "OSTU 2", NULL);
     AddButton(font, 0xffffffff, panel, 0, -1.0f, 3.0f, 1.0f, "Option 3", NULL);
 
-    AddButton(font, 0xff8800ff, uiPlaneId, -7.0f, 4.5f, 1.0f, 1.0f, "", &(SpriteAsset){
+    gameUiSystem->menuButtonId = AddButton(font, 0xff8800ff, uiPlaneId, -7.0f, 4.5f, 1.0f, 1.0f, "", &(SpriteAsset){
         .scale9frame = {0},
         .source = (Rectangle){0, 160, 64, 64},
         .texture = ResourceManager_loadTexture(&psg.resourceManager, "assets/ui_atlas.png", TEXTURE_FILTER_BILINEAR)
     });
+    gameUiSystem->menuPanelId = panel;
     // SceneGraph_setLocalPosition(psg.sceneGraph, uiPlaneId, (Vector3) { 0, 0, 0 });
 }
 

@@ -186,5 +186,5 @@ int SceneGraph_isObjectEnabled(SceneGraph* graph, SceneObjectId id);
 
 int SceneGraph_getComponentValue(SceneGraph* graph, char* name, SceneComponentId componentId, int bufferSize, void* buffer);
 int SceneGraph_setComponentValue(SceneGraph* graph, char* name, SceneComponentId componentId, int bufferSize, void* buffer);
-
+int SceneComponentIdEquals(SceneComponentId a, SceneComponentId b);
 #endif

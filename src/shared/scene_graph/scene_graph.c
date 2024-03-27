@@ -1049,3 +1049,8 @@ int SceneGraph_setComponentValue(SceneGraph *graph, char* name, SceneComponentId
 
     return type->methods.setValue(object, component, componentData, name, bufferSize, buffer);
 }
+
+int SceneComponentIdEquals(SceneComponentId a, SceneComponentId b)
+{
+    return memcmp(&a, &b, sizeof(a)) == 0;
+}
