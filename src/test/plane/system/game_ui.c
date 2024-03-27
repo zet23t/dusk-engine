@@ -196,6 +196,7 @@ void GameUiSystem_onInitialize(SceneObject* sceneObject, SceneComponentId SceneC
         .texture = ResourceManager_loadTexture(&psg.resourceManager, "assets/ui_atlas.png", TEXTURE_FILTER_BILINEAR)
     });
     gameUiSystem->menuPanelId = panel;
+    SceneGraph_setObjectEnabled(psg.sceneGraph, gameUiSystem->menuPanelId, 0);
     // SceneGraph_setLocalPosition(psg.sceneGraph, uiPlaneId, (Vector3) { 0, 0, 0 });
 }
 
