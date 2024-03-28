@@ -1,11 +1,14 @@
 #include "../plane_sim_g.h"
+#include "../game_state_level.h"
 
 #include <stdio.h>
 
 typedef struct GameUiSystem {
     SceneObjectId uiRootId;
     SceneObjectId menuPanelId;
+    SceneObjectId gameOverPanelId;
     SceneComponentId menuButtonId;
+    SceneComponentId restartButtonId;
 } GameUiSystem;
 
 static int _gameUi_messageId;
@@ -22,11 +25,19 @@ static void GameUi_Update(SceneObject* sceneObject, SceneComponentId SceneCompon
                 SceneGraph_setObjectEnabled(sceneObject->graph, gameUiSystem->menuPanelId, 
                     !SceneGraph_isObjectEnabled(sceneObject->graph, gameUiSystem->menuPanelId));
             }
+            if (SceneComponentIdEquals(msg->dataClickZoneMessage.buttonComponentId, gameUiSystem->restartButtonId)) {
+                GameStateLevel_Init();
+            }
         }
+    }
+
+    if (!SceneGraph_getObject(sceneObject->graph, psg.playerPlane)) {
+        SceneGraph_setObjectEnabled(sceneObject->graph, gameUiSystem->gameOverPanelId, 1);
+    
     }
 }
 
-static SceneObjectId AddPanel(SceneObjectId parentId, float x, float y, float width, float height)
+static SceneObjectId AddPanel(SceneObjectId parentId, float x, float y, float width, float height, int colorRGBA)
 {
     SceneObjectId panel = SceneGraph_createObject(psg.sceneGraph, "panel");
     SceneGraph_setParent(psg.sceneGraph, panel, parentId);
@@ -41,7 +52,9 @@ static SceneObjectId AddPanel(SceneObjectId parentId, float x, float y, float wi
             .pivot = (Vector2) { 0.5f, 0.5f },
             .pixelsPerUnit = 40,
             .size = (Vector2) { width, height },
-            .tint = (Color) { 255, 255, 255, 255 },
+            .tint = (Color) { 
+                colorRGBA>>24, 
+                colorRGBA>>16&0xff, colorRGBA>>8&0xff, colorRGBA&0xff },
         });
     return panel;
 }
@@ -185,7 +198,7 @@ void GameUiSystem_onInitialize(SceneObject* sceneObject, SceneComponentId SceneC
             .color = (Color) { 255, 255, 255, 255 },
         });
 
-    SceneObjectId panel = AddPanel(uiPlaneId, 0, 0, 5, 5);
+    SceneObjectId panel = AddPanel(uiPlaneId, 0, 0, 5, 5, 0xffffffff);
     AddButton(font, 0xffffffff, panel, 0, 1.0f, 3.0f, 1.0f, "Option 1", NULL);
     AddButton(font, 0xffffffff, panel, 0, -0.0f, 3.0f, 1.0f, "OSTU 2", NULL);
     AddButton(font, 0xffffffff, panel, 0, -1.0f, 3.0f, 1.0f, "Option 3", NULL);
@@ -196,6 +209,24 @@ void GameUiSystem_onInitialize(SceneObject* sceneObject, SceneComponentId SceneC
         .texture = ResourceManager_loadTexture(&psg.resourceManager, "assets/ui_atlas.png", TEXTURE_FILTER_BILINEAR)
     });
     gameUiSystem->menuPanelId = panel;
+    gameUiSystem->gameOverPanelId = AddPanel(uiPlaneId, 0, 0, 8, 5,0x88221188);
+    SceneObjectId gameOverText = SceneGraph_createObject(psg.sceneGraph, "game-over-text");
+    SceneGraph_setParent(psg.sceneGraph, gameOverText, gameUiSystem->gameOverPanelId);
+    SceneGraph_setLocalPosition(psg.sceneGraph, gameOverText, (Vector3) { 0, 1.5f, 0 });
+    SceneGraph_addComponent(psg.sceneGraph, gameOverText, psg.textComponentId,
+        &(TextComponent) {
+            .text = "Game Over",
+            .font = font,
+            .fontSize = 14,
+            .offset = (Vector2) { 0, 0 },
+            .fontSpacing = 1,
+            .align = (Vector2) { 0.5f, 0.5f },
+            .color = (Color) { 255, 255, 255, 255 },
+        });
+    
+    gameUiSystem->restartButtonId = AddButton(font, 0xff8800ff, gameUiSystem->gameOverPanelId, 0, -1.0f, 3.0f, 1.0f, "Restart", NULL);
+
+    SceneGraph_setObjectEnabled(psg.sceneGraph, gameUiSystem->gameOverPanelId, 0);
     SceneGraph_setObjectEnabled(psg.sceneGraph, gameUiSystem->menuPanelId, 0);
     // SceneGraph_setLocalPosition(psg.sceneGraph, uiPlaneId, (Vector3) { 0, 0, 0 });
 }

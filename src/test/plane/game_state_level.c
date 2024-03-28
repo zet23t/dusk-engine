@@ -2,11 +2,11 @@
 #include "config.h"
 #include "math.h"
 #include "plane_sim_g.h"
+#include "util/util_math.h"
 #include <raymath.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "util/util_math.h"
 
 static Material onShootTrailMaterial = { 0 };
 
@@ -92,6 +92,59 @@ SceneObjectId add_propeller(SceneObjectId plane, float x, float y, float z)
     return propeller;
 }
 
+static Material _hitEffectMaterial = { 0 };
+void SpawnHitEffect(SceneGraph* g, Vector3 position, Vector3 initialVelocity, float vSpread, int cnt, float lifetime, float width, float uvLength, float nodeVelFac)
+{
+    if (_hitEffectMaterial.shader.id == 0) {
+        Texture2D texture = ResourceManager_loadTexture(&psg.resourceManager, "assets/spark.png", TEXTURE_FILTER_BILINEAR);
+        SetTextureWrap(texture, TEXTURE_WRAP_CLAMP);
+        _hitEffectMaterial = LoadMaterialDefault();
+        SetMaterialTexture(&_hitEffectMaterial, MATERIAL_MAP_DIFFUSE, texture);
+        _hitEffectMaterial.maps[MATERIAL_MAP_DIFFUSE].color = WHITE;
+    }
+    float maxIniV = fabsf(initialVelocity.x);
+    if (fabsf(initialVelocity.y) > maxIniV) {
+        maxIniV = fabsf(initialVelocity.y);
+    }
+    if (fabsf(initialVelocity.z) > maxIniV) {
+        maxIniV = fabsf(initialVelocity.z);
+    }
+    for (int i = 0; i < cnt; i += 1) {
+        float drag = GetRandomFloat(0.5f, 3.5f);
+        Vector3 rndVel = (Vector3) { GetRandomFloat(-1, 1), GetRandomFloat(-1, 1), GetRandomFloat(-1, 1) };
+        SceneObjectId hitEffect = SceneGraph_createObject(g, "hit-effect");
+        SceneGraph_setLocalPosition(g, hitEffect, position);
+        Vector3 vel = Vector3Add(initialVelocity, Vector3Scale(rndVel, vSpread));
+        SceneComponentId trailId = AddTrailRendererComponent(hitEffect, 20, lifetime * 0.25f, Vector3Scale(vel, nodeVelFac), 20, _hitEffectMaterial, 0);
+        // AddMeshRendererComponent(hitEffect, psg.meshHitParticle1, 0.0f);
+        TrailRendererComponent* trail = NULL;
+        SceneGraph_getComponent(g, trailId, (void**)&trail);
+        TrailRendererComponent_addTrailWidth(trail, 0.1f * width, 0.0f);
+        trail->uvDistanceFactor = width * uvLength;
+        trail->widthDecayRate = 1.0f / lifetime;
+        AddLinearVelocityComponent(hitEffect, vel, (Vector3) { 0, 0.0f, 0 }, (Vector3) { drag, drag, drag });
+        AddAutoDestroyComponent(hitEffect, lifetime);
+    }
+}
+
+int OnPlayerHit(SceneGraph* g, SceneObjectId target, SceneObjectId bullet)
+{
+    HealthComponent* health;
+    SceneGraph_getComponentByType(g, target, psg.healthComponentId, (void**)&health, 0);
+    if (health == NULL) {
+        return 1;
+    }
+    health->health -= 1;
+    if (health->health <= 0) {
+        SpawnHitEffect(g, SceneGraph_getWorldPosition(g, target), Vector3Scale(GetVelocity(bullet), .5f), 5.0f, 32, 0.8f, 6.0f, 0.2f, -10.0f);
+        SceneGraph_destroyObject(g, target);
+    } else {
+        SpawnHitEffect(g, SceneGraph_getWorldPosition(g, bullet), Vector3Scale(GetVelocity(bullet), .05f), 2.0f, 16, 0.7f, 1.0f, 0.5f, 0.0f);
+    }
+    SceneGraph_destroyObject(g, bullet);
+    return 1;
+}
+
 SceneObjectId plane_instantiate(Vector3 position)
 {
     SceneObjectId plane = SceneGraph_createObject(psg.sceneGraph, "plane");
@@ -142,6 +195,12 @@ SceneObjectId plane_instantiate(Vector3 position)
             .spawnPoint = spawnPoint2,
             .config = shootingConfig,
         });
+    AddHealthComponent(plane, 3, 3);
+    SceneGraph_addComponent(psg.sceneGraph, plane, psg.targetComponentId,
+        &(TargetComponent) {
+            .colliderMask = 2,
+            .radius = 1.0f,
+            .onHit = OnPlayerHit });
 
     return plane;
 }
@@ -153,41 +212,6 @@ static void PropellerRotator(SceneGraph* graph, SceneObjectId objectId, SceneCom
     SceneGraph_setLocalRotation(graph, objectId, (Vector3) { 0, 0, rotation.z + speed * dt });
 }
 
-static Material _hitEffectMaterial = { 0 };
-void SpawnHitEffect(SceneGraph *g, Vector3 position, Vector3 initialVelocity, float vSpread, int cnt, float lifetime, float width, float uvLength, float nodeVelFac)
-{
-    if (_hitEffectMaterial.shader.id == 0) {
-        Texture2D texture = ResourceManager_loadTexture(&psg.resourceManager, "assets/spark.png", TEXTURE_FILTER_BILINEAR);
-        SetTextureWrap(texture, TEXTURE_WRAP_CLAMP);
-        _hitEffectMaterial = LoadMaterialDefault();
-        SetMaterialTexture(&_hitEffectMaterial, MATERIAL_MAP_DIFFUSE, texture);
-        _hitEffectMaterial.maps[MATERIAL_MAP_DIFFUSE].color = WHITE;
-    }
-    float maxIniV = fabsf(initialVelocity.x);
-    if (fabsf(initialVelocity.y) > maxIniV) {
-        maxIniV = fabsf(initialVelocity.y);
-    }
-    if (fabsf(initialVelocity.z) > maxIniV) {
-        maxIniV = fabsf(initialVelocity.z);
-    }
-    for (int i=0;i<cnt;i+=1)
-    {
-        float drag = GetRandomFloat(0.5f, 3.5f);
-        Vector3 rndVel = (Vector3) { GetRandomFloat(-1, 1), GetRandomFloat(-1, 1), GetRandomFloat(-1, 1) };
-        SceneObjectId hitEffect = SceneGraph_createObject(g, "hit-effect");
-        SceneGraph_setLocalPosition(g, hitEffect, position);
-        Vector3 vel = Vector3Add(initialVelocity, Vector3Scale(rndVel, vSpread));
-        SceneComponentId trailId = AddTrailRendererComponent(hitEffect, 20, lifetime * 0.25f, Vector3Scale(vel, nodeVelFac), 20, _hitEffectMaterial, 0);
-        // AddMeshRendererComponent(hitEffect, psg.meshHitParticle1, 0.0f);
-        TrailRendererComponent* trail = NULL;
-        SceneGraph_getComponent(g, trailId, (void**)&trail);
-        TrailRendererComponent_addTrailWidth(trail, 0.1f * width, 0.0f);
-        trail->uvDistanceFactor = width * uvLength;
-        trail->widthDecayRate = 1.0f / lifetime;
-        AddLinearVelocityComponent(hitEffect, vel, (Vector3){0,0.0f,0}, (Vector3){drag,drag,drag});
-        AddAutoDestroyComponent(hitEffect, lifetime);
-    }
-}
 
 int OnEnemyHit(SceneGraph* g, SceneObjectId target, SceneObjectId bullet)
 {
@@ -201,8 +225,7 @@ int OnEnemyHit(SceneGraph* g, SceneObjectId target, SceneObjectId bullet)
         SpawnHitEffect(g, SceneGraph_getWorldPosition(g, bullet), Vector3Scale(GetVelocity(target), .5f), 5.0f, 32, 0.8f, 6.0f, 0.2f, -10.0f);
         SceneGraph_destroyObject(g, target);
 
-    }
-    else {
+    } else {
         SpawnHitEffect(g, SceneGraph_getWorldPosition(g, bullet), Vector3Scale(GetVelocity(bullet), .05f), 2.0f, 16, 0.7f, 1.0f, 0.5f, 0.0f);
     }
     SceneGraph_destroyObject(g, bullet);
@@ -267,17 +290,19 @@ int GameStateLevel_Init()
     // SceneGraph_addComponent(psg.sceneGraph, systemsId, psg.targetSpawnSystemId, NULL);
     SceneGraph_addComponent(psg.sceneGraph, systemsId, psg.cloudSystemId, NULL);
     LevelEvent events[128] = {
-        { .time = 1.0f, .onTrigger = level1_e1, .levelEventData = (LevelEventData) { 
-            .formationStep = 2.5f, .n = 2, .x = 7, .y = 15,
-            .pointCount = 3, 
-            .points[0]= (Vector2) { 0, -5 }, 
-            .points[1] = (Vector2){-10, -10},
-            .points[2] = (Vector2){-20, 10},
-        } },
+        { .time = 1.0f, .onTrigger = level1_e1, .levelEventData = (LevelEventData) {
+                                                    .formationStep = 2.5f,
+                                                    .n = 2,
+                                                    .x = 7,
+                                                    .y = 15,
+                                                    .pointCount = 3,
+                                                    .points[0] = (Vector2) { 0, -5 },
+                                                    .points[1] = (Vector2) { -10, -10 },
+                                                    .points[2] = (Vector2) { -20, 10 },
+                                                } },
         { 0 }
     };
-    for (int i=0;i<127;i++)
-    {
+    for (int i = 0; i < 127; i++) {
         LevelEventData eventData = { 0 };
         eventData.x = GetRandomValue(-8, 8);
         eventData.y = GetRandomValue(15, 20);
@@ -285,9 +310,9 @@ int GameStateLevel_Init()
         eventData.n = GetRandomValue(1, 3);
         eventData.pointCount = 3;
         eventData.points[0] = (Vector2) { 0, -5 };
-        eventData.points[1] = (Vector2) { (eventData.x > 0 ? -1 : 1) * GetRandomValue(0,4), GetRandomValue(-15,-9) };
-        eventData.points[2] = (Vector2) { GetRandomValue(-8,8), 8 };
-        events[i] = (LevelEvent) { .time = 1.5f * i + GetRandomValue(0,10)*.2f, .onTrigger = level1_e1, .levelEventData = eventData };
+        eventData.points[1] = (Vector2) { (eventData.x > 0 ? -1 : 1) * GetRandomValue(0, 4), GetRandomValue(-15, -9) };
+        eventData.points[2] = (Vector2) { GetRandomValue(-8, 8), 8 };
+        events[i] = (LevelEvent) { .time = 1.5f * i + GetRandomValue(0, 10) * .2f, .onTrigger = level1_e1, .levelEventData = eventData };
     }
     events[127] = (LevelEvent) { 0 };
     SceneGraph_addComponent(psg.sceneGraph, systemsId, psg.levelSystemId, &(LevelSystem) { .time = 0.0f, .events = events });
@@ -305,7 +330,7 @@ int GameStateLevel_Init()
         });
 
     psg.playerPlane = plane_instantiate((Vector3) { 0, 0, 0 });
-    
+
     SceneGraph_addComponent(psg.sceneGraph, systemsId, psg.gameUiSystemId, NULL);
 
     // SceneGraph_addComponent(psg.sceneGraph, uiPlaneId, psg.textComponentId,
@@ -321,7 +346,7 @@ int GameStateLevel_Init()
     //     TraceLog(LOG_ERROR, "No 'ui' object in level config");
     //     return 0;
     // }
-    
+
     // cJSON* uiRootName = cJSON_GetObjectItemCaseSensitive(uiConfig, "root");
     // if (!cJSON_IsString(uiRootName)) {
     //     TraceLog(LOG_ERROR, "No 'root' string in 'ui' object in level config");
