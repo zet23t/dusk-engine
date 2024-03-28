@@ -4,11 +4,13 @@
 #include <stdio.h>
 
 typedef struct GameUiSystem {
+    float time;
     SceneObjectId uiRootId;
     SceneObjectId menuPanelId;
     SceneObjectId gameOverPanelId;
     SceneComponentId menuButtonId;
     SceneComponentId restartButtonId;
+    SceneComponentId remainingDistanceTextId;
 } GameUiSystem;
 
 static int _gameUi_messageId;
@@ -16,6 +18,7 @@ static void GameUi_Update(SceneObject* sceneObject, SceneComponentId SceneCompon
         float delta, void* componentData)
 {
     GameUiSystem* gameUiSystem = (GameUiSystem*)componentData;
+    gameUiSystem->time += delta;
     while (1) {
         MessageHubMessage* msg = MessageHub_getMessage(&_gameUi_messageId);
         if (!msg)
@@ -35,6 +38,11 @@ static void GameUi_Update(SceneObject* sceneObject, SceneComponentId SceneCompon
         SceneGraph_setObjectEnabled(sceneObject->graph, gameUiSystem->gameOverPanelId, 1);
     
     }
+
+    float remainingDistance = 1000.0f - gameUiSystem->time;
+    char text[64];
+    sprintf(text, "Remaining Distance: %.0f\nHealth: III", remainingDistance);
+    TextComponent_setText(sceneObject->graph, gameUiSystem->remainingDistanceTextId, text);
 }
 
 static SceneObjectId AddPanel(SceneObjectId parentId, float x, float y, float width, float height, int colorRGBA)
@@ -195,6 +203,21 @@ void GameUiSystem_onInitialize(SceneObject* sceneObject, SceneComponentId SceneC
             .offset = (Vector2) { 0, 0 },
             .fontSpacing = 1,
             .align = (Vector2) { 0.5f, 0.5f },
+            .color = (Color) { 255, 255, 255, 255 },
+        });
+
+    SceneObjectId remainingDistanceText = SceneGraph_createObject(psg.sceneGraph, "remaining-distance-text");
+    SceneGraph_setParent(psg.sceneGraph, remainingDistanceText, uiPlaneId);
+    SceneGraph_setLocalPosition(psg.sceneGraph, remainingDistanceText, (Vector3) { 7.5f, 5.0f, 0 });
+    gameUiSystem->remainingDistanceTextId = SceneGraph_addComponent(psg.sceneGraph, remainingDistanceText, psg.textComponentId,
+        &(TextComponent) {
+            .text = "Remaining Distance: 1000",
+            .font = font,
+            .fontSize = 8,
+            .offset = (Vector2) { 0, 0 },
+            .fontSpacing = 1,
+            .lineSpacing = 1.0f,
+            .align = (Vector2) { 0.0f, 0.0f },
             .color = (Color) { 255, 255, 255, 255 },
         });
 

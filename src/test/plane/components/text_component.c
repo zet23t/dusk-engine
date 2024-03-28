@@ -178,6 +178,18 @@ static void TextComponent_initialize(SceneObject* sceneObject, SceneComponentId 
     memcpy(dst, src, sizeof(*src));
     dst->text = strdup(src->text);
 }
+
+void TextComponent_setText(SceneGraph* graph, SceneComponentId textComponentId, const char *str)
+{
+    TextComponent *textComponent;
+    if (!SceneGraph_getComponent(graph, textComponentId, (void*) &textComponent))
+    {
+        return;
+    }
+    free(textComponent->text);
+    textComponent->text = strdup(str);
+}
+
 static void TextComponent_onDestroy(SceneObject* sceneObject, SceneComponentId sceneComponentId, void* componentData)
 {
     TextComponent *textComponent = (TextComponent*) componentData;
@@ -198,7 +210,7 @@ static void TextComponentDraw(Camera3D camera, SceneObject* node, SceneComponent
     strcpy(text, textComponent->text);
     char *t = text;
     float scale = textComponent->fontSize / (float)font.baseSize;
-    float lineHeight = scale + textComponent->lineSpacing / (float)font.baseSize * scale;
+    float lineHeight = scale + textComponent->lineSpacing * scale;
     int lineCount = 1;
     for (int i=0;i<textLen;i+=1) lineCount += text[i] == '\n';
     m.m13 += (lineHeight) * lineCount * textComponent->align.y * 2.0f;
@@ -224,7 +236,7 @@ static void TextComponentDraw(Camera3D camera, SceneObject* node, SceneComponent
         DrawText3D(font, t, mm, textComponent->fontSize, textComponent->fontSpacing, textComponent->lineSpacing, false, textComponent->color);
         if (next)
         {
-            m.m14 -= (textComponent->lineSpacing + textComponent->fontSize * .5f);// / (float) font.baseSize;
+            m.m14 -= (textComponent->lineSpacing * textComponent->fontSize / (float) font.baseSize);// ;
             t = next;
         }
         else

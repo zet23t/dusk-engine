@@ -177,6 +177,8 @@ typedef struct TextComponent {
     Color color;
 } TextComponent;
 
+void TextComponent_setText(SceneGraph* graph, SceneComponentId textComponentId, const char *str);
+
 #define ACTION_TYPE_ENABLE_OBJECT 1
 #define ACTION_TYPE_DISABLE_OBJECT 2
 #define ACTION_TYPE_DESTROY_OBJECT 3
