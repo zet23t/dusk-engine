@@ -41,7 +41,27 @@ static void GameUi_Update(SceneObject* sceneObject, SceneComponentId SceneCompon
 
     float remainingDistance = 1000.0f - gameUiSystem->time;
     char text[64];
-    sprintf(text, "Remaining Distance: %.0f\nHealth: III", remainingDistance);
+    char hitpoints[64];
+    HealthComponent *health;
+    if (SceneGraph_getComponentOrFindByType(sceneObject->graph, psg.playerPlane, NULL, psg.healthComponentId, (void**)&health)) {
+        int cpos = 0;
+        for (int i=0;i<health->maxHealth;i+=1)
+        {
+            if (i < health->health)
+            {
+                hitpoints[cpos++] = 0xc2;
+                hitpoints[cpos++] = 0x80;
+            }
+            else
+            {
+                hitpoints[cpos++] = 0x7f;
+            }
+        }
+        hitpoints[cpos++] = 0;
+    } else {
+        hitpoints[0] = 0;
+    }
+    sprintf(text, "Remaining Distance: %.0f\nHitpoints: %s", remainingDistance, hitpoints);
     TextComponent_setText(sceneObject->graph, gameUiSystem->remainingDistanceTextId, text);
 }
 
@@ -252,6 +272,7 @@ void GameUiSystem_onInitialize(SceneObject* sceneObject, SceneComponentId SceneC
     SceneGraph_setObjectEnabled(psg.sceneGraph, gameUiSystem->gameOverPanelId, 0);
     SceneGraph_setObjectEnabled(psg.sceneGraph, gameUiSystem->menuPanelId, 0);
     // SceneGraph_setLocalPosition(psg.sceneGraph, uiPlaneId, (Vector3) { 0, 0, 0 });
+
 }
 
 void GameUiSystemRegister()

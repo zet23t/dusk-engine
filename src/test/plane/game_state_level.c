@@ -195,7 +195,7 @@ SceneObjectId plane_instantiate(Vector3 position)
             .spawnPoint = spawnPoint2,
             .config = shootingConfig,
         });
-    AddHealthComponent(plane, 3, 3);
+    AddHealthComponent(plane, 6, 6);
     SceneGraph_addComponent(psg.sceneGraph, plane, psg.targetComponentId,
         &(TargetComponent) {
             .colliderMask = 2,

@@ -700,13 +700,18 @@ SceneComponent* SceneGraph_getComponentByType(SceneGraph* graph, SceneObjectId i
 
 SceneComponent* SceneGraph_getComponentOrFindByType(SceneGraph* graph, SceneObjectId id, SceneComponentId* componentId, SceneComponentTypeId typeId, void** componentData)
 {
-    SceneComponent* result = SceneGraph_getComponent(graph, *componentId, componentData);
-    if (result != NULL) {
-        return result;
+    SceneComponent* result;
+
+    if (componentId != NULL)
+    {
+        result = SceneGraph_getComponent(graph, *componentId, componentData);
+        if (result != NULL) {
+            return result;
+        }
     }
 
     result = SceneGraph_getComponentByType(graph, id, typeId, componentData, 0);
-    if (result != NULL) {
+    if (result != NULL && componentId != NULL) {
         *componentId = result->id;
     }
 
