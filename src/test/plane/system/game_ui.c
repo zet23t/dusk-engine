@@ -18,7 +18,6 @@ static void GameUi_Update(SceneObject* sceneObject, SceneComponentId SceneCompon
         float delta, void* componentData)
 {
     GameUiSystem* gameUiSystem = (GameUiSystem*)componentData;
-    gameUiSystem->time += delta;
     while (1) {
         MessageHubMessage* msg = MessageHub_getMessage(&_gameUi_messageId);
         if (!msg)
@@ -59,10 +58,13 @@ static void GameUi_Update(SceneObject* sceneObject, SceneComponentId SceneCompon
         }
         hitpoints[cpos++] = 0;
     } else {
-        hitpoints[0] = 0;
+        SceneGraph_setComponentEnabled(sceneObject->graph, gameUiSystem->remainingDistanceTextId, 0);
+        return;
     }
     sprintf(text, "Remaining Distance: %.0f\nHitpoints: %s", remainingDistance, hitpoints);
     TextComponent_setText(sceneObject->graph, gameUiSystem->remainingDistanceTextId, text);
+
+    gameUiSystem->time += delta;
 }
 
 static SceneObjectId AddPanel(SceneObjectId parentId, float x, float y, float width, float height, int colorRGBA)
