@@ -212,7 +212,6 @@ static void PropellerRotator(SceneGraph* graph, SceneObjectId objectId, SceneCom
     SceneGraph_setLocalRotation(graph, objectId, (Vector3) { 0, 0, rotation.z + speed * dt });
 }
 
-
 int OnEnemyHit(SceneGraph* g, SceneObjectId target, SceneObjectId bullet)
 {
     HealthComponent* health;
@@ -283,6 +282,23 @@ static void level1_e1(SceneGraph* g, struct LevelEvent* event)
     }
 }
 
+static void _spawnerAirfield(SceneGraph* g, SceneObjectId parent, int x, int y, struct GroundTileSpawner *spawner)
+{
+    SceneObjectId parentRotInv = SceneGraph_createObject(g, "parent-rot-inv");
+    SceneGraph_setParent(g, parentRotInv, parent);
+    Vector3 parentRot = SceneGraph_getLocalRotation(g, parent);
+    SceneGraph_setLocalRotation(g, parentRotInv, (Vector3) { 0, -parentRot.y, 0 });
+    
+    SceneObjectId airfield = SceneGraph_createObject(g, "airfield");
+    SceneGraph_setParent(g, airfield, parentRotInv);
+    SceneGraph_setLocalRotation(g, airfield, (Vector3) { 0, 180, 0 });
+    AddMeshRendererComponentByName(airfield, "airfield-mud-1", 0.0f);
+    SceneObjectId hangar = SceneGraph_createObject(g, "hangar");
+    SceneGraph_setParent(g, hangar, airfield);
+    SceneGraph_setLocalPosition(g, hangar, (Vector3) { -2.5f, 0, -2.0f });
+    AddMeshRendererComponentByName(hangar, "hangar-1", 0.0f);
+}
+
 int GameStateLevel_Init()
 {
     SceneGraph_clear(psg.sceneGraph);
@@ -317,7 +333,13 @@ int GameStateLevel_Init()
     events[127] = (LevelEvent) { 0 };
     SceneGraph_addComponent(psg.sceneGraph, systemsId, psg.levelSystemId, &(LevelSystem) { .time = 0.0f, .events = events });
     SceneGraph_addComponent(psg.sceneGraph, systemsId, psg.playerInputHandlerId, NULL);
-    SceneGraph_addComponent(psg.sceneGraph, systemsId, psg.groundTileSystemId, NULL);
+    SceneGraph_addComponent(psg.sceneGraph, systemsId, psg.groundTileSystemId,
+        &(GroundTileConfigComponent) {
+            .waterLineLevel = .83f,
+            .baseSpeed = 0.125f,
+            .modifications[0] = { .x = 1, .y = 2, .width = 2, .height = 2, .type = 'g', .treeChance = 0.0f },
+            .spawners[0]= { .x = 2, .y = 2, .width = 1, .height = 1, .spawn = _spawnerAirfield },
+        });
 
     psg.camera = SceneGraph_createObject(psg.sceneGraph, "camera");
     SceneGraph_setLocalPosition(psg.sceneGraph, psg.camera, (Vector3) { 0, 100, -25 });

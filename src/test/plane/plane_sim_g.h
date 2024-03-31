@@ -252,6 +252,30 @@ typedef struct CameraComponent {
     float farPlane;
 } CameraComponent;
 
+typedef struct GroundTileModification {
+    int x, y, width, height;
+    char type;
+    float treeChance;
+} GroundTileModification;
+typedef struct GroundTileSpawner {
+    int x, y, width, height;
+    union {
+        void *arg;
+        Vector3 vec3[4];
+    };
+    void (*spawn)(SceneGraph*, SceneObjectId parent, int x, int y, struct GroundTileSpawner* arg);
+} GroundTileSpawner;
+#define COLUMN_COUNT 6
+#define ROW_COUNT 8
+typedef struct GroundTileConfigComponent {
+    float offset;
+    SceneObjectId groundTiles[ROW_COUNT * COLUMN_COUNT];
+    GroundTileModification modifications[16];
+    GroundTileSpawner spawners[16];
+    float waterLineLevel;
+    float baseSpeed;
+} GroundTileConfigComponent;
+
 typedef struct HealthComponent {
     float health;
     float maxHealth;
