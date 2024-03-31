@@ -171,7 +171,7 @@ static SceneObjectId spawnTile(GroundTileConfigComponent *g, int x, int y)
         SceneGraph_setLocalPosition(psg.sceneGraph, tree, position);
         Vector3 rotate = { GetRandomFloat(-10, 10), GetRandomFloat(0, 360), GetRandomFloat(-10, 10) };
         SceneGraph_setLocalRotation(psg.sceneGraph, tree, rotate);
-        AddMeshRendererComponent(tree, psg.leafTreeList[treeType], 0.0f);
+        AddMeshRendererComponent(tree, psg.leafTreeList[treeType], 1.0f);
     }
     return id;
 }
