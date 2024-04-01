@@ -1,18 +1,18 @@
 #include "config.h"
+#include "game_state_level.h"
 #include "math.h"
 #include "plane_sim_g.h"
-#include <raymath.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
 #include "shared/touch_util.h"
-#include "game_state_level.h"
+#include <raymath.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
-#if defined(PLATFORM_DESKTOP)
-#define GLSL_VERSION 330
-#else // PLATFORM_ANDROID, PLATFORM_WEB
+// #if defined(PLATFORM_DESKTOP)
+// #define GLSL_VERSION 330
+// #else // PLATFORM_ANDROID, PLATFORM_WEB
 #define GLSL_VERSION 100
-#endif
+// #endif
 
 struct MeshMapping {
     const char* name;
@@ -214,7 +214,6 @@ void GameUiSystemRegister();
 #include "component_list.h"
 #undef COMPONENT
 
-
 int plane_sim_init()
 {
     if (loadMeshes()) {
@@ -225,8 +224,7 @@ int plane_sim_init()
     levelConfigLoad(1);
 
     int isReload = psg.sceneGraph != NULL;
-    if (!isReload)
-    {
+    if (!isReload) {
         psg.sceneGraph = SceneGraph_create();
     }
 
@@ -287,13 +285,14 @@ void plane_sim_draw()
         if (levelConfigLoad(IsKeyPressed(KEY_F5))) {
             GameStateLevel_Init();
         }
-        #if defined(DEBUG)
+#if defined(DEBUG)
         SetTraceLogLevel(LOG_INFO);
-        #endif
+#endif
     }
 #endif
 
     Camera3D camera = CameraComponent_getCamera3D(psg.sceneGraph, psg.camera);
+    SetShaderValue(shader, shader.locs[SHADER_LOC_VECTOR_VIEW], &camera.position.x, SHADER_UNIFORM_VEC3);
 
     camera.far = 256.0f;
     camera.near = 64.0f;
@@ -330,8 +329,7 @@ void plane_sim_update(float dt)
     ProcessTouches();
 
     Vector2 mouseDelta = GetMouseDelta();
-    if (IsMouseButtonDown(MOUSE_BUTTON_LEFT) || IsMouseButtonDown(MOUSE_BUTTON_RIGHT) || mouseDelta.x != 0.0f || mouseDelta.y != 0.0f)
-    {
+    if (IsMouseButtonDown(MOUSE_BUTTON_LEFT) || IsMouseButtonDown(MOUSE_BUTTON_RIGHT) || mouseDelta.x != 0.0f || mouseDelta.y != 0.0f) {
         psg.hasMouse = 1;
     }
     if (IsKeyPressed(KEY_R)) {
