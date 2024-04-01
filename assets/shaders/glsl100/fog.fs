@@ -51,8 +51,8 @@ void main()
     vec4 color = vec4(lightf, lightf, lightf, 1.0) * texelColor;
     float greyScale = dot(texelColor.rgb, vec3(0.299, 0.587, 0.114));
 
-    float dist = length(viewPos - fragPosition) * 0.0125 * fogDensity;
-    float fogFactor = clamp(dist + (1.0 - greyScale)*0.015, 0.0, 1.0);//-fragPosition.y * 0.0125;
+    float dist = length(viewPos - fragPosition) * 0.005 * fogDensity;
+    float fogFactor = clamp(dist + (1.0 - greyScale * 2.0)*0.15, 0.0, 1.0);//-fragPosition.y * 0.0125;
     
     fogColor = mix(fogColor, fogColor, fogFactor);
 
