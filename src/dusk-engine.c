@@ -61,9 +61,9 @@ int main(void)
 
     Host_InitializeGameCode(NULL);
 
-#if PLATFORM_WEB
-    DisableCursor();
-#endif
+// #if PLATFORM_WEB
+//     DisableCursor();
+// #endif
 
     int showInfo = 0;
     int isPaused = 0;

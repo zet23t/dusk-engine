@@ -63,7 +63,7 @@ int loadMeshes()
             psg.meshTiles[psg.meshTileCount] = config;
 
             psg.meshTileCount++;
-            TraceLog(LOG_INFO, "  Added mesh tile: %s", meshName);
+            printf("  Added mesh tile: %s\n", meshName);
             continue;
         }
 

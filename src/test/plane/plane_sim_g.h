@@ -273,6 +273,7 @@ typedef struct GroundTileConfigComponent {
     GroundTileModification modifications[16];
     GroundTileSpawner spawners[16];
     float waterLineLevel;
+    float highgroundLevel;
     float baseSpeed;
 } GroundTileConfigComponent;
 

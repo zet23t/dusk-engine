@@ -336,6 +336,7 @@ int GameStateLevel_Init()
     SceneGraph_addComponent(psg.sceneGraph, systemsId, psg.groundTileSystemId,
         &(GroundTileConfigComponent) {
             .waterLineLevel = .25f,
+            .highgroundLevel = 0.4f,
             .baseSpeed = 0.125f,
             .modifications[0] = { .x = 0, .y = 1, .width = 4, .height = 4, .type = 'g', .treeChance = 0.0f },
             .spawners[0]= { .x = 2, .y = 2, .width = 1, .height = 1, .spawn = _spawnerAirfield },

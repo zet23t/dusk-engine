@@ -13,8 +13,8 @@ const char groundTypes[TILE_TYPE_COUNT] = { 'g', 'w' };
 
 static MeshTileConfig FindMatchingTile(uint32_t cornersToMatch, int* rotation)
 {
-    MeshTileConfig matches[psg.meshTileCount];
-    int rotations[psg.meshTileCount];
+    MeshTileConfig matches[psg.meshTileCount * 4];
+    int rotations[psg.meshTileCount * 4];
     int matchCount = 0;
     for (int i = 0; i < psg.meshTileCount; i++) {
         MeshTileConfig config = psg.meshTiles[i];
@@ -47,54 +47,64 @@ static float bilinearInterpolate(float topRight, float bottomRight, float bottom
     return lerp(bottom, top, y);
 }
 
-static SceneObjectId spawnTile(GroundTileConfigComponent *g, int x, int y)
+static SceneObjectId spawnTile(GroundTileConfigComponent* g, int x, int y)
 {
     float freq = 0.25f;
     SceneObjectId id = SceneGraph_createObject(psg.sceneGraph, "GroundTile");
+    SceneGraph_setLocalPosition(psg.sceneGraph, id, (Vector3) { 0, groundTileOffset.y, 0 });
     float p1 = stb_perlin_turbulence_noise3(x * freq, (y - 1) * freq, 0, 0.5f, 0.5f, 3);
     float p2 = stb_perlin_turbulence_noise3(x * freq, y * freq, 0, 0.5f, 0.5f, 3);
     float p3 = stb_perlin_turbulence_noise3((x - 1) * freq, (y)*freq, 0, 0.5f, 0.5f, 3);
     float p4 = stb_perlin_turbulence_noise3((x - 1) * freq, (y - 1) * freq, 0, 0.5f, 0.5f, 3);
     char corners[4];
-    corners[0] = p1 > g->waterLineLevel ? 'g' : 'w';
-    corners[1] = p2 > g->waterLineLevel ? 'g' : 'w';
-    corners[2] = p3 > g->waterLineLevel ? 'g' : 'w';
-    corners[3] = p4 > g->waterLineLevel ? 'g' : 'w';
+    float h1 = g->waterLineLevel;
+    float h2 = g->highgroundLevel;
+    corners[0] = p1 > h1 ? (p1 > h2 ? 'G' : 'g') : 'w';
+    corners[1] = p2 > h1 ? (p2 > h2 ? 'G' : 'g') : 'w';
+    corners[2] = p3 > h1 ? (p3 > h2 ? 'G' : 'g') : 'w';
+    corners[3] = p4 > h1 ? (p4 > h2 ? 'G' : 'g') : 'w';
+
     float treeChances[4];
     treeChances[0] = corners[0] == 'g' ? 0.5f : 0.0f;
     treeChances[1] = corners[1] == 'g' ? 0.5f : 0.0f;
     treeChances[2] = corners[2] == 'g' ? 0.5f : 0.0f;
     treeChances[3] = corners[3] == 'g' ? 0.5f : 0.0f;
-    for (int i=0;i<16;i++)
-    {
+    for (int i = 0; i < 16; i++) {
         GroundTileModification mod = g->modifications[i];
-        if (mod.type == 0) continue;
+        if (mod.type == 0)
+            continue;
         int mx = mod.x, my = mod.y, mw = mod.width, mh = mod.height;
         int tx = x, ty = y - 1;
-        if (tx >= mx && tx < mx + mw && ty >= my && ty < my + mh)
-        {
+        if (tx >= mx && tx < mx + mw && ty >= my && ty < my + mh) {
             corners[0] = mod.type;
             treeChances[0] = mod.treeChance;
         }
         ty = y;
-        if (tx >= mx && tx < mx + mw && ty >= my && ty < my + mh)
-        {
+        if (tx >= mx && tx < mx + mw && ty >= my && ty < my + mh) {
             corners[1] = mod.type;
             treeChances[1] = mod.treeChance;
         }
         tx = x - 1;
-        if (tx >= mx && tx < mx + mw && ty >= my && ty < my + mh)
-        {
+        if (tx >= mx && tx < mx + mw && ty >= my && ty < my + mh) {
             corners[2] = mod.type;
             treeChances[2] = mod.treeChance;
         }
         ty = y - 1;
-        if (tx >= mx && tx < mx + mw && ty >= my && ty < my + mh)
-        {
+        if (tx >= mx && tx < mx + mw && ty >= my && ty < my + mh) {
             corners[3] = mod.type;
             treeChances[3] = mod.treeChance;
         }
     }
+    
+    
+    if (corners[0] == 'G' && corners[1] == 'G' && corners[2] == 'G' && corners[3] == 'G') {
+        corners[0] = 'g';
+        corners[1] = 'g';
+        corners[2] = 'g';
+        corners[3] = 'g';
+        SceneGraph_setLocalPosition(psg.sceneGraph, id, (Vector3) { 0, 2.0f + groundTileOffset.y, 0 });
+    }
+
     uint32_t cornerConfig = *(uint32_t*)corners;
     int rot = 0;
     MeshTileConfig config = FindMatchingTile(cornerConfig, &rot);
@@ -106,14 +116,13 @@ static SceneObjectId spawnTile(GroundTileConfigComponent *g, int x, int y)
     }
     AddMeshRendererComponent(id, config.mesh, 1.0f);
 
-    for (int i=0;i<16;i++)
-    {
+    for (int i = 0; i < 16; i++) {
         GroundTileSpawner spawner = g->spawners[i];
-        if (spawner.spawn == NULL) continue;
+        if (spawner.spawn == NULL)
+            continue;
         int mx = spawner.x, my = spawner.y, mw = spawner.width, mh = spawner.height;
         int tx = x, ty = y - 1;
-        if (tx >= mx && tx < mx + mw && ty >= my && ty < my + mh)
-        {
+        if (tx >= mx && tx < mx + mw && ty >= my && ty < my + mh) {
             spawner.spawn(psg.sceneGraph, id, x, y, &spawner);
         }
     }
@@ -141,7 +150,7 @@ static SceneObjectId spawnTile(GroundTileConfigComponent *g, int x, int y)
             continue;
         }
 
-        if (GetRandomValue(0, 100) > 50 + (int)(80.0f * (variation - .5f))){
+        if (GetRandomValue(0, 100) > 50 + (int)(80.0f * (variation - .5f))) {
             continue;
         }
 
@@ -179,15 +188,15 @@ static SceneObjectId spawnTile(GroundTileConfigComponent *g, int x, int y)
 static int step = 0;
 static int moveSpeedSetting = 0;
 
-static void GroundTileSystem_onInitialize(SceneObject *object, SceneComponentId componentId, void *componentData, void *arg)
+static void GroundTileSystem_onInitialize(SceneObject* object, SceneComponentId componentId, void* componentData, void* arg)
 {
-    GroundTileConfigComponent *groundTileCfgCmp = (GroundTileConfigComponent*)componentData;
+    GroundTileConfigComponent* groundTileCfgCmp = (GroundTileConfigComponent*)componentData;
     memcpy(groundTileCfgCmp, arg, sizeof(GroundTileConfigComponent));
 }
 
-void UpdateGroundTileSystem(SceneObject *object, SceneComponentId componentId, float dt, void *userdata)
+void UpdateGroundTileSystem(SceneObject* object, SceneComponentId componentId, float dt, void* userdata)
 {
-    GroundTileConfigComponent *groundTileCfgCmp = (GroundTileConfigComponent*)userdata;
+    GroundTileConfigComponent* groundTileCfgCmp = (GroundTileConfigComponent*)userdata;
     groundTileCfgCmp->offset += psg.deltaTime * groundTileCfgCmp->baseSpeed * (moveSpeedSetting == 0 ? 1.0f : 8.0f);
     if (IsKeyPressed(KEY_Q)) {
         moveSpeedSetting = !moveSpeedSetting;
@@ -216,6 +225,8 @@ void UpdateGroundTileSystem(SceneObject *object, SceneComponentId componentId, f
                 id = spawnTile(groundTileCfgCmp, x, y);
                 groundTileCfgCmp->groundTiles[y * COLUMN_COUNT + x] = id;
             }
+            Vector3 currentPos = SceneGraph_getLocalPosition(psg.sceneGraph, id);
+            position.y = currentPos.y;
             SceneGraph_setLocalPosition(psg.sceneGraph, id, position);
         }
     }
@@ -226,6 +237,5 @@ void GroundTileSystemRegister()
     psg.groundTileSystemId = SceneGraph_registerComponentType(psg.sceneGraph, "GroundTileSystem", sizeof(GroundTileConfigComponent),
         (SceneComponentTypeMethods) {
             .onInitialize = GroundTileSystem_onInitialize,
-            .updateTick = UpdateGroundTileSystem
-        });
+            .updateTick = UpdateGroundTileSystem });
 }
