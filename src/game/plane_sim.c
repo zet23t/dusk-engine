@@ -185,7 +185,6 @@ static void shaderLoad(int isReload)
     }
 }
 
-void PlaneBehaviorComponentRegister();
 void LinearVelocityComponentRegister();
 void ShootingComponentRegister();
 void AutoDestroyComponentRegister();
