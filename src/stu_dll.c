@@ -37,8 +37,8 @@
 #include "game/system/cloud_system.c"
 #include "game/system/level_system.c"
 #include "game/system/game_ui.c"
-#include "game/plane_sim_g.c"
-#include "game/plane_sim.c"
+#include "game/game_g.c"
+#include "game/game.c"
 #include "game/game_state_level.c"
 
 #if PLATFORM_WEB
@@ -56,7 +56,7 @@ DLL_EXPORT void InitializeGameCode(void *storedState)
         memcpy(&psg, storedState, sizeof(PSG));
         free(storedState);
     }
-    if (plane_sim_init()) {
+    if (game_init()) {
         printf("InitializeGameCode failed\n");
         return;
     }
@@ -74,10 +74,10 @@ DLL_EXPORT void* UnloadGameCode()
 
 DLL_EXPORT void GameCodeDraw()
 {
-    plane_sim_draw();
+    game_draw();
 }
 
 DLL_EXPORT void GameCodeUpdate(float dt)
 {
-    plane_sim_update(dt);
+    game_update(dt);
 }

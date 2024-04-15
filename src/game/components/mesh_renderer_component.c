@@ -18,7 +18,7 @@ BEGIN_COMPONENT_STRUCT {
 
 // === DEFINITIONS ===
 
-#include "../plane_sim_g.h"
+#include "../game_g.h"
 
 static void MeshRendererDraw(Camera3D camera, SceneObject* node, SceneComponentId sceneComponentId, void* component, void* userdata)
 {

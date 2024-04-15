@@ -1,4 +1,4 @@
-#include "../plane_sim_g.h"
+#include "../game_g.h"
 
 static float planeMovementRangeX = 5.0f;
 static float planeMovementRangeZ = 5.0f;

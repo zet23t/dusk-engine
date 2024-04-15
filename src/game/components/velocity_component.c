@@ -1,4 +1,4 @@
-#include "../plane_sim_g.h"
+#include "../game_g.h"
 #include <raymath.h>
 
 static float calculateFrameTimeIndependentDragFactor(float dragFactor, float deltaTime)

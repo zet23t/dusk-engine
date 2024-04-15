@@ -1,4 +1,4 @@
-#include "../plane_sim_g.h"
+#include "../game_g.h"
 
 #include <math.h>
 #include "../util/util_math.h"

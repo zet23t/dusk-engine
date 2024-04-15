@@ -1,7 +1,7 @@
 #include "game_state_level.h"
 #include "config.h"
 #include "math.h"
-#include "plane_sim_g.h"
+#include "game_g.h"
 #include "util/util_math.h"
 #include <raymath.h>
 #include <stdio.h>

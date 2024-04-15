@@ -1,4 +1,4 @@
-#include "../plane_sim_g.h"
+#include "../game_g.h"
 
 static void EnemyPlaneBehaviorComponentUpdate(SceneObject* node, SceneComponentId sceneComponentId, float dt, void* component)
 {

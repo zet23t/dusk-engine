@@ -1,7 +1,7 @@
 #include "config.h"
 #include "game_state_level.h"
 #include "math.h"
-#include "plane_sim_g.h"
+#include "game_g.h"
 #include "shared/touch_util.h"
 #include <raymath.h>
 #include <stdio.h>
@@ -213,7 +213,7 @@ void GameUiSystemRegister();
 #include "component_list.h"
 #undef COMPONENT
 
-int plane_sim_init()
+int game_init()
 {
     if (loadMeshes()) {
         return 1;
@@ -266,7 +266,7 @@ int plane_sim_init()
 static int textIndex = 0;
 static int autoreload = 0;
 static int reloadTimer = 0;
-void plane_sim_draw()
+void game_draw()
 {
 
 #if !defined(PLATFORM_WEB)
@@ -323,7 +323,7 @@ void plane_sim_draw()
     }
 }
 
-void plane_sim_update(float dt)
+void game_update(float dt)
 {
     ProcessTouches();
 

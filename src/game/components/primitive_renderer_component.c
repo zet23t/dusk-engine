@@ -21,7 +21,7 @@ typedef struct COMPONENT_NAME
 #else
 
 // === DEFINITIONS ===
-#include "../plane_sim_g.h"
+#include "../game_g.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <rlgl.h>

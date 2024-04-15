@@ -12,7 +12,7 @@ COMPONENT(PlaneBehaviorComponent)
 
 // === DEFINITIONS ===
 
-#include "../plane_sim_g.h"
+#include "../game_g.h"
 #include <raymath.h>
 
 static void PlaneBehaviorComponentUpdateTick(SceneObject* sceneObject, SceneComponentId sceneComponentId,

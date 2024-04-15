@@ -1,4 +1,4 @@
-#include "../plane_sim_g.h"
+#include "../game_g.h"
 
 #include <string.h>
 static Vector3 VectorFromJSONArray(cJSON *array, Vector3 def)

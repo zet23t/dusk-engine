@@ -1,5 +1,5 @@
-#ifndef __PLANE_SIM_G_H__
-#define __PLANE_SIM_G_H__
+#ifndef __game_G_H__
+#define __game_G_H__
 
 #include "external/cjson.h"
 #include "shared/scene_graph/scene_graph.h"

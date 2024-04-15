@@ -1,5 +1,5 @@
 
-#include "../plane_sim_g.h"
+#include "../game_g.h"
 
 void ReadMappedVariables(cJSON *map, MappedVariable *variables)
 {

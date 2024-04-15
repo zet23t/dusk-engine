@@ -1,4 +1,4 @@
-#include "../../plane_sim_g.h"
+#include "../../game_g.h"
 
 static void ButtonComponent_update(SceneObject* node, SceneComponentId id, float dt, void *componentData)
 {

@@ -14,7 +14,7 @@ typedef struct COMPONENT_NAME {
 
 #else
 // === COMPONENT IMPLEMENTATION ===
-#include "../plane_sim_g.h"
+#include "../game_g.h"
 static void AspectRatioMatcher(SceneObject* sceneObject, SceneComponentId sceneComponentId,
     float delta, void* componentData)
 {

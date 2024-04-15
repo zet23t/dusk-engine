@@ -1,4 +1,4 @@
-#include "../plane_sim_g.h"
+#include "../game_g.h"
 #include <math.h>
 
 #include "external/stb_perlin.h" // Required for: stb_perlin_fbm_noise3
