@@ -63,6 +63,7 @@ typedef struct DuskGuiParamsEntry
     char isPressed;
     char isTriggered;
     DuskGuiParams params;
+    DuskGuiParamsEntry *parent;
 } DuskGuiParamsEntry;
 
 typedef struct DuskGuiState {
@@ -70,6 +71,10 @@ typedef struct DuskGuiState {
     DuskGuiParamsList prevParams;
     DuskGuiParamsEntry locked;
     int idCounter;
+    DuskGuiParamsEntry root;
+    // Note: this is stupid; should use txId instead
+    DuskGuiParamsEntry *currentPanel;
+
 } DuskGuiState;
 
 void DuskGui_init();

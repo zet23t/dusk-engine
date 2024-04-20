@@ -7,11 +7,8 @@
 
 void ObjectConfiguratorEditorComponent_init(SceneObject* sceneObject, SceneComponentId SceneComponent, void* componentData, void* initArg)
 {
-    Font font = ResourceManager_loadFont(&psg.resourceManager, "assets/myfont.png");
-    GuiSetFont(font);
-    GuiSetStyle(DEFAULT, TEXT_SIZE, font.baseSize);
-    GuiSetStyle(DEFAULT, TEXT_COLOR_NORMAL, 0xffffffff);
-
+    Font font = ResourceManager_loadFont(&psg.resourceManager, "assets/myfont-regular.png");
+    
 
     SceneObjectId camera = SceneGraph_createObject(psg.sceneGraph, "Camera");
     psg.camera = camera;
@@ -35,7 +32,7 @@ void ObjectConfiguratorEditorComponent_init(SceneObject* sceneObject, SceneCompo
     data->cameraPivotPitchId = cameraPivotPitch;
 
     DuskGui_init();
-    DuskGui_setDefaultFont(font, font.baseSize, 0, WHITE, BLUE, RED);
+    DuskGui_setDefaultFont(font, font.baseSize, 1, BLACK, (Color){16,16,32,255}, (Color){32,32,64,255});
 
 }
 
@@ -65,6 +62,10 @@ void ObjectConfiguratorEditorComponent_draw2D(Camera2D camera, SceneObject* scen
         SceneGraph_setLocalRotation(psg.sceneGraph, data->cameraPivotYawId, rotationYaw);
         SceneGraph_setLocalRotation(psg.sceneGraph, data->cameraPivotPitchId, rotationPitch);
     }
+
+    DuskGuiParamsEntry panel = DuskGui_beginPanel((DuskGuiParams){
+        .text="hierarchy_view", 
+        .bounds = (Rectangle) { 0, 20, 200, GetScreenHeight() }, .rayCastTarget = 1});
     if (DuskGui_button((DuskGuiParams){.text = "<- back", .bounds = (Rectangle) { 10, 10, 90, 30 }, .rayCastTarget = 1}))
     {
         GameStateLevel_Init();
@@ -74,6 +75,8 @@ void ObjectConfiguratorEditorComponent_draw2D(Camera2D camera, SceneObject* scen
         SceneGraph_setLocalRotation(psg.sceneGraph, data->cameraPivotYawId, (Vector3) { 0, 0, 0 });
         SceneGraph_setLocalRotation(psg.sceneGraph, data->cameraPivotPitchId, (Vector3) { 30, 0, 0 });
     }
+    DuskGui_endPanel(panel);
+
     DuskGui_evaluate();
 }
 void ObjectConfiguratorEditorComponent_draw(Camera3D camera, SceneObject* sceneObject, SceneComponentId sceneComponent,

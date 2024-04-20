@@ -144,6 +144,11 @@ NPatchInfo GenNPatchInfo(Texture2D texture, int top, int right, int bottom, int 
 
 void DuskGui_init()
 {
+    _duskGuiState.root.params.bounds = (Rectangle) {0, 0, GetScreenWidth(), GetScreenHeight()};
+    _duskGuiState.root.params.text = "root";
+    _duskGuiState.root.txId = "root";
+    _duskGuiState.currentPanel = &_duskGuiState.root;
+
     _duskGuiState.currentParams = (DuskGuiParamsList) {
         .params = (DuskGuiParamsEntry *)malloc(sizeof(DuskGuiParamsEntry) * 256),
         .count = 0,
@@ -308,10 +313,15 @@ void DuskGui_evaluate()
     {
         DuskGui_unlock();
     }
+
+    _duskGuiState.currentPanel = &_duskGuiState.root;
+    _duskGuiState.root.params.bounds = (Rectangle) {0, 0, GetScreenWidth(), GetScreenHeight()};
 }
 
 static DuskGuiParamsEntry DuskGui_makeEntry(DuskGuiParams params)
 {
+    params.bounds.x += _duskGuiState.currentPanel->params.bounds.x;
+    params.bounds.y += _duskGuiState.currentPanel->params.bounds.y;
     DuskGuiParamsEntry entry = {
         .id = _duskGuiState.idCounter++,
         .txId = NULL,
@@ -334,10 +344,8 @@ static DuskGuiParamsEntry DuskGui_makeEntry(DuskGuiParams params)
     return entry;
 }
 
-int DuskGui_dragArea(DuskGuiParams params)
+DuskGuiParamsEntry DuskGui_update(DuskGuiParamsEntry entry)
 {
-    DuskGuiParamsEntry entry = DuskGui_makeEntry(params);
-    DuskGui_addParams(&_duskGuiState.currentParams, &entry);
     DuskGuiParamsEntry *match = DuskGui_findParams(&_duskGuiState.prevParams, &entry);
     if (match)
     {
@@ -345,20 +353,45 @@ int DuskGui_dragArea(DuskGuiParams params)
         entry.isPressed = match->isPressed;
         entry.isTriggered = match->isTriggered;
     }
+    return entry;
+}
+
+int DuskGui_dragArea(DuskGuiParams params)
+{
+    DuskGuiParamsEntry entry = DuskGui_makeEntry(params);
+    DuskGui_addParams(&_duskGuiState.currentParams, &entry);
+    entry = DuskGui_update(entry);
     return DuskGui_hasLock(&entry);
+}
+
+DuskGuiParamsEntry DuskGui_beginPanel(DuskGuiParams params)
+{
+    DuskGuiParamsEntry entry = DuskGui_makeEntry(params);
+    DuskGui_addParams(&_duskGuiState.currentParams, &entry);
+    entry.params.bounds.x += _duskGuiState.currentPanel->params.bounds.x;
+    entry.params.bounds.y += _duskGuiState.currentPanel->params.bounds.y;
+    entry.parent = _duskGuiState.currentPanel;
+    _duskGuiState.currentPanel = &_duskGuiState.currentParams.params[entry.id];
+
+    entry = DuskGui_update(entry);
+    if (params.style && params.style->draw) {
+        params.style->draw(&entry, &_duskGuiState, &_defaultButtonStyle);
+    } else {
+        DuskGui_defaultDrawStyle(&entry, &_duskGuiState, &_defaultButtonStyle);
+    }
+    return entry;
+}
+
+void DuskGui_endPanel(DuskGuiParamsEntry entry)
+{
+    _duskGuiState.currentPanel = entry.parent;
 }
 
 int DuskGui_button(DuskGuiParams params)
 {
     DuskGuiParamsEntry entry = DuskGui_makeEntry(params);
     DuskGui_addParams(&_duskGuiState.currentParams, &entry);
-    DuskGuiParamsEntry *match = DuskGui_findParams(&_duskGuiState.prevParams, &entry);
-    if (match)
-    {
-        entry.isHovered = match->isHovered;
-        entry.isPressed = match->isPressed;
-        entry.isTriggered = match->isTriggered;
-    }
+    entry = DuskGui_update(entry);
     if (params.style && params.style->draw) {
         params.style->draw(&entry, &_duskGuiState, &_defaultButtonStyle);
     } else {
