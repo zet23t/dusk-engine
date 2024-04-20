@@ -12,6 +12,7 @@ void ObjectConfiguratorEditorComponent_init(SceneObject* sceneObject, SceneCompo
     GuiSetStyle(DEFAULT, TEXT_SIZE, font.baseSize);
     GuiSetStyle(DEFAULT, TEXT_COLOR_NORMAL, 0xffffffff);
 
+
     SceneObjectId camera = SceneGraph_createObject(psg.sceneGraph, "Camera");
     psg.camera = camera;
     SceneGraph_addComponent(psg.sceneGraph, camera, psg.cameraComponentId, &(CameraComponent) {
@@ -31,6 +32,8 @@ void ObjectConfiguratorEditorComponent_init(SceneObject* sceneObject, SceneCompo
     data->cameraPivotId = cameraPivot;
 
     DuskGui_init();
+    DuskGui_setDefaultFont(font, font.baseSize, 0, WHITE, BLUE, RED);
+
 }
 
 void ObjectConfiguratorEditorComponent_update(SceneObject* node, SceneComponentId id, float dt, void* componentData)

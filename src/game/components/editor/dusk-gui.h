@@ -16,7 +16,34 @@ typedef struct DuskGuiParamsEntryList {
 
 typedef struct DuskGuiStyle
 {
-    void (*draw)(DuskGuiParamsEntry *params, DuskGuiState *state);
+    void (*draw)(DuskGuiParamsEntry *params, DuskGuiState *state, struct DuskGuiStyle *fallback);
+    
+    Font font;
+    float fontSize;
+    int fontSpacing;
+
+    float textAlignmentX;
+    float textAlignmentY;
+
+    int paddingLeft;
+    int paddingRight;
+    int paddingTop;
+    int paddingBottom;
+    
+    Color textColorNormal;
+    Color textColorHover;
+    Color textColorPressed;
+    Color backgroundColorNormal;
+    Color backgroundColorHover;
+    Color backgroundColorPressed;
+
+    Texture2D textureNormal;
+    Texture2D textureHover;
+    Texture2D texturePressed;
+    NPatchInfo nPatchInfoNormal;
+    NPatchInfo nPatchInfoHover;
+    NPatchInfo nPatchInfoPressed;
+    
     void *styleUserData;
 } DuskGuiStyle;
 
@@ -47,6 +74,7 @@ typedef struct DuskGuiState {
 
 void DuskGui_init();
 void DuskGui_evaluate();
+void DuskGui_setDefaultFont(Font font, float fontSize, int fontSpacing, Color normal, Color hover, Color pressed);
 int DuskGui_button(DuskGuiParams params);
 
 #ifdef DUSK_GUI_IMPLEMENTATION
