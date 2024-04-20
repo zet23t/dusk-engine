@@ -1,3 +1,4 @@
+#include "editor.h"
 #include "config.h"
 #include "game_state_level.h"
 #include "math.h"
@@ -263,12 +264,11 @@ int game_init()
     return 1;
 }
 
-static int textIndex = 0;
+// static int textIndex = 0;
 static int autoreload = 0;
 static int reloadTimer = 0;
 void game_draw()
 {
-
 #if !defined(PLATFORM_WEB)
     if (IsKeyPressed(KEY_F1)) {
         SceneGraph_print(psg.sceneGraph, 1, 10);
@@ -290,37 +290,48 @@ void game_draw()
     }
 #endif
 
+    if (IsKeyPressed(KEY_F2)) {
+        SceneGraph_clear(psg.sceneGraph);
+        Editor_init();
+    }
+
     Camera3D camera = CameraComponent_getCamera3D(psg.sceneGraph, psg.camera);
     SetShaderValue(shader, shader.locs[SHADER_LOC_VECTOR_VIEW], &camera.position.x, SHADER_UNIFORM_VEC3);
 
-    camera.far = 256.0f;
-    camera.near = 64.0f;
+    // camera.far = 256.0f;
+    // camera.near = 64.0f;
 
     BeginMode3D(camera);
     SceneGraph_draw(psg.sceneGraph, camera, NULL);
     SceneGraph_sequentialDraw(psg.sceneGraph, camera, NULL);
     EndMode3D();
 
-    if (IsKeyDown(KEY_SPACE) || IsKeyDown(KEY_LEFT_CONTROL) || IsKeyDown(KEY_RIGHT_CONTROL)) {
-        int width = GetScreenWidth();
-        int height = GetScreenHeight();
-        const char* texts[] = {
-            "Ratatatta",
-            "Pew pew",
-            "Bang bang",
-        };
-        const char* buffer = texts[textIndex % 3];
-        if (GetRandomValue(0, 5) == 0) {
-            textIndex++;
-        }
-        int textWidth = MeasureText(buffer, 40);
-        int offsetX = GetRandomValue(-3, 3);
-        int offsetY = GetRandomValue(-3, 3);
-        int x = (width - textWidth) / 2 + offsetX;
-        int y = height - 40 + offsetY;
-        DrawText(buffer, x + 2, y + 2, 40, BLACK);
-        DrawText(buffer, x, y, 40, WHITE);
-    }
+    Camera2D cam2d = (Camera2D) { .near = 0, .far = 1, .zoom = 1 };
+    BeginMode2D(cam2d);
+    SceneGraph_draw2D(psg.sceneGraph, cam2d, NULL);
+    EndMode2D();
+
+
+    // if (IsKeyDown(KEY_SPACE) || IsKeyDown(KEY_LEFT_CONTROL) || IsKeyDown(KEY_RIGHT_CONTROL)) {
+    //     int width = GetScreenWidth();
+    //     int height = GetScreenHeight();
+    //     const char* texts[] = {
+    //         "Ratatatta",
+    //         "Pew pew",
+    //         "Bang bang",
+    //     };
+    //     const char* buffer = texts[textIndex % 3];
+    //     if (GetRandomValue(0, 5) == 0) {
+    //         textIndex++;
+    //     }
+    //     int textWidth = MeasureText(buffer, 40);
+    //     int offsetX = GetRandomValue(-3, 3);
+    //     int offsetY = GetRandomValue(-3, 3);
+    //     int x = (width - textWidth) / 2 + offsetX;
+    //     int y = height - 40 + offsetY;
+    //     DrawText(buffer, x + 2, y + 2, 40, BLACK);
+    //     DrawText(buffer, x, y, 40, WHITE);
+    // }
 }
 
 void game_update(float dt)

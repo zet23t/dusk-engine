@@ -39,6 +39,7 @@
 #include "game/system/game_ui.c"
 #include "game/game_g.c"
 #include "game/game.c"
+#include "game/editor.c"
 #include "game/game_state_level.c"
 
 #if PLATFORM_WEB

@@ -75,6 +75,8 @@ typedef struct SceneComponentTypeMethods {
         float delta, void* componentData);
     void (*draw)(Camera3D camera, SceneObject* sceneObject, SceneComponentId sceneComponent,
         void* componentData, void* userdata);
+    void (*draw2D)(Camera2D camera, SceneObject* sceneObject, SceneComponentId sceneComponent,
+        void* componentData, void* userdata);
     void (*sequentialDraw)(Camera3D camera, SceneObject* sceneObject, SceneComponentId sceneComponent,
         void* componentData, void* userdata);
     void (*onDestroy)(SceneObject* sceneObject, SceneComponentId sceneComponent, void* componentData);
@@ -162,6 +164,7 @@ void SceneGraph_setParent(SceneGraph* graph, SceneObjectId id, SceneObjectId par
 void SceneGraph_updateTick(SceneGraph* graph, float delta);
 // calls draw methods of all components in order of type registration. No particular order of objects is followed
 void SceneGraph_draw(SceneGraph* graph, Camera3D camera, void* userdata);
+void SceneGraph_draw2D(SceneGraph* graph, Camera2D camera, void* userdata);
 // calls sequential draw methods of all components in order of being added to the object. No particular order of objects is followed
 // for root objects, but within a tree of objects, children are drawn after their parents and in the order they were added.
 // This form of iteration is most inefficient (memory wise) and should be used only for UI or other cases where draw order is important.

@@ -432,6 +432,29 @@ void SceneGraph_sequentialDraw(SceneGraph* graph, Camera3D camera, void* userdat
     }
 }
 
+void SceneGraph_draw2D(SceneGraph* graph, Camera2D camera, void* userdata)
+{
+    for (int i = 0; i < graph->componentTypes_count; i++) {
+        SceneComponentType type = graph->componentTypes[i];
+        if (type.methods.draw2D == NULL) {
+            continue;
+        }
+        for (int j = 0; j < type.components_count; j++) {
+            SceneComponent* component = &type.components[j];
+            if (component->id.version == 0 || (component->flags & SCENE_COMPONENT_FLAG_ENABLED) == 0) {
+                continue;
+            }
+
+            SceneObject* object = SceneGraph_getObject(graph, component->objectId);
+            if (object == NULL) {
+                continue;
+            }
+
+            void* data = &type.componentData[j * type.dataSize];
+            type.methods.draw2D(camera, object, component->id, data, userdata);
+        }
+    }
+}
 void SceneGraph_draw(SceneGraph* graph, Camera3D camera, void* userdata)
 {
     for (int i = 0; i < graph->componentTypes_count; i++) {

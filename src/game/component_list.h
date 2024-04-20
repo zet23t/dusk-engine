@@ -6,3 +6,4 @@
 #include "components/ui/click_zone_component.h"
 #include "components/ui/button_component.h"
 #include "components/tween_component.h"
+#include "components/editor/object_configurator_editor.h"
