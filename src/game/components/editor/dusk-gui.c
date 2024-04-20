@@ -345,12 +345,7 @@ int DuskGui_dragArea(DuskGuiParams params)
         entry.isPressed = match->isPressed;
         entry.isTriggered = match->isTriggered;
     }
-    if (params.style && params.style->draw) {
-        params.style->draw(&entry, &_duskGuiState, &_defaultButtonStyle);
-    } else {
-        DuskGui_defaultDrawStyle(&entry, &_duskGuiState, &_defaultButtonStyle);
-    }
-    return entry.isTriggered;
+    return DuskGui_hasLock(&entry);
 }
 
 int DuskGui_button(DuskGuiParams params)

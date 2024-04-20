@@ -4,7 +4,8 @@ COMPONENT(ObjectConfiguratorEditorComponent)
 #elif defined(COMPONENT_DECLARATION)
 
 typedef struct ObjectConfiguratorEditorComponent {
-    SceneObjectId cameraPivotId;
+    SceneObjectId cameraPivotYawId;
+    SceneObjectId cameraPivotPitchId;
 } ObjectConfiguratorEditorComponent;
 
 #else

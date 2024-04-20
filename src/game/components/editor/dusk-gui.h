@@ -76,6 +76,7 @@ void DuskGui_init();
 void DuskGui_evaluate();
 void DuskGui_setDefaultFont(Font font, float fontSize, int fontSpacing, Color normal, Color hover, Color pressed);
 int DuskGui_button(DuskGuiParams params);
+int DuskGui_dragArea(DuskGuiParams params);
 
 #ifdef DUSK_GUI_IMPLEMENTATION
 
