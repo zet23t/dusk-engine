@@ -1,6 +1,5 @@
 #include "../../game_g.h"
-#define RAYGUI_IMPLEMENTATION
-#include "raygui.h"
+#include "../../game_state_level.h"
 
 #define DUSK_GUI_IMPLEMENTATION
 #include "dusk-gui.h"
@@ -24,8 +23,10 @@ void ObjectConfiguratorEditorComponent_init(SceneObject* sceneObject, SceneCompo
     SceneGraph_setParent(psg.sceneGraph, cameraPivotPitch, cameraPivotYaw);
     SceneGraph_setLocalRotation(psg.sceneGraph, cameraPivotPitch, (Vector3) { 30, 0, 0 });
     
-    SceneObjectId plane = SceneGraph_createObject(psg.sceneGraph, "Plane");
-    AddMeshRendererComponentByName(plane, "fighter-plane-1", 1.0f);
+    // SceneObjectId plane = SceneGraph_createObject(psg.sceneGraph, "Plane");
+    // AddMeshRendererComponentByName(plane, "fighter-plane-1", 1.0f);
+    SpawnEnemy(psg.sceneGraph, 0, 0, (EnemyBehaviorComponent) {0});
+
 
     ObjectConfiguratorEditorComponent *data = (ObjectConfiguratorEditorComponent*)componentData;
     data->cameraPivotYawId = cameraPivotYaw;
@@ -38,10 +39,28 @@ void ObjectConfiguratorEditorComponent_init(SceneObject* sceneObject, SceneCompo
 
 void ObjectConfiguratorEditorComponent_update(SceneObject* node, SceneComponentId id, float dt, void* componentData)
 {
-    if (!GuiIsLocked() && IsMouseButtonDown(MOUSE_LEFT_BUTTON)) {
-        // Vector2 delta = GetMouseDelta();
-        // printf("Mouse delta: %f %f\n", delta.x, delta.y);
-        // SceneGraph_rotateLocal(psg.sceneGraph, ((ObjectConfiguratorEditorComponent*)componentData)->cameraPivotId, (Vector3) { delta.y, delta.x, 0 });
+    
+}
+
+static void DrawHierarchyNode(SceneGraph *sceneGraph, SceneObjectId objId, int depth, int *y)
+{
+    SceneObject *obj = SceneGraph_getObject(sceneGraph, objId);
+    if (obj == NULL) return;
+    int x = 10 + depth * 10;
+    int h = 16;
+    int availableSpace = DuskGui_getAvailableSpace().x;
+    char name[strlen(obj->name) + 10];
+    sprintf(name, "%s (%d)", obj->name, objId.id);
+    if (DuskGui_label((DuskGuiParams){.text = name, .bounds = (Rectangle) { x, *y, availableSpace - 10 - x, h }, .rayCastTarget = 1,
+        .style = DuskGui_getStyle(DUSKGUI_STYLE_LABELBUTTON)
+    }))
+    {
+        printf("Clicked on %s\n", obj->name);
+    }
+    *y += h;
+    for (int i=0;i<obj->children_count;i++)
+    {
+        DrawHierarchyNode(sceneGraph, obj->children[i], depth + 1, y);
     }
 }
 
@@ -64,17 +83,34 @@ void ObjectConfiguratorEditorComponent_draw2D(Camera2D camera, SceneObject* scen
     }
 
     DuskGuiParamsEntry panel = DuskGui_beginPanel((DuskGuiParams){
-        .text="hierarchy_view", 
+        .text="##hierarchy_view", 
         .bounds = (Rectangle) { 0, 20, 200, GetScreenHeight() }, .rayCastTarget = 1});
-    if (DuskGui_button((DuskGuiParams){.text = "<- back", .bounds = (Rectangle) { 10, 10, 90, 30 }, .rayCastTarget = 1}))
+    DuskGui_label((DuskGuiParams){.text = "Hierarchy", .bounds = (Rectangle) { 10, 40, 100, 50 }, .rayCastTarget = 1});
+    if (DuskGui_button((DuskGuiParams){.text = "<- back", .bounds = (Rectangle) { 10, 10, 85, 20 }, .rayCastTarget = 1}))
     {
         GameStateLevel_Init();
     }
-    if (DuskGui_button((DuskGuiParams){.text = "Reset view", .bounds = (Rectangle) { 100, 10, 100, 30 }, .rayCastTarget = 1}))
+    if (DuskGui_button((DuskGuiParams){.text = "Reset view", .bounds = (Rectangle) { 100, 10, 85, 20 }, .rayCastTarget = 1}))
     {
         SceneGraph_setLocalRotation(psg.sceneGraph, data->cameraPivotYawId, (Vector3) { 0, 0, 0 });
         SceneGraph_setLocalRotation(psg.sceneGraph, data->cameraPivotPitchId, (Vector3) { 30, 0, 0 });
     }
+
+    int y = 70;
+    for (int i=0;i<psg.sceneGraph->objects_count;i++)
+    {
+        SceneObjectId objId = psg.sceneGraph->objects[i].id;
+        SceneObject *obj = SceneGraph_getObject(psg.sceneGraph, objId);
+        if (obj == NULL) continue;
+
+        SceneObject *parent = SceneGraph_getObject(psg.sceneGraph, obj->parent);
+        if (parent != NULL) continue;
+
+        DrawHierarchyNode(psg.sceneGraph, objId, 0, &y);
+
+    }
+
+
     DuskGui_endPanel(panel);
 
     DuskGui_evaluate();

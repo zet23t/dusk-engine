@@ -198,8 +198,6 @@ void MovementPatternComponentRegister();
 void CameraComponentRegister();
 void TargetHandlerComponentRegister();
 void TextComponentRegister();
-void ActionComponentRegister();
-void TimerComponentRegister();
 void TrailRendererComponentRegister();
 void EnemyBehaviorComponentRegister();
 
@@ -249,8 +247,6 @@ int game_init()
     CameraComponentRegister();
     TargetHandlerComponentRegister();
     TextComponentRegister();
-    ActionComponentRegister();
-    TimerComponentRegister();
     TrailRendererComponentRegister();
     EnemyBehaviorComponentRegister();
 

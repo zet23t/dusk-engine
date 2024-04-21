@@ -73,7 +73,6 @@ typedef struct PSG {
     SceneComponentTypeId cameraComponentId;
     SceneComponentTypeId targetHandlerComponentId;
     SceneComponentTypeId textComponentId;
-    SceneComponentTypeId actionComponentTypeId;
     SceneComponentTypeId timerComponentTypeId;
     SceneComponentTypeId trailRendererComponentTypeId;
     SceneComponentTypeId tweenComponentId;
@@ -179,19 +178,6 @@ typedef struct TextComponent {
 
 void TextComponent_setText(SceneGraph* graph, SceneComponentId textComponentId, const char *str);
 
-#define ACTION_TYPE_ENABLE_OBJECT 1
-#define ACTION_TYPE_DISABLE_OBJECT 2
-#define ACTION_TYPE_DESTROY_OBJECT 3
-#define ACTION_TYPE_ENABLE_COMPONENT 16
-#define ACTION_TYPE_DISABLE_COMPONENT 17
-#define ACTION_TYPE_DESTROY_COMPONENT 18
-#define ACTION_TYPE_ENABLE_CHILD_OBJECT 32
-#define ACTION_TYPE_DISABLE_CHILD_OBJECT 33
-#define ACTION_TYPE_DESTROY_CHILD_OBJECT 34
-#define ACTION_TYPE_ENABLE_CHILD_COMPONENT 48
-#define ACTION_TYPE_DISABLE_CHILD_COMPONENT 49
-#define ACTION_TYPE_DESTROY_CHILD_COMPONENT 50
-
 typedef struct TrailNode {
     Vector3 position;
     Vector3 velocity;
@@ -226,25 +212,6 @@ typedef struct TrailRendererComponent {
     Vector3 emitterVelocity;
     Vector3 lastPosition;
 } TrailRendererComponent;
-
-typedef struct Action {
-    uint32_t actionType;
-    char* targetName;
-} Action;
-
-typedef struct ActionComponent {
-    Action* actions;
-    int actionCount;
-    int disableOnTrigger;
-} ActionComponent;
-
-typedef struct TimerComponent {
-    Action* actions;
-    int actionCount;
-    int repeatCount;
-    float time;
-    float triggerTime;
-} TimerComponent;
 
 typedef struct CameraComponent {
     float fov;
@@ -380,10 +347,6 @@ SceneComponentId AddTimerComponent(SceneObjectId objectId, float duration, int r
 SceneComponentId AddTrailRendererComponent(SceneObjectId objectId, float emitterRate, float maxLifeTime, Vector3 emitterVelocity, int maxVertexCount, Material material, int ownsMaterial);
 void TrailRendererComponent_addTrailWidth(TrailRendererComponent* trailRendererComponent, float width, float percent);
 void TrailRendererComponent_setMaterial(TrailRendererComponent* trailRendererComponent, Material material, int ownsMaterial);
-
-int ActionFromJSON(cJSON* actionCfg, Action* action);
-void TriggerActions(SceneGraph* sceneGraph, SceneObjectId objectId, Action* actions, int count);
-void TimerComponentAddAction(SceneComponentId componentId, int actionType, const char* targetName);
 
 Vector3 GetVelocity(SceneObjectId objectId);
 #endif

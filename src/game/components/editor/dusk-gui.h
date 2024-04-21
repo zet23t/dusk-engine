@@ -77,11 +77,29 @@ typedef struct DuskGuiState {
 
 } DuskGuiState;
 
+typedef enum DuskGuiStyleType {
+    DUSKGUI_STYLE_BUTTON = 0,
+    DUSKGUI_STYLE_LABEL,
+    DUSKGUI_STYLE_LABELBUTTON,
+    DUSKGUI_STYLE_PANEL,
+    DUSKGUI_MAX_STYLESHEETS
+} DuskGuiStyleType;
+
+typedef struct DuskGuiStyleSheet {
+    DuskGuiStyle styles[DUSKGUI_MAX_STYLESHEETS];
+} DuskGuiStyleSheet;
+
 void DuskGui_init();
 void DuskGui_evaluate();
 void DuskGui_setDefaultFont(Font font, float fontSize, int fontSpacing, Color normal, Color hover, Color pressed);
+DuskGuiStyle* DuskGui_getStyle(int styleType);
 int DuskGui_button(DuskGuiParams params);
 int DuskGui_dragArea(DuskGuiParams params);
+int DuskGui_label(DuskGuiParams params);
+Vector2 DuskGui_getAvailableSpace();
+
+DuskGuiParamsEntry DuskGui_beginPanel(DuskGuiParams params);
+void DuskGui_endPanel(DuskGuiParamsEntry entry);
 
 #ifdef DUSK_GUI_IMPLEMENTATION
 

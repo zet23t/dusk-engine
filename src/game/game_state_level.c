@@ -231,7 +231,7 @@ int OnEnemyHit(SceneGraph* g, SceneObjectId target, SceneObjectId bullet)
     return 1;
 }
 
-static void SpawnEnemy(SceneGraph* g, float x, float y, EnemyBehaviorComponent behavior)
+void SpawnEnemy(SceneGraph* g, float x, float y, EnemyBehaviorComponent behavior)
 {
     SceneObjectId enemy = SceneGraph_createObject(g, "enemy");
     SceneGraph_setLocalPosition(g, enemy, (Vector3) { x, 0, y });

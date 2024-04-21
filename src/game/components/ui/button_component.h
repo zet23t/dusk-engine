@@ -16,6 +16,7 @@ typedef struct ButtonComponent {
     ButtonState pressedState;
 } ButtonComponent;
 
+
 #else
 
 #include "button_component.c"

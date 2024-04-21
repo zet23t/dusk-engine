@@ -7,7 +7,6 @@
 #include "game/messagehub.c"
 #include "game/util/util_math.c"
 #include "game/util/prefab.c"
-#include "game/util/actions.c"
 #include "game/util/mapped_variables.c"
 #include "game/resource_manager.c"
 #include "game/components/bullet_component.c"
@@ -22,8 +21,6 @@
 #include "game/components/movement_pattern_component.c"
 #include "game/components/target_handler_component.c"
 #include "game/components/text_component.c"
-#include "game/components/timer_component.c"
-#include "game/components/action_component.c"
 #include "game/components/trail_renderer_component.c"
 #include "game/components/enemybehavior_component.c"
 
