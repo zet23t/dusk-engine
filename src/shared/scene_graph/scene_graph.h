@@ -40,88 +40,12 @@
 #define SCENE_OBJECT_FLAG_LOCAL_MATRIX_DIRTY 4
 #define SCENE_OBJECT_FLAG_WORLD_MATRIX_DIRTY 8
 
-typedef struct SceneObjectId {
-    uint32_t id;
-    uint32_t version;
-} SceneObjectId;
-
-typedef struct SceneComponentTypeId {
-    uint32_t id;
-    uint32_t version;
-} SceneComponentTypeId;
-
-typedef struct SceneComponentId {
-    uint32_t id;
-    uint32_t version;
-    SceneComponentTypeId typeId;
-} SceneComponentId;
-
 typedef struct SceneGraph SceneGraph;
 typedef struct SceneObject SceneObject;
 typedef struct SceneComponent SceneComponent;
 
-typedef struct SceneObjectTransform {
-    Vector3 position;
-    Vector3 eulerRotationDegrees;
-    Vector3 scale;
-    Matrix localMatrix;
-    Matrix worldMatrix;
-    int32_t worldMatrixVersion;
-} SceneObjectTransform;
+#include "shared/serialization/serializable_structs.h"
 
-typedef struct SceneComponentTypeMethods {
-    void (*onInitialize)(SceneObject* sceneObject, SceneComponentId SceneComponent, void* componentData, void* initArg);
-    void (*updateTick)(SceneObject* sceneObject, SceneComponentId SceneComponent,
-        float delta, void* componentData);
-    void (*draw)(Camera3D camera, SceneObject* sceneObject, SceneComponentId sceneComponent,
-        void* componentData, void* userdata);
-    void (*draw2D)(Camera2D camera, SceneObject* sceneObject, SceneComponentId sceneComponent,
-        void* componentData, void* userdata);
-    void (*sequentialDraw)(Camera3D camera, SceneObject* sceneObject, SceneComponentId sceneComponent,
-        void* componentData, void* userdata);
-    void (*onDestroy)(SceneObject* sceneObject, SceneComponentId sceneComponent, void* componentData);
-
-    int (*getValue)(SceneObject* sceneObject, SceneComponent* sceneComponent, void* componentData, char* name, int bufferSize, void* buffer);
-    int (*setValue)(SceneObject* sceneObject, SceneComponent* sceneComponent, void* componentData, char* name, int bufferSize, void* buffer);
-} SceneComponentTypeMethods;
-
-typedef struct SceneComponent {
-    SceneComponentId id;
-    SceneObjectId objectId;
-    SceneComponentTypeId typeId;
-    char* name;
-    uint32_t flags;
-} SceneComponent;
-
-typedef struct SceneComponentType {
-    SceneComponentTypeId id;
-    char* name;
-    size_t dataSize;
-    STRUCT_LIST_ELEMENT(SceneComponent, components)
-    STRUCT_LIST_ELEMENT(uint8_t, componentData)
-    SceneComponentTypeMethods methods;
-} SceneComponentType;
-
-typedef struct SceneObject {
-    SceneObjectId id;
-    SceneGraph* graph;
-    char* name;
-    int32_t flags;
-    int32_t marker;
-    int32_t parentWorldMatrixVersion;
-    SceneObjectId parent;
-    SceneObjectTransform transform;
-
-    STRUCT_LIST_ELEMENT(SceneObjectId, children)
-    STRUCT_LIST_ELEMENT(SceneComponentId, components)
-} SceneObject;
-
-typedef struct SceneGraph {
-    int32_t versionCounter;
-    int32_t markerCounter;
-    STRUCT_LIST_ELEMENT(SceneObject, objects)
-    STRUCT_LIST_ELEMENT(SceneComponentType, componentTypes)
-} SceneGraph;
 
 SceneGraph* SceneGraph_create();
 void SceneGraph_destroy(SceneGraph* graph);

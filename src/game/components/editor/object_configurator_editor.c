@@ -84,7 +84,7 @@ void ObjectConfiguratorEditorComponent_draw2D(Camera2D camera, SceneObject* scen
 
     DuskGuiParamsEntry panel = DuskGui_beginPanel((DuskGuiParams){
         .text="##hierarchy_view", 
-        .bounds = (Rectangle) { 0, 20, 200, GetScreenHeight() }, .rayCastTarget = 1});
+        .bounds = (Rectangle) { -1, -2, 200, GetScreenHeight()+4}, .rayCastTarget = 1});
     DuskGui_label((DuskGuiParams){.text = "Hierarchy", .bounds = (Rectangle) { 10, 40, 100, 50 }, .rayCastTarget = 1});
     if (DuskGui_button((DuskGuiParams){.text = "<- back", .bounds = (Rectangle) { 10, 10, 85, 20 }, .rayCastTarget = 1}))
     {

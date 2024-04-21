@@ -254,7 +254,8 @@ int game_init()
     GameUiSystemRegister();
 
     if (!isReload) {
-        GameStateLevel_Init();
+        // GameStateLevel_Init();
+        Editor_init();
     }
 
     return 1;
