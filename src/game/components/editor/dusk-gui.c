@@ -154,8 +154,14 @@ void DuskGui_init()
     float half = (float)(size - 1) / 2;
     const float a = 0.6f;
     const float b = 0.5f;
-    for (int x = 0; x < size; x++) {
-        for (int y = 0; y < size; y++) {
+    for (int y = 0; y < size; y++) {
+        float ybrightness = 1.1f - (float)y / (size - 1) * .4f;
+        if (ybrightness < 0)
+            ybrightness = 0;
+        if (ybrightness > 1)
+            ybrightness = 1;
+        int ibrightness = (int)(ybrightness * 255.0f);
+        for (int x = 0; x < size; x++) {
             float dx = (x - half) / half;
             float dy = (y - half) / half;
             float sqd = dx * dx + dy * dy;
@@ -171,10 +177,11 @@ void DuskGui_init()
                     brightness = 0;
                 if (brightness > 1)
                     brightness = 1;
+                brightness *= ybrightness;
                 int color = (int)(brightness * 255.0f);
                 pixels[y * size + x] = (Color) { color, color, color, (float)(255.0f * alpha) };
             } else {
-                pixels[y * size + x] = (Color) { 255, 255, 255, 0 };
+                pixels[y * size + x] = (Color) { ibrightness, ibrightness, ibrightness, 0 };
             }
         }
     }
