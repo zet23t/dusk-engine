@@ -1082,3 +1082,10 @@ int SceneComponentIdEquals(SceneComponentId a, SceneComponentId b)
 {
     return memcmp(&a, &b, sizeof(a)) == 0;
 }
+
+#include "external/cJSON.h"
+
+void SceneComponentType_onSerialized(const char *key, SceneComponentType *componentType, cJSON *json)
+{
+
+}

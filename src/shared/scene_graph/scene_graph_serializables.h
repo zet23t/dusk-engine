@@ -1,3 +1,7 @@
+#include <inttypes.h>
+#include <raylib.h>
+#include <stddef.h>
+
 SERIALIZABLE_STRUCT_START(SceneObjectTransform)
     SERIALIZABLE_FIELD(Vector3, position)
     SERIALIZABLE_FIELD(Vector3, eulerRotationDegrees)
@@ -54,10 +58,10 @@ SERIALIZABLE_STRUCT_START(SceneComponentType)
     SERIALIZABLE_CSTR(name)
     SERIALIZABLE_FIELD(size_t, dataSize);
     SERIALIZABLE_STRUCT_LIST_ELEMENT(SceneComponent, components)
-    SERIALIZABLE_STRUCT_LIST_ELEMENT(uint8_t, componentData)
-    SERIALIZABLE_FIELD(SceneComponentTypeMethods, methods)
+    NONSERIALIZABLE_STRUCT_LIST_ELEMENT(uint8_t, componentData)
+    NONSERIALIZED_FIELD(SceneComponentTypeMethods, methods)
+    POST_SERIALIZE_CALLBACK(SceneComponentType, SceneComponentType_onSerialized)
 SERIALIZABLE_STRUCT_END(SceneComponentType)
-
 
 SERIALIZABLE_STRUCT_START(SceneObject)
     SERIALIZABLE_FIELD(SceneObjectId, id)
@@ -78,5 +82,5 @@ SERIALIZABLE_STRUCT_START(SceneGraph)
     SERIALIZABLE_FIELD(int32_t, markerCounter)
     SERIALIZABLE_STRUCT_LIST_ELEMENT(SceneObject, objects)
     SERIALIZABLE_STRUCT_LIST_ELEMENT(SceneComponentType, componentTypes)
-    POST_DESERIALIAZE_CALLBACK(SceneGraph_onDeserialized)
+    POST_DESERIALIAZE_CALLBACK(SceneGraph, SceneGraph_onDeserialized)
 SERIALIZABLE_STRUCT_END(SceneGraph)

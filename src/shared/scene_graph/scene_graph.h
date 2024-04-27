@@ -13,11 +13,6 @@
 #include <raylib.h>
 #include <stddef.h>
 
-#define STRUCT_LIST_ELEMENT(type, name) \
-    type* name;                         \
-    int name##_count;                   \
-    int name##_capacity;
-
 #define STRUCT_LIST_ACQUIRE_FN(masterType, listType, name)                 \
     static listType* masterType##_acquire_##name(masterType* master)       \
     {                                                                      \
@@ -45,7 +40,6 @@ typedef struct SceneObject SceneObject;
 typedef struct SceneComponent SceneComponent;
 
 #include "shared/serialization/serializable_structs.h"
-
 
 SceneGraph* SceneGraph_create();
 void SceneGraph_destroy(SceneGraph* graph);
