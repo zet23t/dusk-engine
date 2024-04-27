@@ -23,11 +23,11 @@
 #endif
 
 #ifndef POST_DESERIALIAZE_CALLBACK
-#define POST_DESERIALIAZE_CALLBACK(type, name) void name(const char *key, type* data, cJSON *obj);
+#define POST_DESERIALIAZE_CALLBACK(type, name)
 #endif
 
 #ifndef POST_SERIALIZE_CALLBACK
-#define POST_SERIALIZE_CALLBACK(type, name) void name(const char *key, type* data, cJSON *obj);
+#define POST_SERIALIZE_CALLBACK(type, name)
 #endif
 
 #ifndef SERIALIZABLE_STRUCT_END

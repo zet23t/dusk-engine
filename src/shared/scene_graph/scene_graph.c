@@ -1085,7 +1085,7 @@ int SceneComponentIdEquals(SceneComponentId a, SceneComponentId b)
 
 #include "external/cJSON.h"
 
-void SceneComponentType_onSerialized(const char *key, SceneComponentType *componentType, cJSON *json)
+void SceneComponentType_onSerialized(const char *key, SceneComponentType *componentType, cJSON *json, void *userData)
 {
 
 }

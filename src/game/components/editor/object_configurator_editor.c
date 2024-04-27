@@ -1,5 +1,7 @@
 #include "../../game_g.h"
 #include "../../game_state_level.h"
+#include "shared/serialization/serializers.h"
+
 
 #define DUSK_GUI_IMPLEMENTATION
 #include "dusk-gui.h"
@@ -96,7 +98,15 @@ void ObjectConfiguratorEditorComponent_draw2D(Camera2D camera, SceneObject* scen
         SceneGraph_setLocalRotation(psg.sceneGraph, data->cameraPivotPitchId, (Vector3) { 30, 0, 0 });
     }
 
-    int y = 70;
+    if (DuskGui_button((DuskGuiParams){.text = "Serialize", .bounds = (Rectangle) { 10, 70, 85, 20 }, .rayCastTarget = 1}))
+    {
+        cJSON *obj = cJSON_CreateObject();
+        SerializeData_SceneGraph(NULL, psg.sceneGraph, obj, NULL);
+        char *serialized = cJSON_Print(obj);
+        printf("Serialized:\n%s\n", serialized);
+    }
+
+    int y = 90;
     for (int i=0;i<psg.sceneGraph->objects_count;i++)
     {
         SceneObjectId objId = psg.sceneGraph->objects[i].id;
