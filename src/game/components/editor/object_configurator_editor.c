@@ -44,7 +44,119 @@ void ObjectConfiguratorEditorComponent_update(SceneObject* node, SceneComponentI
     
 }
 
-static void DrawHierarchyNode(SceneGraph *sceneGraph, SceneObjectId objId, int depth, int *y)
+typedef struct GUIDrawState {
+    int y;
+    int indention;
+    int labelWidth;
+    SceneObjectId selectedObjectId;
+    SceneGraph *sceneGraph;
+} GUIDrawState;
+
+void DrawSerializeData_int(const char *key, int* data, GUIDrawState *state) {
+    DuskGui_label((DuskGuiParams){.text = key, .bounds = (Rectangle) { 10 + state->indention * 10, state->y, 100, 18 }, .rayCastTarget = 1});
+    char buffer[32];
+    sprintf(buffer, "%d", *data);
+    Vector2 space = DuskGui_getAvailableSpace();
+    DuskGui_label((DuskGuiParams){.text = buffer, .bounds = (Rectangle) { 10 + state->labelWidth, state->y, space.x - 10 - state->labelWidth, 18 }, .rayCastTarget = 1});
+    state->y += 18;
+}
+
+void DrawSerializeData_uint32_t(const char *key, uint32_t *data, GUIDrawState *userData) {
+    int v = *data;
+    DrawSerializeData_int(key, &v, userData);
+    *data = (uint32_t)v;
+}
+void DrawSerializeData_int32_t(const char *key, int32_t *data, GUIDrawState *userData) {
+    int v = *data;
+    DrawSerializeData_int(key, &v, userData);
+    *data = (int32_t)v;
+}
+void DrawSerializeData_size_t(const char *key, size_t *data, GUIDrawState *userData) {
+    int v = *data;
+    DrawSerializeData_int(key, &v, userData);
+    *data = (size_t)v;
+}
+void DrawSerializeData_Vector3(const char *key, Vector3* data, GUIDrawState *state) {
+    DuskGui_label((DuskGuiParams){.text = key, .bounds = (Rectangle) { 10 + state->indention * 10, state->y, 100, 18 }, .rayCastTarget = 1});
+    char buffer[120];
+    sprintf(buffer, "%.2f %.2f %.2f", data->x, data->y, data->z);
+    Vector2 space = DuskGui_getAvailableSpace();
+    DuskGui_label((DuskGuiParams){.text = buffer, .bounds = (Rectangle) { 10 + state->labelWidth, state->y, space.x - 10 - state->labelWidth, 18 }, .rayCastTarget = 1});
+    state->y += 18;
+}
+void DrawSerializeData_cstr(const char *key, char* data, GUIDrawState *state) {
+    DuskGui_label((DuskGuiParams){.text = key, .bounds = (Rectangle) { 10 + state->indention * 10, state->y, 100, 18 }, .rayCastTarget = 1});
+    Vector2 space = DuskGui_getAvailableSpace();
+    DuskGui_label((DuskGuiParams){.text = data, .bounds = (Rectangle) { 10 + state->labelWidth, state->y, space.x - state->labelWidth - 10, 18 }, .rayCastTarget = 1});
+    state->y += 18;
+}
+
+void DrawSerializeData_SceneComponentIdOverride(const char *key, SceneComponentId* data, GUIDrawState *state) {
+    DuskGui_label((DuskGuiParams){.text = key, .bounds = (Rectangle) { 10 + state->indention * 10, state->y, 100, 18 }, .rayCastTarget = 1});
+    char buffer[120];
+    sprintf(buffer, "%d %d", data->id, data->version);
+    Vector2 space = DuskGui_getAvailableSpace();
+    DuskGui_label((DuskGuiParams){.text = buffer, .bounds = (Rectangle) { 10 + state->labelWidth, state->y, space.x - 10 - state->labelWidth, 18 }, .rayCastTarget = 1});
+    state->y += 18;
+}
+
+void DrawSerializeData_SceneObjectIdOverride(const char *key, SceneObjectId* data, GUIDrawState *state) {
+    DuskGui_label((DuskGuiParams){.text = key, .bounds = (Rectangle) { 10 + state->indention * 10, state->y, 100, 18 }, .rayCastTarget = 1});
+    char buffer[120];
+    SceneObject *sceneObject = SceneGraph_getObject(state->sceneGraph, *data);
+    if (sceneObject == NULL) {
+        sprintf(buffer, "NULL");
+    } else {
+        sprintf(buffer, "%s (%d)", sceneObject->name, data->id);
+    }
+    Vector2 space = DuskGui_getAvailableSpace();
+    if (DuskGui_label((DuskGuiParams){.text = buffer, .bounds = (Rectangle) { 10 + state->labelWidth, state->y, space.x - 10 - state->labelWidth, 18 }, .rayCastTarget = 1}))
+    {
+        state->selectedObjectId = *data;
+    }
+    state->y += 18;
+}
+
+typedef struct DrawFunctionOverrides {
+    void (*_uint32_t)(const char *key, uint32_t* data, GUIDrawState *userData);
+    void (*_int32_t)(const char *key, int32_t* data, GUIDrawState *userData);
+    void (*_size_t)(const char *key, size_t* data, GUIDrawState *userData);
+    void (*_int)(const char *key, int* data, GUIDrawState *userData);
+    void (*_Vector3)(const char *key, Vector3* data, GUIDrawState *userData);
+#define SERIALIZABLE_STRUCT_START(name) void (*_##name)(const char *key, name* data, GUIDrawState *userData);
+#include "shared/serialization/define_serialization_macros.h"
+#include "shared/serialization/serializable_file_headers.h"
+#include "shared/serialization/undef_serialization_macros.h"
+} DrawFunctionOverrides;
+
+DrawFunctionOverrides _drawFunctionOverrides;
+
+#define SERIALIZABLE_STRUCT_START(name) void DrawSerializeData_##name(const char *key, name* data, GUIDrawState *state) {\
+    if (key != NULL) {\
+        DuskGui_label((DuskGuiParams){.text = key, .bounds = (Rectangle) { 10 + state->indention * 10, state->y, 100, 18 }, .rayCastTarget = 1});\
+        state->indention++, state->y+=18;\
+    }
+#define SERIALIZABLE_FIELD(type, name) \
+    if (_drawFunctionOverrides._##type == NULL) DrawSerializeData_##type(#name, &data->name, state); \
+    else _drawFunctionOverrides._##type(#name, &data->name, state);
+#define SERIALIZABLE_CSTR(name) DrawSerializeData_cstr(#name, data->name, state);
+#define SERIALIZABLE_STRUCT_LIST_ELEMENT(type, name) \
+    DuskGui_label((DuskGuiParams){.text = #name, .bounds = (Rectangle) { 10 + state->indention * 10, state->y, 100, 18 }, .rayCastTarget = 1});\
+    state->indention++, state->y+=18;\
+    for (int i = 0; i < data->name##_count; i++) { \
+        char num[32];\
+        sprintf(num, "%d", i);\
+        if (_drawFunctionOverrides._##type == NULL) DrawSerializeData_##type(num, &data->name[i], state); \
+        else _drawFunctionOverrides._##type(num, &data->name[i], state); \
+    }\
+    state->indention--;
+// #define POST_SERIALIZE_CALLBACK(type, name) name(key, data, element, userData);
+#define SERIALIZABLE_STRUCT_END(name) state->indention--;}
+#include "shared/serialization/define_serialization_macros.h"
+#include "shared/serialization/serializable_file_headers.h"
+#include "shared/serialization/undef_serialization_macros.h"
+
+static void DrawHierarchyNode(SceneGraph *sceneGraph, ObjectConfiguratorEditorComponent* cfgEdit, SceneObjectId objId, int depth, int *y)
 {
     SceneObject *obj = SceneGraph_getObject(sceneGraph, objId);
     if (obj == NULL) return;
@@ -58,13 +170,15 @@ static void DrawHierarchyNode(SceneGraph *sceneGraph, SceneObjectId objId, int d
     }))
     {
         printf("Clicked on %s\n", obj->name);
+        cfgEdit->selectedObjectId = objId;
     }
     *y += h;
     for (int i=0;i<obj->children_count;i++)
     {
-        DrawHierarchyNode(sceneGraph, obj->children[i], depth + 1, y);
+        DrawHierarchyNode(sceneGraph, cfgEdit, obj->children[i], depth + 1, y);
     }
 }
+
 
 void ObjectConfiguratorEditorComponent_draw2D(Camera2D camera, SceneObject* sceneObject, SceneComponentId sceneComponent,
     void* componentData, void* userdata)
@@ -116,12 +230,28 @@ void ObjectConfiguratorEditorComponent_draw2D(Camera2D camera, SceneObject* scen
         SceneObject *parent = SceneGraph_getObject(psg.sceneGraph, obj->parent);
         if (parent != NULL) continue;
 
-        DrawHierarchyNode(psg.sceneGraph, objId, 0, &y);
+        DrawHierarchyNode(psg.sceneGraph, data, objId, 0, &y);
 
     }
-
-
     DuskGui_endPanel(panel);
+
+    _drawFunctionOverrides._SceneComponentId = DrawSerializeData_SceneComponentIdOverride;
+    _drawFunctionOverrides._SceneObjectId = DrawSerializeData_SceneObjectIdOverride;
+    DuskGuiParamsEntry inspector_panel = DuskGui_beginPanel((DuskGuiParams){.text="##object_view", .bounds = (Rectangle) { GetScreenWidth()-300, GetScreenHeight() - 200, 300, 200}, .rayCastTarget = 1});
+    DuskGuiParamsEntry inspector_scroll = DuskGui_beginScrollArea((DuskGuiParams){.text="##object_scroll", .bounds = (Rectangle) { 0, 0, 300, 200}, .rayCastTarget = 1});
+    SceneObject *selectedObj = SceneGraph_getObject(psg.sceneGraph, data->selectedObjectId);
+    if (selectedObj != NULL)
+    {
+        GUIDrawState state = {.labelWidth = 140, .sceneGraph = psg.sceneGraph, .selectedObjectId = data->selectedObjectId};
+        state.y = 0;
+        DrawSerializeData_SceneObject(NULL, selectedObj, &state);
+        DuskGui_setContentSize(inspector_scroll, (Vector2) { 300, state.y });
+        data->selectedObjectId = state.selectedObjectId;
+    }
+    DuskGui_endScrollArea(inspector_scroll);
+    DuskGui_endPanel(inspector_panel);
+
+
 
     DuskGui_evaluate();
 }

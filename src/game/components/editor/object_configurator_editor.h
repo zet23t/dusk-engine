@@ -6,6 +6,7 @@ COMPONENT(ObjectConfiguratorEditorComponent)
 typedef struct ObjectConfiguratorEditorComponent {
     SceneObjectId cameraPivotYawId;
     SceneObjectId cameraPivotPitchId;
+    SceneObjectId selectedObjectId;
 } ObjectConfiguratorEditorComponent;
 
 #else
