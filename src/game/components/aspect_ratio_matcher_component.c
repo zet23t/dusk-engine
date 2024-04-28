@@ -6,11 +6,12 @@
 COMPONENT(AspectRatioMatcherComponent)
 #elif defined(COMPONENT_DECLARATION)
 // === COMPONENT DECLARATION ===
-typedef struct COMPONENT_NAME {
-    SceneComponentId cameraComponentId;
-    float canvasDistance;
-    float width, height;
-} COMPONENT_NAME;
+SERIALIZABLE_STRUCT_START(AspectRatioMatcherComponent)
+    SERIALIZABLE_FIELD(SceneComponentId, cameraComponentId)
+    SERIALIZABLE_FIELD(float, canvasDistance)
+    SERIALIZABLE_FIELD(float, width)
+    SERIALIZABLE_FIELD(float, height)
+SERIALIZABLE_STRUCT_END(AspectRatioMatcherComponent)
 
 #else
 // === COMPONENT IMPLEMENTATION ===

@@ -86,6 +86,7 @@ typedef enum DuskGuiStyleType {
     DUSKGUI_STYLE_LABEL,
     DUSKGUI_STYLE_LABELBUTTON,
     DUSKGUI_STYLE_PANEL,
+    DUSKGUI_STYLE_HORIZONTAL_LINE,
     DUSKGUI_MAX_STYLESHEETS
 } DuskGuiStyleType;
 
@@ -100,6 +101,7 @@ DuskGuiStyle* DuskGui_getStyle(int styleType);
 int DuskGui_button(DuskGuiParams params);
 int DuskGui_dragArea(DuskGuiParams params);
 int DuskGui_label(DuskGuiParams params);
+void DuskGui_horizontalLine(DuskGuiParams params);
 void DuskGui_setContentSize(DuskGuiParamsEntry entry, Vector2 contentSize);
 void DuskGui_setContentOffset(DuskGuiParamsEntry entry, Vector2 contentOffset);
 Vector2 DuskGui_getAvailableSpace();

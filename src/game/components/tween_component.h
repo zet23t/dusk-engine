@@ -3,6 +3,7 @@
 COMPONENT(TweenComponent)
 #elif defined(COMPONENT_DECLARATION)
 
+#ifndef TWEEN_LOCAL_POSITION
 #define TWEEN_LOCAL_POSITION "local_position"
 #define TWEEN_LOCAL_POSITION_X "local_position_x"
 #define TWEEN_LOCAL_POSITION_Y "local_position_y"
@@ -15,31 +16,24 @@ COMPONENT(TweenComponent)
 #define TWEEN_LOCAL_SCALE_X "local_scale_x"
 #define TWEEN_LOCAL_SCALE_Y "local_scale_y"
 #define TWEEN_LOCAL_SCALE_Z "local_scale_z"
+#endif
 
-typedef struct TweenComponent {
-    float time;
-    float maxTime;
-    uint8_t transitionFunctionType;
-    uint8_t targetIsObject;
-    char *targetName;
-
-    union {
-        SceneComponentId componentId;
-        SceneObjectId objectId;
-    };
-
-    union {
-        Vector3 startVec3;
-        float startFloat;
-        Color startColor;
-    };
-    union 
-    {
-        Vector3 endVec3;
-        float endFloat;
-        Color endColor;
-    };
-} TweenComponent;
+SERIALIZABLE_STRUCT_START(TweenComponent)
+    SERIALIZABLE_FIELD(float, time)
+    SERIALIZABLE_FIELD(float, maxTime)
+    SERIALIZABLE_FIELD(uint8_t, transitionFunctionType)
+    SERIALIZABLE_FIELD(uint8_t, targetIsObject)
+    SERIALIZABLE_CSTR(targetName)
+    SERIALIZABLE_FIELD(SceneComponentId, componentId)
+    SERIALIZABLE_FIELD(SceneObjectId, objectId)
+    
+    SERIALIZABLE_FIELD(Vector3, startVec3)
+    SERIALIZABLE_FIELD(float, startFloat)
+    SERIALIZABLE_FIELD(Color, startColor)
+    SERIALIZABLE_FIELD(Vector3, endVec3)
+    SERIALIZABLE_FIELD(float, endFloat)
+    SERIALIZABLE_FIELD(Color, endColor)
+SERIALIZABLE_STRUCT_END(TweenComponent)
 
 #else
 

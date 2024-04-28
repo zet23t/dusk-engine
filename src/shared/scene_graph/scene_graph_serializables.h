@@ -54,9 +54,9 @@ SERIALIZABLE_STRUCT_START(SceneComponent)
 SERIALIZABLE_STRUCT_END(SceneComponent)
 
 SERIALIZABLE_STRUCT_START(SceneComponentType)
-    SERIALIZABLE_FIELD(SceneComponentTypeId, id);
+    SERIALIZABLE_FIELD(SceneComponentTypeId, id)
     SERIALIZABLE_CSTR(name)
-    SERIALIZABLE_FIELD(size_t, dataSize);
+    SERIALIZABLE_FIELD(size_t, dataSize)
     SERIALIZABLE_STRUCT_LIST_ELEMENT(SceneComponent, components)
     NONSERIALIZABLE_STRUCT_LIST_ELEMENT(uint8_t, componentData)
     NONSERIALIZED_FIELD(SceneComponentTypeMethods, methods)

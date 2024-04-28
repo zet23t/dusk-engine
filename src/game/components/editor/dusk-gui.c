@@ -41,6 +41,10 @@ void DuskGui_setDefaultFont(Font font, float fontSize, int fontSpacing, Color no
     _defaultStyles.styles[DUSKGUI_STYLE_LABEL].fontSize = fontSize;
     _defaultStyles.styles[DUSKGUI_STYLE_LABEL].fontSpacing = fontSpacing;
 
+    _defaultStyles.styles[DUSKGUI_STYLE_HORIZONTAL_LINE].font = font;
+    _defaultStyles.styles[DUSKGUI_STYLE_HORIZONTAL_LINE].fontSize = fontSize;
+    _defaultStyles.styles[DUSKGUI_STYLE_HORIZONTAL_LINE].fontSpacing = fontSpacing;
+
     _defaultStyles.styles[DUSKGUI_STYLE_LABELBUTTON].font = font;
     _defaultStyles.styles[DUSKGUI_STYLE_LABELBUTTON].fontSize = fontSize;
     _defaultStyles.styles[DUSKGUI_STYLE_LABELBUTTON].fontSpacing = fontSpacing;
@@ -186,29 +190,28 @@ void DuskGui_init()
         }
     }
 
-    _defaultStyles.styles[DUSKGUI_STYLE_BUTTON] = (DuskGuiStyle)
-        {
-            .draw = DuskGui_defaultDrawStyle,
-            .font = { 0 },
-            .fontSize = 10,
-            .fontSpacing = 1,
-            .textAlignmentX = 0.5f,
-            .textAlignmentY = 0.5f,
-            .paddingLeft = 4,
-            .paddingRight = 4,
-            .paddingTop = 6,
-            .paddingBottom = 4,
-            .textColorNormal = BLACK,
-            .textColorHover = BLACK,
-            .textColorPressed = RED,
-            .backgroundColorNormal = (Color) { 200, 200, 200, 255 },
-            .backgroundColorHover = (Color) { 200, 220, 250, 255 },
-            .backgroundColorPressed = WHITE,
-            .textureNormal = { 0 },
-            .textureHover = { 0 },
-            .texturePressed = { 0 },
-            .styleUserData = NULL
-        };
+    _defaultStyles.styles[DUSKGUI_STYLE_BUTTON] = (DuskGuiStyle) {
+        .draw = DuskGui_defaultDrawStyle,
+        .font = { 0 },
+        .fontSize = 10,
+        .fontSpacing = 1,
+        .textAlignmentX = 0.5f,
+        .textAlignmentY = 0.5f,
+        .paddingLeft = 4,
+        .paddingRight = 4,
+        .paddingTop = 6,
+        .paddingBottom = 4,
+        .textColorNormal = BLACK,
+        .textColorHover = BLACK,
+        .textColorPressed = RED,
+        .backgroundColorNormal = (Color) { 200, 200, 200, 255 },
+        .backgroundColorHover = (Color) { 200, 220, 250, 255 },
+        .backgroundColorPressed = WHITE,
+        .textureNormal = { 0 },
+        .textureHover = { 0 },
+        .texturePressed = { 0 },
+        .styleUserData = NULL
+    };
 
     Texture2D defaultTexture = LoadTextureFromImage(defaultImage);
     UnloadImage(defaultImage);
@@ -224,9 +227,9 @@ void DuskGui_init()
     _defaultStyles.styles[DUSKGUI_STYLE_BUTTON].font = GetFontDefault();
 
     _defaultStyles.styles[DUSKGUI_STYLE_PANEL] = _defaultStyles.styles[DUSKGUI_STYLE_BUTTON];
-    _defaultStyles.styles[DUSKGUI_STYLE_PANEL].backgroundColorNormal = (Color) { 220, 220, 220, 255};
-    _defaultStyles.styles[DUSKGUI_STYLE_PANEL].backgroundColorHover = (Color) { 220, 220, 220, 255};
-    _defaultStyles.styles[DUSKGUI_STYLE_PANEL].backgroundColorPressed = (Color) { 220, 220, 220, 255};
+    _defaultStyles.styles[DUSKGUI_STYLE_PANEL].backgroundColorNormal = (Color) { 220, 220, 220, 255 };
+    _defaultStyles.styles[DUSKGUI_STYLE_PANEL].backgroundColorHover = (Color) { 220, 220, 220, 255 };
+    _defaultStyles.styles[DUSKGUI_STYLE_PANEL].backgroundColorPressed = (Color) { 220, 220, 220, 255 };
 
     _defaultStyles.styles[DUSKGUI_STYLE_LABEL].textColorNormal = BLACK;
     _defaultStyles.styles[DUSKGUI_STYLE_LABEL].textColorHover = BLACK;
@@ -235,6 +238,29 @@ void DuskGui_init()
     _defaultStyles.styles[DUSKGUI_STYLE_LABELBUTTON].textColorNormal = BLACK;
     _defaultStyles.styles[DUSKGUI_STYLE_LABELBUTTON].textColorHover = (Color) { 80, 80, 128, 255 };
     _defaultStyles.styles[DUSKGUI_STYLE_LABELBUTTON].textColorPressed = (Color) { 100, 100, 255, 255 };
+
+    Image horizontalImage = GenImageColor(8, 8, WHITE);
+    Texture2D horizontalLineTexture = LoadTextureFromImage(horizontalImage);
+    UnloadImage(horizontalImage);
+    _defaultStyles.styles[DUSKGUI_STYLE_HORIZONTAL_LINE] = (DuskGuiStyle) {
+        .textureHover = horizontalLineTexture,
+        .textureNormal = horizontalLineTexture,
+        .texturePressed = horizontalLineTexture,
+        .backgroundColorNormal = (Color) { 90, 90, 90, 255 },
+        .backgroundColorHover = (Color) { 90, 90, 90, 255 },
+        .backgroundColorPressed = (Color) { 90, 90, 90, 255 },
+        .textColorNormal = (Color) { 170, 170, 170, 255 },
+        .textColorHover = (Color) { 170, 170, 170, 255 },
+        .textColorPressed = (Color) { 170, 170, 170, 255 },
+        .paddingLeft = 2,
+        .paddingRight = 2,
+        .paddingTop = 0,
+        .paddingBottom = 0,
+        .textAlignmentY = 0.5f,
+    };
+    _defaultStyles.styles[DUSKGUI_STYLE_HORIZONTAL_LINE].nPatchInfoNormal = (NPatchInfo) { .layout = NPATCH_NINE_PATCH, .source = (Rectangle) { 0, 0, 4, 4 }, .left = 2, .top = 2, .right = 2, .bottom = 2 };
+    _defaultStyles.styles[DUSKGUI_STYLE_HORIZONTAL_LINE].nPatchInfoHover = _defaultStyles.styles[DUSKGUI_STYLE_HORIZONTAL_LINE].nPatchInfoNormal;
+    _defaultStyles.styles[DUSKGUI_STYLE_HORIZONTAL_LINE].nPatchInfoPressed = _defaultStyles.styles[DUSKGUI_STYLE_HORIZONTAL_LINE].nPatchInfoNormal;
 }
 
 DuskGuiStyle* DuskGui_getStyle(int styleType)
@@ -322,8 +348,7 @@ void DuskGui_evaluate()
         if (entry->params.rayCastTarget == 0)
             continue;
         int isHit = CheckCollisionPointRec(GetMousePosition(), entry->params.bounds);
-        if (isHit && blocked)
-        {
+        if (isHit && blocked) {
             isHit = 0;
             for (int j = 0; j < blockingParentsCount; j++) {
                 // printf("%i blocked by %s, checking if parent %s\n", j, entry->txId, blockingParents[j]->txId);
@@ -336,7 +361,7 @@ void DuskGui_evaluate()
         }
 
         if (isHit) {
-            DuskGuiParamsEntry *parent = entry;
+            DuskGuiParamsEntry* parent = entry;
             while (parent) {
                 if (blockingParentsCount == maxBlockingParents) {
                     printf("Warning, parent chain too long\n");
@@ -377,7 +402,7 @@ static DuskGuiParamsEntry DuskGui_makeEntry(DuskGuiParams params)
 {
     params.bounds.x += _duskGuiState.currentPanel->params.bounds.x;
     params.bounds.y += _duskGuiState.currentPanel->params.bounds.y;
-    
+
     params.bounds.x += _duskGuiState.currentPanel->contentOffset.x;
     params.bounds.y += _duskGuiState.currentPanel->contentOffset.y;
     DuskGuiParamsEntry entry = {
@@ -447,23 +472,23 @@ DuskGuiParamsEntry DuskGui_beginScrollArea(DuskGuiParams params)
     if (entry.isMouseOver) {
         Vector2 wheelMove = GetMouseWheelMoveV();
         entry.contentOffset.y += wheelMove.y * 15.0f;
-        if (entry.contentOffset.y > 0) {
-            entry.contentOffset.y = 0;
-        }
         if (-entry.contentOffset.y > entry.contentSize.y - entry.params.bounds.height) {
             entry.contentOffset.y = -(entry.contentSize.y - entry.params.bounds.height);
         }
+        if (entry.contentOffset.y > 0 || entry.contentSize.y <= entry.params.bounds.height) {
+            entry.contentOffset.y = 0;
+        }
     }
-    
+
     DuskGui_setContentOffset(entry, entry.contentOffset);
-    
+
     if (params.style && params.style->draw) {
         params.style->draw(&entry, &_duskGuiState, &_defaultStyles.styles[DUSKGUI_STYLE_PANEL]);
     } else {
         DuskGui_defaultDrawStyle(&entry, &_duskGuiState, &_defaultStyles.styles[DUSKGUI_STYLE_PANEL]);
     }
 
-// printf("beg sci: %f %f %f %f %d %d\n", entry.params.bounds.x, entry.params.bounds.y, entry.params.bounds.width, entry.params.bounds.height, GetScreenWidth(), GetScreenHeight());
+    // printf("beg sci: %f %f %f %f %d %d\n", entry.params.bounds.x, entry.params.bounds.y, entry.params.bounds.width, entry.params.bounds.height, GetScreenWidth(), GetScreenHeight());
     BeginScissorMode((int)entry.params.bounds.x, (int)entry.params.bounds.y, (int)entry.params.bounds.width, (int)entry.params.bounds.height);
     return entry;
 }
@@ -516,6 +541,18 @@ int DuskGui_label(DuskGuiParams params)
         DuskGui_defaultDrawStyle(&entry, &_duskGuiState, &_defaultStyles.styles[DUSKGUI_STYLE_LABEL]);
     }
     return entry.isTriggered;
+}
+
+void DuskGui_horizontalLine(DuskGuiParams params)
+{
+    DuskGuiParamsEntry entry = DuskGui_makeEntry(params);
+    DuskGui_addParams(&_duskGuiState.currentParams, &entry);
+    entry = DuskGui_update(entry);
+    if (params.style && params.style->draw) {
+        params.style->draw(&entry, &_duskGuiState, &_defaultStyles.styles[DUSKGUI_STYLE_HORIZONTAL_LINE]);
+    } else {
+        DuskGui_defaultDrawStyle(&entry, &_duskGuiState, &_defaultStyles.styles[DUSKGUI_STYLE_HORIZONTAL_LINE]);
+    }
 }
 
 int DuskGui_button(DuskGuiParams params)

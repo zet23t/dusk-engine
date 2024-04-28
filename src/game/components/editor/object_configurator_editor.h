@@ -3,13 +3,13 @@
 COMPONENT(ObjectConfiguratorEditorComponent)
 #elif defined(COMPONENT_DECLARATION)
 
-typedef struct ObjectConfiguratorEditorComponent {
-    SceneObjectId cameraPivotYawId;
-    SceneObjectId cameraPivotPitchId;
-    SceneObjectId selectedObjectId;
-} ObjectConfiguratorEditorComponent;
+SERIALIZABLE_STRUCT_START(ObjectConfiguratorEditorComponent)
+    SERIALIZABLE_FIELD(SceneObjectId, cameraPivotYawId)
+    SERIALIZABLE_FIELD(SceneObjectId, cameraPivotPitchId)
+    SERIALIZABLE_FIELD(SceneObjectId, selectedObjectId)
+SERIALIZABLE_STRUCT_END(ObjectConfiguratorEditorComponent)
 
-#else
+#elif defined(COMPONENT_IMPLEMENTATION)
 
 #include "object_configurator_editor.c"
 #include "../../util/component_macros.h"

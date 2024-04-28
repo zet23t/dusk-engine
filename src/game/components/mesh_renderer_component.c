@@ -8,11 +8,11 @@ COMPONENT(MeshRendererComponent)
 
 // === DECLARATIONS ===
 #include "../util/component_macros.h"
-BEGIN_COMPONENT_STRUCT {
-    float litAmount;
-    Material* material;
-    Mesh* mesh;
-} END_COMPONENT_STRUCT
+SERIALIZABLE_STRUCT_START(MeshRendererComponent)
+    SERIALIZABLE_FIELD(float, litAmount)
+    NONSERIALIZED_FIELD(Material*, material)
+    NONSERIALIZED_FIELD(Mesh*, mesh)
+SERIALIZABLE_STRUCT_END(MeshRendererComponent)
 
 #else
 

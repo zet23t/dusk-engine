@@ -7,16 +7,18 @@ COMPONENT(PrimitiveRendererComponent)
 #elif defined(COMPONENT_DECLARATION)
 
 // === DECLARATIONS ===
+#ifndef PRIMITIVE_TYPE_CUBE
 #define PRIMITIVE_TYPE_CUBE 0
 #define PRIMITIVE_TYPE_SPHERE 1
 #define PRIMITIVE_TYPE_CYLINDER 2
-typedef struct COMPONENT_NAME
-{
-    Color color;
-    Vector3 size;
-    int primitiveType;
-    bool isWireframe;
-} COMPONENT_NAME;
+#endif
+
+SERIALIZABLE_STRUCT_START(PrimitiveRendererComponent)
+    SERIALIZABLE_FIELD(Color, color)
+    SERIALIZABLE_FIELD(Vector3, size)
+    SERIALIZABLE_FIELD(int, primitiveType)
+    SERIALIZABLE_FIELD(bool, isWireframe)
+SERIALIZABLE_STRUCT_END(PrimitiveRendererComponent)
 
 #else
 

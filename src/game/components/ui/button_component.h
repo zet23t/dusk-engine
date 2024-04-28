@@ -2,19 +2,19 @@
 // === COMPONENT UTILITIES ===
 COMPONENT(ButtonComponent)
 #elif defined(COMPONENT_DECLARATION)
-typedef struct ButtonState {
-    SpriteAsset spriteAsset;
-    Vector2 contentOffset;
-} ButtonState;
+SERIALIZABLE_STRUCT_START(ButtonState)
+    NONSERIALIZED_FIELD(SpriteAsset, spriteAsset)
+    SERIALIZABLE_FIELD(Vector2, contentOffset)
+SERIALIZABLE_STRUCT_END(ButtonState)
 
-typedef struct ButtonComponent {
-    SceneComponentId clickZoneComponentId;
-    SceneComponentId spriteRendererComponentId;
-    SceneObjectId contentId;
-    ButtonState normalState;
-    ButtonState hoverState;
-    ButtonState pressedState;
-} ButtonComponent;
+SERIALIZABLE_STRUCT_START(ButtonComponent)
+    SERIALIZABLE_FIELD(SceneComponentId, clickZoneComponentId)
+    SERIALIZABLE_FIELD(SceneComponentId, spriteRendererComponentId)
+    SERIALIZABLE_FIELD(SceneObjectId, contentId)
+    SERIALIZABLE_FIELD(ButtonState, normalState)
+    SERIALIZABLE_FIELD(ButtonState, hoverState)
+    SERIALIZABLE_FIELD(ButtonState, pressedState)
+SERIALIZABLE_STRUCT_END(ButtonComponent)
 
 
 #else

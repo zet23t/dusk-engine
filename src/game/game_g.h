@@ -116,13 +116,6 @@ typedef struct PSG {
     ShaderLocationIndex litAmountIndex;
 } PSG;
 
-typedef struct SpriteAsset
-{
-    Texture2D texture;
-    Rectangle source;
-    Vector4 scale9frame;
-} SpriteAsset;
-
 typedef struct LevelEventData {
     float x;
     float y;
@@ -328,9 +321,7 @@ typedef struct LinearVelocityComponent {
     Vector3 drag;
 } LinearVelocityComponent;
 
-#define COMPONENT_DECLARATION
-#include "component_list.h"
-#undef COMPONENT_DECLARATION
+#include "shared/serialization/serializable_structs.h"
 
 extern PSG psg;
 
