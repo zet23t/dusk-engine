@@ -78,6 +78,12 @@ void DrawSerializeData_Color(const char *key, Color* data, GUIDrawState *state) 
     state->y += 18;
 }
 
+void DrawSerializeData_int8_t(const char *key, int8_t *data, GUIDrawState *userData) {
+    int v = *data;
+    DrawSerializeData_int(key, &v, userData);
+    *data = (int8_t)v;
+}
+
 void DrawSerializeData_uint32_t(const char *key, uint32_t *data, GUIDrawState *userData) {
     int v = *data;
     DrawSerializeData_int(key, &v, userData);
@@ -161,6 +167,7 @@ typedef struct DrawFunctionOverrides {
     void (*_uint32_t)(const char *key, uint32_t* data, GUIDrawState *userData);
     void (*_int32_t)(const char *key, int32_t* data, GUIDrawState *userData);
     void (*_uint8_t)(const char *key, uint8_t* data, GUIDrawState *userData);
+    void (*_int8_t)(const char *key, int8_t* data, GUIDrawState *userData);
     void (*_size_t)(const char *key, size_t* data, GUIDrawState *userData);
     void (*_float)(const char *key, float* data, GUIDrawState *userData);
     void (*_int)(const char *key, int* data, GUIDrawState *userData);
@@ -194,7 +201,7 @@ DrawFunctionOverrides _drawFunctionOverrides;
     }\
     state->indention--;
 // #define POST_SERIALIZE_CALLBACK(type, name) name(key, data, element, userData);
-#define SERIALIZABLE_STRUCT_END(name) state->indention--;}
+#define SERIALIZABLE_STRUCT_END(name) if (key != NULL) state->indention--; }
 #include "shared/serialization/serializable_file_headers.h"
 
 typedef void (*DrawFunction)(const char *key, void* data, GUIDrawState *state);
@@ -221,12 +228,12 @@ DrawFunction GetDrawFunction(const char *name)
 }
 
 void DrawSerializedData_SceneObject(const char *key, SceneObject* data, GUIDrawState *state) {
+    if (key != NULL) state->indention++;
     DrawSerializeData_cstr("name", data->name, state);
     DuskGui_horizontalLine((DuskGuiParams){.text = "Transform", .bounds = (Rectangle) { 1, state->y, DuskGui_getAvailableSpace().x - 2, 18 }});
     state->y += 20;
     DrawSerializeData_SceneObjectTransform(NULL, &data->transform, state);
     state->y += 3;
-    state->indention++;
     
     for (int i=0;i<data->components_count;i++)
     {
@@ -247,7 +254,7 @@ void DrawSerializedData_SceneObject(const char *key, SceneObject* data, GUIDrawS
         }
         // DrawSerializeData_SceneComponentIdOverride(NULL, &component->id, state);
     }
-    state->indention--;
+    if (key != NULL) state->indention--;
 }
 static void DrawHierarchyNode(SceneGraph *sceneGraph, ObjectConfiguratorEditorComponent* cfgEdit, SceneObjectId objId, int depth, int *y)
 {

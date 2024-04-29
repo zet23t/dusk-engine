@@ -42,14 +42,14 @@ static void spawnHitEffect(Vector3 position, Vector3 impactVelocity)
 static int onTargetHit(SceneGraph* graph, SceneObjectId target, SceneObjectId bullet)
 {
     HealthComponent* healthComponent;
-    if (SceneGraph_getComponentByType(graph, target, psg.healthComponentId, (void**)&healthComponent, 0)) {
+    if (SceneGraph_getComponentByType(graph, target, psg.HealthComponentId, (void**)&healthComponent, 0)) {
         healthComponent->health -= 1;
     } else
         SceneGraph_destroyObject(graph, target);
 
     Vector3 position = SceneGraph_getLocalPosition(graph, bullet);
     LinearVelocityComponent* velocity;
-    if (SceneGraph_getComponentByType(graph, bullet, psg.linearVelocityComponentId, (void**)&velocity, 0)) {
+    if (SceneGraph_getComponentByType(graph, bullet, psg.LinearVelocityComponentId, (void**)&velocity, 0)) {
         spawnHitEffect(position, velocity->velocity);
     } else
         spawnHitEffect(position, (Vector3) { 0, 0, 0 });
@@ -63,7 +63,7 @@ static SceneObjectId instantiate_target(Vector3 position)
     SceneObjectId target = SceneGraph_createObject(psg.sceneGraph, "target");
     SceneGraph_setLocalPosition(psg.sceneGraph, target, position);
     AddMeshRendererComponent(target, psg.meshPlane2, 0.0f);
-    SceneGraph_addComponent(psg.sceneGraph, target, psg.targetComponentId,
+    SceneGraph_addComponent(psg.sceneGraph, target, psg.TargetComponentId,
         &(TargetComponent) {
             .radius = 0.8f,
             .colliderMask = 1,

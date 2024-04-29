@@ -24,7 +24,7 @@ void HandlePlayerInputUpdate(SceneObject *object, SceneComponentId componentId, 
     if (psg.deltaTime == 0) return;
     Vector3 position = SceneGraph_getLocalPosition(psg.sceneGraph, psg.playerPlane);
     LinearVelocityComponent *velocity;
-    SceneGraph_getComponentByType(psg.sceneGraph, psg.playerPlane, psg.linearVelocityComponentId, (void**)&velocity, 0);
+    SceneGraph_getComponentByType(psg.sceneGraph, psg.playerPlane, psg.LinearVelocityComponentId, (void**)&velocity, 0);
     if (velocity == NULL) return;
 
     int cnt = GetTouchPointCount();
@@ -63,7 +63,7 @@ void HandlePlayerInputUpdate(SceneObject *object, SceneComponentId componentId, 
         for (int i=0;1;i++)
         {
             ShootingComponent *shooting;
-            SceneGraph_getComponentByType(psg.sceneGraph, psg.playerPlane, psg.shootingComponentId, (void**)&shooting, i);
+            SceneGraph_getComponentByType(psg.sceneGraph, psg.playerPlane, psg.ShootingComponentId, (void**)&shooting, i);
             if (shooting == NULL) break;
             shooting->shooting = 1;
         }

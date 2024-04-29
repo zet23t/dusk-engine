@@ -61,14 +61,9 @@ typedef struct PSG {
 
     cJSON* levelConfig;
 
-    SceneComponentTypeId linearVelocityComponentId;
-    SceneComponentTypeId shootingComponentId;
     SceneComponentTypeId autoDestroyComponentId;
     SceneComponentTypeId bulletComponentId;
-    SceneComponentTypeId targetComponentId;
-    SceneComponentTypeId healthComponentId;
     SceneComponentTypeId updateCallbackComponentId;
-    SceneComponentTypeId enemyPlaneBehaviorComponentId;
     SceneComponentTypeId movementPatternComponentId;
     SceneComponentTypeId cameraComponentId;
     SceneComponentTypeId targetHandlerComponentId;
@@ -142,9 +137,6 @@ typedef struct LevelSystem {
     float time;
     LevelEvent* events;
 } LevelSystem;
-
-typedef struct ShootingConfig ShootingConfig;
-typedef struct ShootingComponent ShootingComponent;
 
 typedef struct EnemyBehaviorComponent
 {
@@ -237,11 +229,6 @@ typedef struct GroundTileConfigComponent {
     float baseSpeed;
 } GroundTileConfigComponent;
 
-typedef struct HealthComponent {
-    float health;
-    float maxHealth;
-} HealthComponent;
-
 typedef struct EnemyPlaneBehaviorComponent {
     float phase;
     float rolling;
@@ -271,26 +258,9 @@ typedef struct UpdateCallbackComponent {
     
 } UpdateCallbackComponent;
 
-typedef void (*OnShootFn)(SceneGraph*, SceneComponentId shooter, ShootingComponent*, ShootingConfig* shootingComponent);
-
-typedef struct ShootingConfig {
-    float shotInterval;
-    float bulletSpeed;
-    float bulletLifetime;
-    int bulletMask;
-    OnShootFn onShoot;
-} ShootingConfig;
-
 typedef struct AutoDestroyComponent {
     float lifeTimeLeft;
 } AutoDestroyComponent;
-
-typedef struct ShootingComponent {
-    float cooldown;
-    int8_t shooting;
-    ShootingConfig config;
-    SceneObjectId spawnPoint;
-} ShootingComponent;
 
 typedef struct BulletComponent {
     float radius;
@@ -299,11 +269,6 @@ typedef struct BulletComponent {
 } BulletComponent;
 
 typedef int (*OnHit)(SceneGraph*, SceneObjectId target, SceneObjectId bullet);
-typedef struct TargetComponent {
-    float radius;
-    uint32_t colliderMask;
-    OnHit onHit;
-} TargetComponent;
 
 typedef struct PlaneBehaviorComponent {
     float phase;
@@ -314,12 +279,6 @@ typedef struct PlaneBehaviorComponent {
     SceneObjectId propeller;
     SceneComponentId velocityComponentId;
 } PlaneBehaviorComponent;
-
-typedef struct LinearVelocityComponent {
-    Vector3 velocity;
-    Vector3 acceleration;
-    Vector3 drag;
-} LinearVelocityComponent;
 
 #include "shared/serialization/serializable_structs.h"
 

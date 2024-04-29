@@ -186,14 +186,9 @@ static void shaderLoad(int isReload)
     }
 }
 
-void LinearVelocityComponentRegister();
-void ShootingComponentRegister();
 void AutoDestroyComponentRegister();
 void BulletComponentRegister();
-void TargetComponentRegister();
-void HealthComponentRegister();
 void UpdateCallbackComponentRegister();
-void EnemyPlaneBehaviorComponentRegister();
 void MovementPatternComponentRegister();
 void CameraComponentRegister();
 void TargetHandlerComponentRegister();
@@ -235,17 +230,11 @@ int game_init()
 #define COMPONENT(t) t##Register();
 #include "component_list.h"
 #undef COMPONENT
-    LinearVelocityComponentRegister();
-    ShootingComponentRegister();
     AutoDestroyComponentRegister();
     BulletComponentRegister();
-    TargetComponentRegister();
-    HealthComponentRegister();
     UpdateCallbackComponentRegister();
-    EnemyPlaneBehaviorComponentRegister();
     MovementPatternComponentRegister();
     CameraComponentRegister();
-    TargetHandlerComponentRegister();
     TextComponentRegister();
     TrailRendererComponentRegister();
     EnemyBehaviorComponentRegister();

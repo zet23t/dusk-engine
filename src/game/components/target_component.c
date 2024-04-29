@@ -36,14 +36,3 @@ static void TargetComponent_draw(Camera3D camera, SceneObject* node, SceneCompon
     DrawSphereWires(pos, target->radius, 10, 10, WHITE);
 }
 #endif
-
-void TargetComponentRegister()
-{
-    psg.targetComponentId = SceneGraph_registerComponentType(psg.sceneGraph, "Target", sizeof(TargetComponent),
-        (SceneComponentTypeMethods) {
-            .updateTick = TargetComponentUpdate,
-#if defined(DEBUG)
-            .draw = TargetComponent_draw,
-#endif
-        });
-}

@@ -24,7 +24,7 @@ static void PlaneBehaviorComponentUpdateTick(SceneObject* sceneObject, SceneComp
     PlaneBehaviorComponent* planeBehavior = (PlaneBehaviorComponent*)componentData;
 
     LinearVelocityComponent* velocity;
-    SceneGraph_getComponentOrFindByType(psg.sceneGraph, sceneObject->id, &planeBehavior->velocityComponentId, psg.linearVelocityComponentId, (void**)&velocity);
+    SceneGraph_getComponentOrFindByType(psg.sceneGraph, sceneObject->id, &planeBehavior->velocityComponentId, psg.LinearVelocityComponentId, (void**)&velocity);
     if (velocity == NULL) {
         return;
     }

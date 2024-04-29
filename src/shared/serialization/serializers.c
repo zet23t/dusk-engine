@@ -47,6 +47,9 @@ void SerializeData_size_t(const char *key, size_t *data, cJSON *obj, void *userD
 void SerializeData_uint8_t(const char *key, uint8_t *data, cJSON *obj, void *userData) {
     cJSON_AddNumberToObject(obj, key, *data);
 }
+void SerializeData_int8_t(const char *key, int8_t *data, cJSON *obj, void *userData) {
+    cJSON_AddNumberToObject(obj, key, *data);
+}
 
 #define SERIALIZABLE_STRUCT_START(name) void SerializeData_##name(const char *key, name* data, cJSON *obj, void *userData) {\
     cJSON *element __attribute__((unused)) = obj == NULL ? cJSON_CreateObject() : (key == NULL ? obj : cJSON_AddObjectToObject(obj, key));

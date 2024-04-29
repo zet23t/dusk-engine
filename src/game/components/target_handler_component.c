@@ -43,7 +43,7 @@ static void HandleSpawnActions(SceneGraph *graph, cJSON *objects, Vector3 positi
             SceneObjectId spawn = InstantiateFromJSON(graph, objects, action.prefab);
             SceneGraph_setLocalPosition(graph, spawn, position);
             LinearVelocityComponent* spawnVelocity;
-            if (SceneGraph_getComponentByType(graph, spawn, psg.linearVelocityComponentId, (void**)&spawnVelocity, 0)) {
+            if (SceneGraph_getComponentByType(graph, spawn, psg.LinearVelocityComponentId, (void**)&spawnVelocity, 0)) {
                 float factor = GetRandomFloat(action.bulletVelocityFactor.x, action.bulletVelocityFactor.y);
                 float x = GetRandomFloat(action.minRandomVelocityRange.x, action.maxRandomVelocityRange.x);
                 float y = GetRandomFloat(action.minRandomVelocityRange.y, action.maxRandomVelocityRange.y);
@@ -60,7 +60,7 @@ static int TargetHandlerComponentOnHit(SceneGraph* graph, SceneObjectId target, 
 {
     HealthComponent* healthComponent;
     int isDestroyed = 0;
-    if (SceneGraph_getComponentByType(graph, target, psg.healthComponentId, (void**)&healthComponent, 0)) {
+    if (SceneGraph_getComponentByType(graph, target, psg.HealthComponentId, (void**)&healthComponent, 0)) {
         healthComponent->health -= 1;
         isDestroyed = healthComponent->health <= 0;
     } else {
@@ -72,10 +72,10 @@ static int TargetHandlerComponentOnHit(SceneGraph* graph, SceneObjectId target, 
     Vector3 velocity = { 0, 0, 0 };
     Vector3 targetVelocity = { 0, 0, 0 };
     LinearVelocityComponent* velocityComponent;
-    if (SceneGraph_getComponentByType(graph, bullet, psg.linearVelocityComponentId, (void**)&velocityComponent, 0)) {
+    if (SceneGraph_getComponentByType(graph, bullet, psg.LinearVelocityComponentId, (void**)&velocityComponent, 0)) {
         velocity = velocityComponent->velocity;
     }
-    if (SceneGraph_getComponentByType(graph, target, psg.linearVelocityComponentId, (void**)&velocityComponent, 0)) {
+    if (SceneGraph_getComponentByType(graph, target, psg.LinearVelocityComponentId, (void**)&velocityComponent, 0)) {
         targetVelocity = velocityComponent->velocity;
     }
 
@@ -128,7 +128,7 @@ static void TargetHandlerComponentInitialize(SceneObject* sceneObject, SceneComp
             }
         }
 
-        SceneGraph_addComponent(psg.sceneGraph, sceneObject->id, psg.targetComponentId, &targetComponent);
+        SceneGraph_addComponent(psg.sceneGraph, sceneObject->id, psg.TargetComponentId, &targetComponent);
     }
 }
 

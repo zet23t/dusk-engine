@@ -32,7 +32,7 @@ void EnemyBehaviorComponent_onUpdate(SceneObject* sceneObject, SceneComponentId 
 {
     EnemyBehaviorComponent* enemyBehaviorComponent = (EnemyBehaviorComponent*)componentData;
     LinearVelocityComponent* velocity;
-    SceneComponent* velocityComponent = SceneGraph_getComponentOrFindByType(sceneObject->graph, sceneObject->id, &enemyBehaviorComponent->velocityComponentId, psg.linearVelocityComponentId, (void**)&velocity);
+    SceneComponent* velocityComponent = SceneGraph_getComponentOrFindByType(sceneObject->graph, sceneObject->id, &enemyBehaviorComponent->velocityComponentId, psg.LinearVelocityComponentId, (void**)&velocity);
     if (!enemyBehaviorComponent->initialized)
     {
         enemyBehaviorComponent->initialized = 1;

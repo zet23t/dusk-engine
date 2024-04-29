@@ -37,16 +37,7 @@ void AddHealthComponent(SceneObjectId objectId, int health, int maxHealth)
         .health = health,
         .maxHealth = maxHealth,
     };
-    SceneGraph_addComponent(psg.sceneGraph, objectId, psg.healthComponentId, &(ComponentInitializer) {
+    SceneGraph_addComponent(psg.sceneGraph, objectId, psg.HealthComponentId, &(ComponentInitializer) {
         .memData = &component,
     });
-}
-
-void HealthComponentRegister()
-{
-    psg.healthComponentId = SceneGraph_registerComponentType(psg.sceneGraph, "HealthComponent", sizeof(HealthComponent),
-        (SceneComponentTypeMethods) {
-            .updateTick = HealthComponentUpdate,
-            .onInitialize = HealthComponentInitialize,
-        });
 }

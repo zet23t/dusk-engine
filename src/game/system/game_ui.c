@@ -42,7 +42,7 @@ static void GameUi_Update(SceneObject* sceneObject, SceneComponentId SceneCompon
     char text[64];
     char hitpoints[64];
     HealthComponent *health;
-    if (SceneGraph_getComponentOrFindByType(sceneObject->graph, psg.playerPlane, NULL, psg.healthComponentId, (void**)&health)) {
+    if (SceneGraph_getComponentOrFindByType(sceneObject->graph, psg.playerPlane, NULL, psg.HealthComponentId, (void**)&health)) {
         int cpos = 0;
         for (int i=0;i<health->maxHealth;i+=1)
         {

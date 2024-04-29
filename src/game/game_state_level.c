@@ -130,7 +130,7 @@ void SpawnHitEffect(SceneGraph* g, Vector3 position, Vector3 initialVelocity, fl
 int OnPlayerHit(SceneGraph* g, SceneObjectId target, SceneObjectId bullet)
 {
     HealthComponent* health;
-    SceneGraph_getComponentByType(g, target, psg.healthComponentId, (void**)&health, 0);
+    SceneGraph_getComponentByType(g, target, psg.HealthComponentId, (void**)&health, 0);
     if (health == NULL) {
         return 1;
     }
@@ -169,18 +169,18 @@ SceneObjectId plane_instantiate(Vector3 position)
     AddLinearVelocityComponent(plane, Vector3Zero(), Vector3Zero(), (Vector3) { drag, drag, drag });
 
     ShootingConfig shootingConfig = {
-        .shotInterval = 0.15f,
+        .shootInterval = 0.15f,
         .bulletSpeed = 20.0f,
         .bulletLifetime = .75f,
         .bulletMask = 1,
-        .onShoot = (OnShootFn)onShoot,
+        .onShoot = onShoot,
     };
 
     SceneObjectId spawnPoint1 = SceneGraph_createObject(psg.sceneGraph, "spawn-point-1");
     SceneGraph_setParent(psg.sceneGraph, spawnPoint1, plane);
     SceneGraph_setLocalPosition(psg.sceneGraph, spawnPoint1, (Vector3) { 0.566518f, -0.018f, 0.617959f });
 
-    SceneGraph_addComponent(psg.sceneGraph, plane, psg.shootingComponentId,
+    SceneGraph_addComponent(psg.sceneGraph, plane, psg.ShootingComponentId,
         &(ShootingComponent) {
             .spawnPoint = spawnPoint1,
             .config = shootingConfig,
@@ -190,13 +190,13 @@ SceneObjectId plane_instantiate(Vector3 position)
     SceneGraph_setParent(psg.sceneGraph, spawnPoint2, plane);
     SceneGraph_setLocalPosition(psg.sceneGraph, spawnPoint2, (Vector3) { -0.566518f, -0.018f, 0.617959f });
 
-    SceneGraph_addComponent(psg.sceneGraph, plane, psg.shootingComponentId,
+    SceneGraph_addComponent(psg.sceneGraph, plane, psg.ShootingComponentId,
         &(ShootingComponent) {
             .spawnPoint = spawnPoint2,
             .config = shootingConfig,
         });
     AddHealthComponent(plane, 6, 6);
-    SceneGraph_addComponent(psg.sceneGraph, plane, psg.targetComponentId,
+    SceneGraph_addComponent(psg.sceneGraph, plane, psg.TargetComponentId,
         &(TargetComponent) {
             .colliderMask = 2,
             .radius = 1.0f,
@@ -215,7 +215,7 @@ static void PropellerRotator(SceneGraph* graph, SceneObjectId objectId, SceneCom
 int OnEnemyHit(SceneGraph* g, SceneObjectId target, SceneObjectId bullet)
 {
     HealthComponent* health;
-    SceneGraph_getComponentByType(g, target, psg.healthComponentId, (void**)&health, 0);
+    SceneGraph_getComponentByType(g, target, psg.HealthComponentId, (void**)&health, 0);
     if (health == NULL) {
         return 0;
     }
@@ -245,7 +245,7 @@ void SpawnEnemy(SceneGraph* g, float x, float y, EnemyBehaviorComponent behavior
             .floatValue = 3000.0f });
     AddMeshRendererComponent(enemy, psg.meshPlane2, 1.0f);
     AddHealthComponent(enemy, 3, 3);
-    SceneGraph_addComponent(g, enemy, psg.targetComponentId,
+    SceneGraph_addComponent(g, enemy, psg.TargetComponentId,
         &(TargetComponent) {
             .colliderMask = 1,
             .radius = 1.0f,
@@ -254,14 +254,14 @@ void SpawnEnemy(SceneGraph* g, float x, float y, EnemyBehaviorComponent behavior
     AddWingTrail(enemy, -1.0f, 0.3f, 0, 2.0f);
 
     ShootingConfig shootingConfig = {
-        .shotInterval = 1.5f,
+        .shootInterval = 1.5f,
         .bulletSpeed = 10.0f,
         .bulletLifetime = 2.0f,
         .bulletMask = 2,
-        .onShoot = (OnShootFn)onShoot,
+        .onShoot = onShoot,
     };
 
-    SceneGraph_addComponent(psg.sceneGraph, enemy, psg.shootingComponentId,
+    SceneGraph_addComponent(psg.sceneGraph, enemy, psg.ShootingComponentId,
         &(ShootingComponent) {
             .spawnPoint = enemy,
             .shooting = 2,

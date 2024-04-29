@@ -4,6 +4,9 @@
 #include <raylib.h>
 #include <inttypes.h>
 
+#define SERIALIZABLE_STRUCT_START(name) typedef struct name name;
+#include "serializable_file_headers.h"
+
 #define SERIALIZABLE_STRUCT_START(name) typedef struct name {
 #define SERIALIZABLE_STRUCT_END(name) } name;
 #define SERIALIZABLE_FIELD(type, name) type name;
