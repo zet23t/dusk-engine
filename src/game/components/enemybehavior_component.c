@@ -88,14 +88,3 @@ void EnemyBehaviorComponent_onDraw(Camera3D camera, SceneObject* sceneObject, Sc
         DrawLine3D(enemyBehaviorComponent->points[i-1], enemyBehaviorComponent->points[i], RED);
     }
 }
-
-void EnemyBehaviorComponentRegister()
-{
-    psg.enemyBehaviorComponentId = SceneGraph_registerComponentType(psg.sceneGraph, "EnemyBehaviorComponent", sizeof(EnemyBehaviorComponent),
-        (SceneComponentTypeMethods) {
-            // .onInitialize = EnemyBehaviorComponent_onInitialize,
-            // .draw = EnemyBehaviorComponent_onDraw,
-            .onDestroy = NULL,
-            .updateTick = EnemyBehaviorComponent_onUpdate,
-        });
-}

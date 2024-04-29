@@ -189,6 +189,16 @@ DrawFunctionOverrides _drawFunctionOverrides;
 #define SERIALIZABLE_FIELD(type, name) \
     if (_drawFunctionOverrides._##type == NULL) DrawSerializeData_##type(#name, &data->name, state); \
     else _drawFunctionOverrides._##type(#name, &data->name, state);
+#define SERIALIZABLE_ARRAY(type, name, count) \
+    DuskGui_label((DuskGuiParams){.text = #name, .bounds = (Rectangle) { 10 + state->indention * 10, state->y, state->labelWidth, 18 }, .rayCastTarget = 1});\
+    state->indention++, state->y+=18;\
+    for (int i = 0; i < count; i++) { \
+        char num[32];\
+        sprintf(num, "%d", i);\
+        if (_drawFunctionOverrides._##type == NULL) DrawSerializeData_##type(num, &data->name[i], state); \
+        else _drawFunctionOverrides._##type(num, &data->name[i], state); \
+    }\
+    state->indention--;
 #define SERIALIZABLE_CSTR(name) DrawSerializeData_cstr(#name, data->name, state);
 #define SERIALIZABLE_STRUCT_LIST_ELEMENT(type, name) \
     DuskGui_label((DuskGuiParams){.text = #name, .bounds = (Rectangle) { 10 + state->indention * 10, state->y, state->labelWidth, 18 }, .rayCastTarget = 1});\

@@ -6,6 +6,10 @@
 #define SERIALIZABLE_FIELD(type,name)
 #endif
 
+#ifndef SERIALIZABLE_ARRAY
+#define SERIALIZABLE_ARRAY(type,name,count)
+#endif
+
 #ifndef SERIALIZABLE_CSTR
 #define SERIALIZABLE_CSTR(name)
 #endif

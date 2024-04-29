@@ -71,7 +71,6 @@ typedef struct PSG {
     SceneComponentTypeId timerComponentTypeId;
     SceneComponentTypeId trailRendererComponentTypeId;
     SceneComponentTypeId tweenComponentId;
-    SceneComponentTypeId enemyBehaviorComponentId;
 
     SceneComponentTypeId targetSpawnSystemId;
     SceneComponentTypeId levelSystemId;
@@ -137,18 +136,6 @@ typedef struct LevelSystem {
     float time;
     LevelEvent* events;
 } LevelSystem;
-
-typedef struct EnemyBehaviorComponent
-{
-    int32_t behaviorType;
-    int32_t phase;
-    float time, velocity, agility;
-    Vector3 points[4];
-    int8_t pointCount;
-    int8_t initialized;
-    int8_t autoDestroy;
-    SceneComponentId velocityComponentId;
-} EnemyBehaviorComponent;
 
 typedef struct TextComponent {
     Font font;

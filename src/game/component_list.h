@@ -9,5 +9,6 @@
 #include "components/health_component.h"
 #include "components/shooting_component.h"
 #include "components/target_component.h"
+#include "components/enemybehavior_component.h"
 #include "components/linear_velocity_component.h"
 #include "components/editor/object_configurator_editor.h"

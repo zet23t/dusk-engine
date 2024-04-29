@@ -194,7 +194,6 @@ void CameraComponentRegister();
 void TargetHandlerComponentRegister();
 void TextComponentRegister();
 void TrailRendererComponentRegister();
-void EnemyBehaviorComponentRegister();
 
 void RegisterTargetSpawnSystem();
 void CloudSystemRegister();
@@ -237,7 +236,6 @@ int game_init()
     CameraComponentRegister();
     TextComponentRegister();
     TrailRendererComponentRegister();
-    EnemyBehaviorComponentRegister();
 
     // Game ui should run last
     GameUiSystemRegister();

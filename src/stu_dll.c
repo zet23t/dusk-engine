@@ -17,7 +17,6 @@
 #include "game/components/target_handler_component.c"
 #include "game/components/text_component.c"
 #include "game/components/trail_renderer_component.c"
-#include "game/components/enemybehavior_component.c"
 
 #define COMPONENT_IMPLEMENTATION
 #include "game/component_list.h"

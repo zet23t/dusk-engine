@@ -10,6 +10,7 @@
 #define SERIALIZABLE_STRUCT_START(name) typedef struct name {
 #define SERIALIZABLE_STRUCT_END(name) } name;
 #define SERIALIZABLE_FIELD(type, name) type name;
+#define SERIALIZABLE_ARRAY(type, name, count) type name[count];
 #define SERIALIZABLE_CSTR(name) char* name;
 #define SERIALIZABLE_STRUCT_LIST_ELEMENT(type, name) \
     type* name;                         \

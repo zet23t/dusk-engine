@@ -237,7 +237,7 @@ void SpawnEnemy(SceneGraph* g, float x, float y, EnemyBehaviorComponent behavior
     SceneGraph_setLocalPosition(g, enemy, (Vector3) { x, 0, y });
     SceneGraph_setLocalRotation(g, enemy, (Vector3) { 0, 180, 0 });
     AddLinearVelocityComponent(enemy, Vector3Zero(), Vector3Zero(), Vector3Zero());
-    SceneGraph_addComponent(g, enemy, psg.enemyBehaviorComponentId, &behavior);
+    SceneGraph_addComponent(g, enemy, psg.EnemyBehaviorComponentId, &behavior);
     SceneObjectId propeller = add_propeller(enemy, 0, 0.08f, 0.6f);
     SceneGraph_addComponent(g, propeller, psg.updateCallbackComponentId,
         &(UpdateCallbackComponent) {
