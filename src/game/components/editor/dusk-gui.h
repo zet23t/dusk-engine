@@ -14,55 +14,71 @@ typedef struct DuskGuiParamsEntryList {
     int capacity;
 } DuskGuiParamsList;
 
-typedef struct DuskGuiStyle
-{
-    void (*draw)(DuskGuiParamsEntry *params, DuskGuiState *state, struct DuskGuiStyle *fallback);
-    
+typedef struct DuskGuiFontStyle {
     Font font;
     float fontSize;
     int fontSpacing;
+} DuskGuiFontStyle;
 
-    float textAlignmentX;
-    float textAlignmentY;
+typedef struct DuskGuiStyle
+{
+    DuskGuiFontStyle *fontStyle;
+
+    Vector2 textAlignment;
 
     int paddingLeft;
     int paddingRight;
     int paddingTop;
     int paddingBottom;
     
-    Color textColorNormal;
-    Color textColorHover;
-    Color textColorPressed;
-    Color backgroundColorNormal;
-    Color backgroundColorHover;
-    Color backgroundColorPressed;
-
-    Texture2D textureNormal;
-    Texture2D textureHover;
-    Texture2D texturePressed;
-    NPatchInfo nPatchInfoNormal;
-    NPatchInfo nPatchInfoHover;
-    NPatchInfo nPatchInfoPressed;
+    Color textColor;
+    Color backgroundColor;
     
+    Texture2D iconTexture;
+    Color iconColor;
+    Vector2 iconSize;
+    Vector2 iconPivot;
+    Vector2 iconOffset;
+    Vector2 iconAlignment;
+    float iconRotationDegrees;
+
+    Texture2D backgroundTexture;
+    NPatchInfo backgroundPatchInfo;
+
     void *styleUserData;
 } DuskGuiStyle;
+
+typedef struct DuskGuiStyleGroup
+{
+    void (*draw)(DuskGuiParamsEntry *params, DuskGuiState *state, struct DuskGuiStyleGroup *fallback);
+
+    DuskGuiStyle fallbackStyle;
+    DuskGuiStyle* normal;
+    DuskGuiStyle* hover;
+    DuskGuiStyle* pressed;
+    DuskGuiStyle* active;
+    DuskGuiStyle* disabled;
+    DuskGuiStyle* focused;
+    DuskGuiStyle* selected;
+} DuskGuiStyleGroup;
 
 typedef struct DuskGuiParams
 {
     const char *text;
     Rectangle bounds;
     int rayCastTarget;
-    DuskGuiStyle *style;
+    DuskGuiStyleGroup *styleGroup;
 } DuskGuiParams;
 
 typedef struct DuskGuiParamsEntry
 {
     int id;
     char *txId;
-    char isMouseOver;
-    char isHovered;
-    char isPressed;
-    char isTriggered;
+    char isMouseOver:1;
+    char isHovered:1;
+    char isPressed:1;
+    char isTriggered:1;
+    char isFolded:1;
     Vector2 contentOffset;
     Vector2 contentSize;
 
@@ -85,22 +101,25 @@ typedef enum DuskGuiStyleType {
     DUSKGUI_STYLE_BUTTON = 0,
     DUSKGUI_STYLE_LABEL,
     DUSKGUI_STYLE_LABELBUTTON,
+    DUSKGUI_STYLE_FOLDOUT_OPEN,
+    DUSKGUI_STYLE_FOLDOUT_CLOSED,
     DUSKGUI_STYLE_PANEL,
     DUSKGUI_STYLE_HORIZONTAL_LINE,
     DUSKGUI_MAX_STYLESHEETS
 } DuskGuiStyleType;
 
 typedef struct DuskGuiStyleSheet {
-    DuskGuiStyle styles[DUSKGUI_MAX_STYLESHEETS];
+    DuskGuiStyleGroup groups[DUSKGUI_MAX_STYLESHEETS];
 } DuskGuiStyleSheet;
 
 void DuskGui_init();
 void DuskGui_evaluate();
-void DuskGui_setDefaultFont(Font font, float fontSize, int fontSpacing, Color normal, Color hover, Color pressed);
-DuskGuiStyle* DuskGui_getStyle(int styleType);
+void DuskGui_setDefaultFont(Font font, float fontSize, int fontSpacing);
+DuskGuiStyleGroup* DuskGui_getStyleGroup(int styleType);
 int DuskGui_button(DuskGuiParams params);
 int DuskGui_dragArea(DuskGuiParams params);
 int DuskGui_label(DuskGuiParams params);
+int DuskGui_foldout(DuskGuiParams params);
 void DuskGui_horizontalLine(DuskGuiParams params);
 void DuskGui_setContentSize(DuskGuiParamsEntry entry, Vector2 contentSize);
 void DuskGui_setContentOffset(DuskGuiParamsEntry entry, Vector2 contentOffset);

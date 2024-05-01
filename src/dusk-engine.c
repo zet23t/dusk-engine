@@ -109,7 +109,7 @@ int main(void)
             step = 1;
         }
 
-        if (IsKeyPressed(KEY_F7) || IsKeyPressed(KEY_F8)) {
+        if (/*IsKeyPressed(KEY_F7) ||*/ IsKeyPressed(KEY_F8)) {
             float reloadStart = GetTime();
             TraceLog(LOG_WARNING, "Unloading game code\n");
             void* storedState = Host_UnloadGameCode();

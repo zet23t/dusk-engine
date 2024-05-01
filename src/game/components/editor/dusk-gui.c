@@ -25,61 +25,59 @@ static DuskGuiParamsEntry* DuskGui_findParams(DuskGuiParamsList* paramsList, Dus
     return NULL;
 }
 
-static void DuskGui_defaultDrawStyle(DuskGuiParamsEntry* params, DuskGuiState* state, DuskGuiStyle* fallbackStyle);
+static void DuskGui_defaultDrawStyle(DuskGuiParamsEntry* params, DuskGuiState* state, DuskGuiStyleGroup* styleGroup);
+static DuskGuiFontStyle _defaultFont;
 static DuskGuiStyleSheet _defaultStyles;
 
-void DuskGui_setDefaultFont(Font font, float fontSize, int fontSpacing, Color normal, Color hover, Color pressed)
+void DuskGui_setDefaultFont(Font font, float fontSize, int fontSpacing)
 {
-    _defaultStyles.styles[DUSKGUI_STYLE_BUTTON].font = font;
-    _defaultStyles.styles[DUSKGUI_STYLE_BUTTON].fontSize = fontSize;
-    _defaultStyles.styles[DUSKGUI_STYLE_BUTTON].fontSpacing = fontSpacing;
-    _defaultStyles.styles[DUSKGUI_STYLE_BUTTON].textColorNormal = normal;
-    _defaultStyles.styles[DUSKGUI_STYLE_BUTTON].textColorHover = hover;
-    _defaultStyles.styles[DUSKGUI_STYLE_BUTTON].textColorPressed = pressed;
-
-    _defaultStyles.styles[DUSKGUI_STYLE_LABEL].font = font;
-    _defaultStyles.styles[DUSKGUI_STYLE_LABEL].fontSize = fontSize;
-    _defaultStyles.styles[DUSKGUI_STYLE_LABEL].fontSpacing = fontSpacing;
-
-    _defaultStyles.styles[DUSKGUI_STYLE_HORIZONTAL_LINE].font = font;
-    _defaultStyles.styles[DUSKGUI_STYLE_HORIZONTAL_LINE].fontSize = fontSize;
-    _defaultStyles.styles[DUSKGUI_STYLE_HORIZONTAL_LINE].fontSpacing = fontSpacing;
-
-    _defaultStyles.styles[DUSKGUI_STYLE_LABELBUTTON].font = font;
-    _defaultStyles.styles[DUSKGUI_STYLE_LABELBUTTON].fontSize = fontSize;
-    _defaultStyles.styles[DUSKGUI_STYLE_LABELBUTTON].fontSpacing = fontSpacing;
+    _defaultFont.font = font;
+    _defaultFont.fontSize = fontSize;
+    _defaultFont.fontSpacing = fontSpacing;
 }
 
-static void DuskGui_defaultDrawStyle(DuskGuiParamsEntry* entry, DuskGuiState* state, DuskGuiStyle* fallbackStyle)
+static void DuskGui_defaultDrawStyle(DuskGuiParamsEntry* entry, DuskGuiState* state, DuskGuiStyleGroup* styleGroup)
 {
-    DuskGuiStyle* style = entry->params.style ? entry->params.style : fallbackStyle;
-    Color textColor = style->textColorNormal;
-    Color backgroundColor = style->backgroundColorNormal;
-    Texture2D texture = style->textureNormal;
-    NPatchInfo nPatchInfo = style->nPatchInfoNormal;
-    if (entry->isHovered) {
-        textColor = style->textColorHover;
-        backgroundColor = style->backgroundColorHover;
-        texture = style->textureHover.id != 0 ? style->textureHover : texture;
-        nPatchInfo = style->nPatchInfoHover;
+    DuskGuiStyleGroup* group = entry->params.styleGroup ? entry->params.styleGroup : styleGroup;
+    DuskGuiStyle* style = group->normal ? group->normal : &group->fallbackStyle;
+    if (entry->isHovered && group->hover) {
+        style = group->hover;
     }
-    if (entry->isPressed) {
-        textColor = style->textColorPressed;
-        backgroundColor = style->backgroundColorPressed;
-        texture = style->texturePressed.id != 0 ? style->texturePressed : texture;
-        nPatchInfo = style->nPatchInfoPressed;
+    if (entry->isPressed && group->pressed) {
+        style = group->pressed;
+    }
+    if (entry->isTriggered && group->active) {
+        style = group->active;
     }
 
-    if (backgroundColor.a > 0) {
-        if (texture.id == 0) {
-            DrawRectangleRec(entry->params.bounds, backgroundColor);
+    if (style->backgroundColor.a > 0) {
+        if (style->backgroundTexture.id == 0) {
+            DrawRectangleRec(entry->params.bounds, style->backgroundColor);
         } else {
-            DrawTextureNPatch(texture, nPatchInfo, entry->params.bounds, (Vector2) { 0, 0 }, 0, backgroundColor);
+            DrawTextureNPatch(style->backgroundTexture, style->backgroundPatchInfo, entry->params.bounds, (Vector2) { 0, 0 }, 0, style->backgroundColor);
         }
     }
 
-    if (entry->params.text && textColor.a > 0) {
-        Font font = style->font;
+    if (style->iconColor.a > 0 && style->iconTexture.id != 0) {
+        Vector2 iconSize = style->iconSize;
+        Vector2 iconPivot = style->iconPivot;
+        Vector2 iconOffset = style->iconOffset;
+        Vector2 iconAlignment = style->iconAlignment;
+        float iconRotation = style->iconRotationDegrees;
+        Vector2 iconPosition = (Vector2) {
+            (entry->params.bounds.width - iconSize.x) * iconAlignment.x + entry->params.bounds.x + iconOffset.x,
+            (entry->params.bounds.height - iconSize.y) * iconAlignment.y + entry->params.bounds.y + iconOffset.y
+        };
+        DrawTexturePro(style->iconTexture, (Rectangle) { 0, 0, style->iconTexture.width, style->iconTexture.height },
+            (Rectangle) { iconPosition.x, iconPosition.y, iconSize.x, iconSize.y },
+            (Vector2) { iconPivot.x * iconSize.x, iconPivot.y * iconSize.y }, iconRotation, style->iconColor);
+    }
+
+    if (entry->params.text && style->textColor.a > 0) {
+        // draw debug outline
+        // DrawRectangleLines(entry->params.bounds.x, entry->params.bounds.y, entry->params.bounds.width, entry->params.bounds.height, RED);
+
+        Font font = style->fontStyle ? style->fontStyle->font : _defaultFont.font;
         if (font.texture.id == 0) {
             font = GetFontDefault();
         }
@@ -101,8 +99,12 @@ static void DuskGui_defaultDrawStyle(DuskGuiParamsEntry* entry, DuskGuiState* st
                 entry->params.bounds.height - style->paddingTop - style->paddingBottom
             };
 
-            while (1 && text[3] != '\0') {
-                box = MeasureTextEx(font, text, style->fontSize, style->fontSpacing);
+            int fontSize = style->fontStyle ? style->fontStyle->fontSize : _defaultFont.fontSize;
+            int fontSpacing = style->fontStyle ? style->fontStyle->fontSpacing : _defaultFont.fontSpacing;
+            Color textColor = style->textColor;
+
+            while (1) {
+                box = MeasureTextEx(font, text, fontSize, fontSpacing);
                 if (box.x > availableSpace.x) {
                     int len = strlen(text);
                     text[len - 1] = '\0';
@@ -113,9 +115,9 @@ static void DuskGui_defaultDrawStyle(DuskGuiParamsEntry* entry, DuskGuiState* st
                     break;
                 }
             }
-            int x = (int)(entry->params.bounds.x + style->paddingLeft + (availableSpace.x - box.x) * style->textAlignmentX);
-            int y = (int)(entry->params.bounds.y + style->paddingTop + (availableSpace.y - box.y) * style->textAlignmentY);
-            DrawTextEx(font, text, (Vector2) { x, y }, style->fontSize, style->fontSpacing, textColor);
+            int x = (int)(entry->params.bounds.x + style->paddingLeft + (availableSpace.x - box.x) * style->textAlignment.x);
+            int y = (int)(entry->params.bounds.y + style->paddingTop + (availableSpace.y - box.y) * style->textAlignment.y);
+            DrawTextEx(font, text, (Vector2) { x, y }, fontSize, fontSpacing, textColor);
         }
     }
 }
@@ -131,10 +133,23 @@ NPatchInfo GenNPatchInfo(int x, int y, int w, int h, int top, int right, int bot
     nPatchInfo.layout = NPATCH_NINE_PATCH;
     return nPatchInfo;
 }
+#define MAX_STYLE_COUNT 64
+static DuskGuiStyle _styleArray[MAX_STYLE_COUNT];
+static int _styleGroupCount = 0;
+DuskGuiStyle* DuskGui_createGuiStyle(DuskGuiStyle* fallbackStyle)
+{
+    if (_styleGroupCount >= MAX_STYLE_COUNT) {
+        TraceLog(LOG_ERROR, "DuskGui_createGuiStyle: Maximum style groups reached");
+        return NULL;
+    }
+    DuskGuiStyle* group = &_styleArray[_styleGroupCount++];
+    *group = *fallbackStyle;
+    return group;
+}
 
 void DuskGui_init()
 {
-    DuskGui_setDefaultFont(GetFontDefault(), 10, 1, BLACK, (Color) { 16, 16, 32, 255 }, (Color) { 32, 32, 64, 255 });
+    DuskGui_setDefaultFont(GetFontDefault(), 10, 1);
     _duskGuiState.root.params.bounds = (Rectangle) { 0, 0, GetScreenWidth(), GetScreenHeight() };
     _duskGuiState.root.params.text = "root";
     _duskGuiState.root.txId = "root";
@@ -190,82 +205,118 @@ void DuskGui_init()
         }
     }
 
-    _defaultStyles.styles[DUSKGUI_STYLE_BUTTON] = (DuskGuiStyle) {
-        .draw = DuskGui_defaultDrawStyle,
-        .font = { 0 },
-        .fontSize = 10,
-        .fontSpacing = 1,
-        .textAlignmentX = 0.5f,
-        .textAlignmentY = 0.5f,
+    DuskGuiStyleGroup* buttonGroup = &_defaultStyles.groups[DUSKGUI_STYLE_BUTTON];
+    buttonGroup->fallbackStyle = (DuskGuiStyle) {
+        .fontStyle = &_defaultFont,
+        .textAlignment = (Vector2) { 0.5f, 0.5f },
         .paddingLeft = 4,
         .paddingRight = 4,
         .paddingTop = 6,
         .paddingBottom = 4,
-        .textColorNormal = BLACK,
-        .textColorHover = BLACK,
-        .textColorPressed = RED,
-        .backgroundColorNormal = (Color) { 200, 200, 200, 255 },
-        .backgroundColorHover = (Color) { 200, 220, 250, 255 },
-        .backgroundColorPressed = WHITE,
-        .textureNormal = { 0 },
-        .textureHover = { 0 },
-        .texturePressed = { 0 },
-        .styleUserData = NULL
+        .backgroundColor = (Color) { 200, 200, 200, 255 },
+        .textColor = BLACK,
     };
+    buttonGroup->normal = &buttonGroup->fallbackStyle;
+    buttonGroup->hover = DuskGui_createGuiStyle(&buttonGroup->fallbackStyle);
+    buttonGroup->hover->backgroundColor = (Color) { 200, 220, 250, 255 };
+    buttonGroup->pressed = DuskGui_createGuiStyle(&buttonGroup->fallbackStyle);
+    buttonGroup->pressed->backgroundColor = (Color) { 200, 200, 200, 255 };
+    buttonGroup->pressed->textColor = RED;
 
     Texture2D defaultTexture = LoadTextureFromImage(defaultImage);
     UnloadImage(defaultImage);
-    _defaultStyles.styles[DUSKGUI_STYLE_BUTTON].textureNormal = defaultTexture;
+    buttonGroup->fallbackStyle.backgroundTexture = defaultTexture;
     SetTextureFilter(defaultTexture, TEXTURE_FILTER_BILINEAR);
     int o = 4;
     int w = size - o * 2;
     int h = size - o * 2;
     int n = w / 2;
-    _defaultStyles.styles[DUSKGUI_STYLE_BUTTON].nPatchInfoNormal = GenNPatchInfo(o, o, w, h, n, n, n, n);
-    _defaultStyles.styles[DUSKGUI_STYLE_BUTTON].nPatchInfoHover = GenNPatchInfo(o, o, w, h, n, n, n, n);
-    _defaultStyles.styles[DUSKGUI_STYLE_BUTTON].nPatchInfoPressed = GenNPatchInfo(o, o, w, h, n, n, n, n);
-    _defaultStyles.styles[DUSKGUI_STYLE_BUTTON].font = GetFontDefault();
+    buttonGroup->fallbackStyle.backgroundPatchInfo = GenNPatchInfo(o, o, w, h, n, n, n, n);
 
-    _defaultStyles.styles[DUSKGUI_STYLE_PANEL] = _defaultStyles.styles[DUSKGUI_STYLE_BUTTON];
-    _defaultStyles.styles[DUSKGUI_STYLE_PANEL].backgroundColorNormal = (Color) { 220, 220, 220, 255 };
-    _defaultStyles.styles[DUSKGUI_STYLE_PANEL].backgroundColorHover = (Color) { 220, 220, 220, 255 };
-    _defaultStyles.styles[DUSKGUI_STYLE_PANEL].backgroundColorPressed = (Color) { 220, 220, 220, 255 };
+    DuskGuiStyleGroup* panelGroup = &_defaultStyles.groups[DUSKGUI_STYLE_PANEL];
+    panelGroup->fallbackStyle = (DuskGuiStyle) {
+        .fontStyle = &_defaultFont,
+        .paddingLeft = 4,
+        .paddingRight = 4,
+        .paddingTop = 4,
+        .paddingBottom = 4,
+        .backgroundColor = (Color) { 220, 220, 220, 255 },
+        .textColor = BLACK,
+        .backgroundTexture = defaultTexture,
+        .backgroundPatchInfo = GenNPatchInfo(o, o, w, h, n, n, n, n),
+    };
 
-    _defaultStyles.styles[DUSKGUI_STYLE_LABEL].textColorNormal = BLACK;
-    _defaultStyles.styles[DUSKGUI_STYLE_LABEL].textColorHover = BLACK;
-    _defaultStyles.styles[DUSKGUI_STYLE_LABEL].textColorPressed = BLACK;
+    DuskGuiStyleGroup* labelGroup = &_defaultStyles.groups[DUSKGUI_STYLE_LABEL];
+    labelGroup->fallbackStyle = (DuskGuiStyle) {
+        .fontStyle = &_defaultFont,
+        .textAlignment = (Vector2) { 0.0f, 0.5f },
+        .textColor = BLACK,
+    };
 
-    _defaultStyles.styles[DUSKGUI_STYLE_LABELBUTTON].textColorNormal = BLACK;
-    _defaultStyles.styles[DUSKGUI_STYLE_LABELBUTTON].textColorHover = (Color) { 80, 80, 128, 255 };
-    _defaultStyles.styles[DUSKGUI_STYLE_LABELBUTTON].textColorPressed = (Color) { 100, 100, 255, 255 };
+    DuskGuiStyleGroup* labelButtonGroup = &_defaultStyles.groups[DUSKGUI_STYLE_LABELBUTTON];
+    labelButtonGroup->fallbackStyle = (DuskGuiStyle) {
+        .fontStyle = &_defaultFont,
+        .textAlignment = (Vector2) { 0.0f, 0.5f },
+        .textColor = BLACK,
+    };
+    labelButtonGroup->normal = &labelButtonGroup->fallbackStyle;
+    labelButtonGroup->hover = DuskGui_createGuiStyle(&labelButtonGroup->fallbackStyle);
+    labelButtonGroup->hover->textColor = (Color) { 80, 80, 128, 255 };
+    labelButtonGroup->pressed = DuskGui_createGuiStyle(&labelButtonGroup->fallbackStyle);
+    labelButtonGroup->pressed->textColor = (Color) { 100, 100, 255, 255 };
+
+    Image foldoutImage = GenImageColor(16, 16, (Color) { 255, 255, 255, 0 });
+    Color* foldoutPixels = (Color*)foldoutImage.data;
+    for (int y = 0; y < 16; y++) {
+        for (int x = 0; x < 16; x++) {
+            if (x - y < 0 && x + y < 16)
+                foldoutPixels[y * 16 + x] = (Color) { 255, 255, 255, 255 };
+        }
+    }
+    Texture2D foldoutIcon = LoadTextureFromImage(foldoutImage);
+    UnloadImage(foldoutImage);
+
+    DuskGuiStyleGroup* foldoutGroup = &_defaultStyles.groups[DUSKGUI_STYLE_FOLDOUT_OPEN];
+    foldoutGroup->fallbackStyle = (DuskGuiStyle) {
+        .fontStyle = &_defaultFont,
+        .textAlignment = (Vector2) { 0.0f, 0.5f },
+        .paddingLeft = 16,
+        .textColor = BLACK,
+        .iconTexture = foldoutIcon,
+        .iconSize = (Vector2) { 16, 16 },
+        .iconPivot = (Vector2) { 8, 8 },
+        .iconOffset = (Vector2) { 2, 0 },
+        .iconAlignment = (Vector2) { 0, 0.5f },
+        .iconRotationDegrees = 0,
+    };
+    foldoutGroup->normal = &foldoutGroup->fallbackStyle;
+    foldoutGroup->hover = DuskGui_createGuiStyle(&foldoutGroup->fallbackStyle);
+    foldoutGroup->hover->textColor = (Color) { 80, 80, 128, 255 };
+    foldoutGroup->pressed = DuskGui_createGuiStyle(&foldoutGroup->fallbackStyle);
+    foldoutGroup->pressed->textColor = (Color) { 100, 100, 255, 255 };
 
     Image horizontalImage = GenImageColor(8, 8, WHITE);
     Texture2D horizontalLineTexture = LoadTextureFromImage(horizontalImage);
     UnloadImage(horizontalImage);
-    _defaultStyles.styles[DUSKGUI_STYLE_HORIZONTAL_LINE] = (DuskGuiStyle) {
-        .textureHover = horizontalLineTexture,
-        .textureNormal = horizontalLineTexture,
-        .texturePressed = horizontalLineTexture,
-        .backgroundColorNormal = (Color) { 90, 90, 90, 255 },
-        .backgroundColorHover = (Color) { 90, 90, 90, 255 },
-        .backgroundColorPressed = (Color) { 90, 90, 90, 255 },
-        .textColorNormal = (Color) { 170, 170, 170, 255 },
-        .textColorHover = (Color) { 170, 170, 170, 255 },
-        .textColorPressed = (Color) { 170, 170, 170, 255 },
+    DuskGuiStyleGroup* horizontalLineGroup = &_defaultStyles.groups[DUSKGUI_STYLE_HORIZONTAL_LINE];
+    horizontalLineGroup->fallbackStyle = (DuskGuiStyle) {
+        .fontStyle = &_defaultFont,
         .paddingLeft = 2,
         .paddingRight = 2,
         .paddingTop = 0,
         .paddingBottom = 0,
-        .textAlignmentY = 0.5f,
+        .backgroundColor = (Color) { 90, 90, 90, 255 },
+        .textColor = (Color) { 170, 170, 170, 255 },
+        .textAlignment = (Vector2) { 0.0f, 0.5f },
+        .backgroundTexture = horizontalLineTexture,
+        .backgroundPatchInfo = GenNPatchInfo(0, 0, 4, 4, 2, 2, 2, 2),
     };
-    _defaultStyles.styles[DUSKGUI_STYLE_HORIZONTAL_LINE].nPatchInfoNormal = (NPatchInfo) { .layout = NPATCH_NINE_PATCH, .source = (Rectangle) { 0, 0, 4, 4 }, .left = 2, .top = 2, .right = 2, .bottom = 2 };
-    _defaultStyles.styles[DUSKGUI_STYLE_HORIZONTAL_LINE].nPatchInfoHover = _defaultStyles.styles[DUSKGUI_STYLE_HORIZONTAL_LINE].nPatchInfoNormal;
-    _defaultStyles.styles[DUSKGUI_STYLE_HORIZONTAL_LINE].nPatchInfoPressed = _defaultStyles.styles[DUSKGUI_STYLE_HORIZONTAL_LINE].nPatchInfoNormal;
+    horizontalLineGroup->normal = &horizontalLineGroup->fallbackStyle;
 }
 
-DuskGuiStyle* DuskGui_getStyle(int styleType)
+DuskGuiStyleGroup* DuskGui_getStyle(int styleType)
 {
-    return &_defaultStyles.styles[styleType];
+    return &_defaultStyles.groups[styleType];
 }
 
 int DuskGui_hasLock(DuskGuiParamsEntry* params)
@@ -300,12 +351,12 @@ void DuskGui_unlock()
     _duskGuiState.locked.txId = NULL;
 }
 
-static void DuskGui_addParams(DuskGuiParamsList* paramsList, DuskGuiParamsEntry* params)
+static DuskGuiParamsEntry* DuskGui_addParams(DuskGuiParamsList* paramsList, DuskGuiParamsEntry* params)
 {
     if (params->params.rayCastTarget == 0) {
         free(params->txId);
         params->txId = NULL;
-        return;
+        return NULL;
     }
     int index = params->id;
 
@@ -321,6 +372,7 @@ static void DuskGui_addParams(DuskGuiParamsList* paramsList, DuskGuiParamsEntry*
         paramsList->count = index + 1;
     }
     paramsList->params[index] = *params;
+    return &paramsList->params[index];
 }
 
 void DuskGui_evaluate()
@@ -433,6 +485,7 @@ DuskGuiParamsEntry DuskGui_update(DuskGuiParamsEntry entry)
         entry.isHovered = match->isHovered;
         entry.isPressed = match->isPressed;
         entry.isTriggered = match->isTriggered;
+        entry.isFolded = match->isFolded;
         entry.contentOffset = match->contentOffset;
         entry.contentSize = match->contentSize;
     }
@@ -462,6 +515,15 @@ int DuskGui_dragArea(DuskGuiParams params)
     return DuskGui_hasLock(&entry);
 }
 
+static void DuskGui_drawStyle(DuskGuiParamsEntry* params, DuskGuiState* state, DuskGuiStyleGroup* styleGroup)
+{
+    if (params->params.styleGroup && params->params.styleGroup->draw) {
+        params->params.styleGroup->draw(params, state, styleGroup);
+    } else {
+        DuskGui_defaultDrawStyle(params, state, styleGroup);
+    }
+}
+
 DuskGuiParamsEntry DuskGui_beginScrollArea(DuskGuiParams params)
 {
     DuskGuiParamsEntry entry = DuskGui_makeEntry(params);
@@ -482,11 +544,7 @@ DuskGuiParamsEntry DuskGui_beginScrollArea(DuskGuiParams params)
 
     DuskGui_setContentOffset(entry, entry.contentOffset);
 
-    if (params.style && params.style->draw) {
-        params.style->draw(&entry, &_duskGuiState, &_defaultStyles.styles[DUSKGUI_STYLE_PANEL]);
-    } else {
-        DuskGui_defaultDrawStyle(&entry, &_duskGuiState, &_defaultStyles.styles[DUSKGUI_STYLE_PANEL]);
-    }
+    DuskGui_drawStyle(&entry, &_duskGuiState, &_defaultStyles.groups[DUSKGUI_STYLE_PANEL]);
 
     // printf("beg sci: %f %f %f %f %d %d\n", entry.params.bounds.x, entry.params.bounds.y, entry.params.bounds.width, entry.params.bounds.height, GetScreenWidth(), GetScreenHeight());
     BeginScissorMode((int)entry.params.bounds.x, (int)entry.params.bounds.y, (int)entry.params.bounds.width, (int)entry.params.bounds.height);
@@ -510,11 +568,8 @@ DuskGuiParamsEntry DuskGui_beginPanel(DuskGuiParams params)
     _duskGuiState.currentPanel = &_duskGuiState.currentParams.params[entry.id];
 
     entry = DuskGui_update(entry);
-    if (params.style && params.style->draw) {
-        params.style->draw(&entry, &_duskGuiState, &_defaultStyles.styles[DUSKGUI_STYLE_PANEL]);
-    } else {
-        DuskGui_defaultDrawStyle(&entry, &_duskGuiState, &_defaultStyles.styles[DUSKGUI_STYLE_PANEL]);
-    }
+
+    DuskGui_drawStyle(&entry, &_duskGuiState, &_defaultStyles.groups[DUSKGUI_STYLE_PANEL]);
 
     BeginScissorMode((int)entry.params.bounds.x, (int)entry.params.bounds.y, (int)entry.params.bounds.width, (int)entry.params.bounds.height);
     return entry;
@@ -530,16 +585,29 @@ void DuskGui_endPanel(DuskGuiParamsEntry entry)
     }
 }
 
+int DuskGui_foldout(DuskGuiParams params)
+{
+    DuskGuiParamsEntry entry = DuskGui_makeEntry(params);
+    DuskGuiParamsEntry* added = DuskGui_addParams(&_duskGuiState.currentParams, &entry);
+    entry = DuskGui_update(entry);
+
+    DuskGui_drawStyle(&entry, &_duskGuiState, &_defaultStyles.groups[DUSKGUI_STYLE_FOLDOUT_OPEN]);
+    if (entry.isTriggered) {
+        entry.isFolded = !entry.isFolded;
+    }
+    if (added) {
+        added->isFolded = entry.isFolded;
+    }
+    return !entry.isFolded;
+}
+
 int DuskGui_label(DuskGuiParams params)
 {
     DuskGuiParamsEntry entry = DuskGui_makeEntry(params);
     DuskGui_addParams(&_duskGuiState.currentParams, &entry);
     entry = DuskGui_update(entry);
-    if (params.style && params.style->draw) {
-        params.style->draw(&entry, &_duskGuiState, &_defaultStyles.styles[DUSKGUI_STYLE_LABEL]);
-    } else {
-        DuskGui_defaultDrawStyle(&entry, &_duskGuiState, &_defaultStyles.styles[DUSKGUI_STYLE_LABEL]);
-    }
+
+    DuskGui_drawStyle(&entry, &_duskGuiState, &_defaultStyles.groups[DUSKGUI_STYLE_LABEL]);
     return entry.isTriggered;
 }
 
@@ -548,11 +616,8 @@ void DuskGui_horizontalLine(DuskGuiParams params)
     DuskGuiParamsEntry entry = DuskGui_makeEntry(params);
     DuskGui_addParams(&_duskGuiState.currentParams, &entry);
     entry = DuskGui_update(entry);
-    if (params.style && params.style->draw) {
-        params.style->draw(&entry, &_duskGuiState, &_defaultStyles.styles[DUSKGUI_STYLE_HORIZONTAL_LINE]);
-    } else {
-        DuskGui_defaultDrawStyle(&entry, &_duskGuiState, &_defaultStyles.styles[DUSKGUI_STYLE_HORIZONTAL_LINE]);
-    }
+
+    DuskGui_drawStyle(&entry, &_duskGuiState, &_defaultStyles.groups[DUSKGUI_STYLE_HORIZONTAL_LINE]);
 }
 
 int DuskGui_button(DuskGuiParams params)
@@ -560,11 +625,7 @@ int DuskGui_button(DuskGuiParams params)
     DuskGuiParamsEntry entry = DuskGui_makeEntry(params);
     DuskGui_addParams(&_duskGuiState.currentParams, &entry);
     entry = DuskGui_update(entry);
-    if (params.style && params.style->draw) {
-        params.style->draw(&entry, &_duskGuiState, &_defaultStyles.styles[DUSKGUI_STYLE_BUTTON]);
-    } else {
-        DuskGui_defaultDrawStyle(&entry, &_duskGuiState, &_defaultStyles.styles[DUSKGUI_STYLE_BUTTON]);
-    }
+    DuskGui_drawStyle(&entry, &_duskGuiState, &_defaultStyles.groups[DUSKGUI_STYLE_BUTTON]);
     return entry.isTriggered;
 }
 
