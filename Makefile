@@ -142,6 +142,11 @@ DEPS := $(OBJS:.o=.d)
 $(info $(SRCS))
 $(info $(OBJS))
 
+RAYLIB_MAKEFILE := submodules/raylib/src/Makefile
+
+PLATFORMS = PLATFORM_DESKTOP PLATFORM_WEB PLATFORM_RPI
+MODES = DEBUG RELEASE
+
 # Default target
 all: dll main
 
@@ -154,6 +159,13 @@ else
 	mkdir -p $(BUILDDIR)
 	$(CC) $(CFLAGS) -shared -o $(BUILDDIR)/game.dll $^ -L$(LIBDIR) -l$(RAYLIB_LIB) $(LDLIBS)
 endif
+
+raylib-all:
+	$(MAKE) -C $(dir $(RAYLIB_MAKEFILE)) RAYLIBTYPE=SHARED PLATFORM=PLATFORM_DESKTOP RAYLIB_BUILD_MODE=DEBUG
+	$(MAKE) -C $(dir $(RAYLIB_MAKEFILE)) RAYLIBTYPE=SHARED PLATFORM=PLATFORM_DESKTOP RAYLIB_BUILD_MODE=RELEASE
+	$(MAKE) -C $(dir $(RAYLIB_MAKEFILE)) PLATFORM=PLATFORM_WEB RAYLIB_BUILD_MODE=DEBUG
+	$(MAKE) -C $(dir $(RAYLIB_MAKEFILE)) PLATFORM=PLATFORM_WEB RAYLIB_BUILD_MODE=RELEASE
+	cp submodules/raylib/release/platform_desktop/raylib.dll .
 
 run: dll $(TARGET)
 	./$(TARGET)
