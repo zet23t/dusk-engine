@@ -83,7 +83,7 @@ typedef struct DuskGuiParamsEntry
     Vector2 contentSize;
 
     DuskGuiParams params;
-    DuskGuiParamsEntry *parent;
+    int parentIndex;
 } DuskGuiParamsEntry;
 
 typedef struct DuskGuiState {
@@ -92,8 +92,7 @@ typedef struct DuskGuiState {
     DuskGuiParamsEntry locked;
     int idCounter;
     DuskGuiParamsEntry root;
-    // Note: this is stupid; should use txId instead
-    DuskGuiParamsEntry *currentPanel;
+    int currentPanelIndex;
 
 } DuskGuiState;
 
@@ -121,15 +120,13 @@ int DuskGui_dragArea(DuskGuiParams params);
 int DuskGui_label(DuskGuiParams params);
 int DuskGui_foldout(DuskGuiParams params);
 void DuskGui_horizontalLine(DuskGuiParams params);
-void DuskGui_setContentSize(DuskGuiParamsEntry entry, Vector2 contentSize);
-void DuskGui_setContentOffset(DuskGuiParamsEntry entry, Vector2 contentOffset);
 Vector2 DuskGui_getAvailableSpace();
 
-DuskGuiParamsEntry DuskGui_beginScrollArea(DuskGuiParams params);
-void DuskGui_endScrollArea(DuskGuiParamsEntry entry);
+DuskGuiParamsEntry* DuskGui_beginScrollArea(DuskGuiParams params);
+void DuskGui_endScrollArea(DuskGuiParamsEntry* entry);
 
-DuskGuiParamsEntry DuskGui_beginPanel(DuskGuiParams params);
-void DuskGui_endPanel(DuskGuiParamsEntry entry);
+DuskGuiParamsEntry* DuskGui_beginPanel(DuskGuiParams params);
+void DuskGui_endPanel(DuskGuiParamsEntry* entry);
 
 #ifdef DUSK_GUI_IMPLEMENTATION
 

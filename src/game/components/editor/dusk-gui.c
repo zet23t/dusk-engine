@@ -147,13 +147,30 @@ DuskGuiStyle* DuskGui_createGuiStyle(DuskGuiStyle* fallbackStyle)
     return group;
 }
 
+static DuskGuiParamsEntry* DuskGui_getParentById(int parentIndex, int defaultToRoot)
+{
+    if (parentIndex <= 0) {
+        return defaultToRoot ? &_duskGuiState.root : NULL;
+    }
+    if (parentIndex == 1)
+    {
+        return &_duskGuiState.root;
+    }
+    return &_duskGuiState.currentParams.params[parentIndex - 2];
+}
+static DuskGuiParamsEntry* DuskGui_getParent(DuskGuiParamsEntry* entry, int defaultToRoot)
+{
+    return DuskGui_getParentById(entry->parentIndex, defaultToRoot);
+}
+
 void DuskGui_init()
 {
     DuskGui_setDefaultFont(GetFontDefault(), 10, 1);
     _duskGuiState.root.params.bounds = (Rectangle) { 0, 0, GetScreenWidth(), GetScreenHeight() };
     _duskGuiState.root.params.text = "root";
     _duskGuiState.root.txId = "root";
-    _duskGuiState.currentPanel = &_duskGuiState.root;
+    _duskGuiState.root.parentIndex = 0;
+    _duskGuiState.currentPanelIndex = 0;
 
     _duskGuiState.currentParams = (DuskGuiParamsList) {
         .params = (DuskGuiParamsEntry*)malloc(sizeof(DuskGuiParamsEntry) * 256),
@@ -216,13 +233,7 @@ void DuskGui_init()
         .backgroundColor = (Color) { 200, 200, 200, 255 },
         .textColor = BLACK,
     };
-    buttonGroup->normal = &buttonGroup->fallbackStyle;
-    buttonGroup->hover = DuskGui_createGuiStyle(&buttonGroup->fallbackStyle);
-    buttonGroup->hover->backgroundColor = (Color) { 200, 220, 250, 255 };
-    buttonGroup->pressed = DuskGui_createGuiStyle(&buttonGroup->fallbackStyle);
-    buttonGroup->pressed->backgroundColor = (Color) { 200, 200, 200, 255 };
-    buttonGroup->pressed->textColor = RED;
-
+    
     Texture2D defaultTexture = LoadTextureFromImage(defaultImage);
     UnloadImage(defaultImage);
     buttonGroup->fallbackStyle.backgroundTexture = defaultTexture;
@@ -232,6 +243,14 @@ void DuskGui_init()
     int h = size - o * 2;
     int n = w / 2;
     buttonGroup->fallbackStyle.backgroundPatchInfo = GenNPatchInfo(o, o, w, h, n, n, n, n);
+
+    buttonGroup->normal = &buttonGroup->fallbackStyle;
+    buttonGroup->hover = DuskGui_createGuiStyle(buttonGroup->normal);
+    buttonGroup->hover->backgroundColor = (Color) { 200, 220, 250, 255 };
+    buttonGroup->pressed = DuskGui_createGuiStyle(buttonGroup->normal);
+    buttonGroup->pressed->backgroundColor = (Color) { 200, 200, 200, 255 };
+    buttonGroup->pressed->textColor = RED;
+
 
     DuskGuiStyleGroup* panelGroup = &_defaultStyles.groups[DUSKGUI_STYLE_PANEL];
     panelGroup->fallbackStyle = (DuskGuiStyle) {
@@ -353,11 +372,6 @@ void DuskGui_unlock()
 
 static DuskGuiParamsEntry* DuskGui_addParams(DuskGuiParamsList* paramsList, DuskGuiParamsEntry* params)
 {
-    if (params->params.rayCastTarget == 0) {
-        free(params->txId);
-        params->txId = NULL;
-        return NULL;
-    }
     int index = params->id;
 
     if (index >= paramsList->capacity) {
@@ -414,13 +428,13 @@ void DuskGui_evaluate()
 
         if (isHit) {
             DuskGuiParamsEntry* parent = entry;
-            while (parent) {
+            while (parent != NULL) {
                 if (blockingParentsCount == maxBlockingParents) {
                     printf("Warning, parent chain too long\n");
                     break;
                 }
                 blockingParents[blockingParentsCount++] = parent;
-                parent = parent->parent;
+                parent = DuskGui_getParent(parent, 0);
             }
             blocked = 1;
         }
@@ -446,22 +460,30 @@ void DuskGui_evaluate()
         DuskGui_unlock();
     }
 
-    _duskGuiState.currentPanel = &_duskGuiState.root;
+    _duskGuiState.currentPanelIndex = 0;
     _duskGuiState.root.params.bounds = (Rectangle) { 0, 0, GetScreenWidth(), GetScreenHeight() };
 }
 
-static DuskGuiParamsEntry DuskGui_makeEntry(DuskGuiParams params)
+static DuskGuiParamsEntry* DuskGui_addParams(DuskGuiParamsList* paramsList, DuskGuiParamsEntry* params);
+void DuskGui_update(DuskGuiParamsEntry *entry);
+static DuskGuiParamsEntry* DuskGui_getCurrentPanel()
 {
-    params.bounds.x += _duskGuiState.currentPanel->params.bounds.x;
-    params.bounds.y += _duskGuiState.currentPanel->params.bounds.y;
+    return DuskGui_getParentById(_duskGuiState.currentPanelIndex, 1);
+}
 
-    params.bounds.x += _duskGuiState.currentPanel->contentOffset.x;
-    params.bounds.y += _duskGuiState.currentPanel->contentOffset.y;
+static DuskGuiParamsEntry* DuskGui_makeEntry(DuskGuiParams params)
+{
+    DuskGuiParamsEntry* parent = DuskGui_getCurrentPanel();
+    params.bounds.x += parent->params.bounds.x;
+    params.bounds.y += parent->params.bounds.y;
+
+    params.bounds.x += parent->contentOffset.x;
+    params.bounds.y += parent->contentOffset.y;
     DuskGuiParamsEntry entry = {
         .id = _duskGuiState.idCounter++,
         .txId = NULL,
         .params = params,
-        .parent = _duskGuiState.currentPanel,
+        .parentIndex = _duskGuiState.currentPanelIndex,
     };
     if (params.text) {
         const char* text = params.text;
@@ -474,22 +496,24 @@ static DuskGuiParamsEntry DuskGui_makeEntry(DuskGuiParams params)
         }
         entry.txId = strdup(text);
     }
-    return entry;
+
+    DuskGuiParamsEntry* added = DuskGui_addParams(&_duskGuiState.currentParams, &entry);
+    DuskGui_update(added);
+    return added;
 }
 
-DuskGuiParamsEntry DuskGui_update(DuskGuiParamsEntry entry)
+void DuskGui_update(DuskGuiParamsEntry *entry)
 {
-    DuskGuiParamsEntry* match = DuskGui_findParams(&_duskGuiState.prevParams, &entry);
+    DuskGuiParamsEntry* match = DuskGui_findParams(&_duskGuiState.prevParams, entry);
     if (match) {
-        entry.isMouseOver = match->isMouseOver;
-        entry.isHovered = match->isHovered;
-        entry.isPressed = match->isPressed;
-        entry.isTriggered = match->isTriggered;
-        entry.isFolded = match->isFolded;
-        entry.contentOffset = match->contentOffset;
-        entry.contentSize = match->contentSize;
+        entry->isMouseOver = match->isMouseOver;
+        entry->isHovered = match->isHovered;
+        entry->isPressed = match->isPressed;
+        entry->isTriggered = match->isTriggered;
+        entry->isFolded = match->isFolded;
+        entry->contentOffset = match->contentOffset;
+        entry->contentSize = match->contentSize;
     }
-    return entry;
 }
 
 void DuskGui_setContentOffset(DuskGuiParamsEntry entry, Vector2 contentOffset)
@@ -509,10 +533,10 @@ void DuskGui_setContentSize(DuskGuiParamsEntry entry, Vector2 contentSize)
 
 int DuskGui_dragArea(DuskGuiParams params)
 {
-    DuskGuiParamsEntry entry = DuskGui_makeEntry(params);
-    DuskGui_addParams(&_duskGuiState.currentParams, &entry);
-    entry = DuskGui_update(entry);
-    return DuskGui_hasLock(&entry);
+    DuskGuiParamsEntry* entry = DuskGui_makeEntry(params);
+    DuskGui_addParams(&_duskGuiState.currentParams, entry);
+    DuskGui_update(entry);
+    return DuskGui_hasLock(entry);
 }
 
 static void DuskGui_drawStyle(DuskGuiParamsEntry* params, DuskGuiState* state, DuskGuiStyleGroup* styleGroup)
@@ -524,113 +548,104 @@ static void DuskGui_drawStyle(DuskGuiParamsEntry* params, DuskGuiState* state, D
     }
 }
 
-DuskGuiParamsEntry DuskGui_beginScrollArea(DuskGuiParams params)
+static int DuskGui_toParentIndex(DuskGuiParamsEntry* entry)
 {
-    DuskGuiParamsEntry entry = DuskGui_makeEntry(params);
-    DuskGui_addParams(&_duskGuiState.currentParams, &entry);
-    _duskGuiState.currentPanel = &_duskGuiState.currentParams.params[entry.id];
+    return entry->id + 2;
+}
 
-    entry = DuskGui_update(entry);
-    if (entry.isMouseOver) {
+DuskGuiParamsEntry* DuskGui_beginScrollArea(DuskGuiParams params)
+{
+    DuskGuiParamsEntry *entry = DuskGui_makeEntry(params);
+    _duskGuiState.currentPanelIndex = DuskGui_toParentIndex(entry);
+
+    if (entry->isMouseOver) {
         Vector2 wheelMove = GetMouseWheelMoveV();
-        entry.contentOffset.y += wheelMove.y * 15.0f;
-        if (-entry.contentOffset.y > entry.contentSize.y - entry.params.bounds.height) {
-            entry.contentOffset.y = -(entry.contentSize.y - entry.params.bounds.height);
+        entry->contentOffset.y += wheelMove.y * 15.0f;
+        if (-entry->contentOffset.y > entry->contentSize.y - entry->params.bounds.height) {
+            entry->contentOffset.y = -(entry->contentSize.y - entry->params.bounds.height);
         }
-        if (entry.contentOffset.y > 0 || entry.contentSize.y <= entry.params.bounds.height) {
-            entry.contentOffset.y = 0;
+        if (entry->contentOffset.y > 0 || entry->contentSize.y <= entry->params.bounds.height) {
+            entry->contentOffset.y = 0;
         }
     }
 
-    DuskGui_setContentOffset(entry, entry.contentOffset);
-
-    DuskGui_drawStyle(&entry, &_duskGuiState, &_defaultStyles.groups[DUSKGUI_STYLE_PANEL]);
+    DuskGui_drawStyle(entry, &_duskGuiState, &_defaultStyles.groups[DUSKGUI_STYLE_PANEL]);
 
     // printf("beg sci: %f %f %f %f %d %d\n", entry.params.bounds.x, entry.params.bounds.y, entry.params.bounds.width, entry.params.bounds.height, GetScreenWidth(), GetScreenHeight());
-    BeginScissorMode((int)entry.params.bounds.x, (int)entry.params.bounds.y, (int)entry.params.bounds.width, (int)entry.params.bounds.height);
+    BeginScissorMode((int)entry->params.bounds.x, (int)entry->params.bounds.y, (int)entry->params.bounds.width, (int)entry->params.bounds.height);
     return entry;
 }
-void DuskGui_endScrollArea(DuskGuiParamsEntry entry)
+void DuskGui_endScrollArea(DuskGuiParamsEntry* entry)
 {
     EndScissorMode();
-    _duskGuiState.currentPanel = entry.parent;
-    if (_duskGuiState.currentPanel != &_duskGuiState.root) {
-        Rectangle bounds = _duskGuiState.currentPanel->params.bounds;
+    _duskGuiState.currentPanelIndex = entry->parentIndex;
+    DuskGuiParamsEntry *currentPanel = DuskGui_getParent(entry, 1);
+    if (currentPanel != &_duskGuiState.root) {
+        Rectangle bounds = currentPanel->params.bounds;
         // printf("end sci: %f %f %f %f\n", bounds.x, bounds.y, bounds.width, bounds.height);
         BeginScissorMode((int)bounds.x, (int)bounds.y, (int)bounds.width, (int)bounds.height);
     }
 }
 
-DuskGuiParamsEntry DuskGui_beginPanel(DuskGuiParams params)
+DuskGuiParamsEntry* DuskGui_beginPanel(DuskGuiParams params)
 {
-    DuskGuiParamsEntry entry = DuskGui_makeEntry(params);
-    DuskGui_addParams(&_duskGuiState.currentParams, &entry);
-    _duskGuiState.currentPanel = &_duskGuiState.currentParams.params[entry.id];
+    DuskGuiParamsEntry *entry = DuskGui_makeEntry(params);
+    DuskGui_addParams(&_duskGuiState.currentParams, entry);
+    _duskGuiState.currentPanelIndex = DuskGui_toParentIndex(entry);
 
-    entry = DuskGui_update(entry);
+    DuskGui_drawStyle(entry, &_duskGuiState, &_defaultStyles.groups[DUSKGUI_STYLE_PANEL]);
 
-    DuskGui_drawStyle(&entry, &_duskGuiState, &_defaultStyles.groups[DUSKGUI_STYLE_PANEL]);
-
-    BeginScissorMode((int)entry.params.bounds.x, (int)entry.params.bounds.y, (int)entry.params.bounds.width, (int)entry.params.bounds.height);
+    BeginScissorMode((int)entry->params.bounds.x, (int)entry->params.bounds.y, (int)entry->params.bounds.width, (int)entry->params.bounds.height);
     return entry;
 }
 
-void DuskGui_endPanel(DuskGuiParamsEntry entry)
+void DuskGui_endPanel(DuskGuiParamsEntry* entry)
 {
     EndScissorMode();
-    _duskGuiState.currentPanel = entry.parent;
-    if (_duskGuiState.currentPanel != &_duskGuiState.root) {
-        Rectangle bounds = _duskGuiState.currentPanel->params.bounds;
+    _duskGuiState.currentPanelIndex = entry->parentIndex;
+    DuskGuiParamsEntry *currentPanel = DuskGui_getParent(entry, 1);
+    if (currentPanel != &_duskGuiState.root) {
+        Rectangle bounds = currentPanel->params.bounds;
         BeginScissorMode((int)bounds.x, (int)bounds.y, (int)bounds.width, (int)bounds.height);
     }
 }
 
 int DuskGui_foldout(DuskGuiParams params)
 {
-    DuskGuiParamsEntry entry = DuskGui_makeEntry(params);
-    DuskGuiParamsEntry* added = DuskGui_addParams(&_duskGuiState.currentParams, &entry);
-    entry = DuskGui_update(entry);
+    DuskGuiParamsEntry *entry = DuskGui_makeEntry(params);
+    
+    DuskGui_drawStyle(entry, &_duskGuiState, &_defaultStyles.groups[DUSKGUI_STYLE_FOLDOUT_OPEN]);
+    if (entry->isTriggered) {
+        entry->isFolded = !entry->isFolded;
+    }
 
-    DuskGui_drawStyle(&entry, &_duskGuiState, &_defaultStyles.groups[DUSKGUI_STYLE_FOLDOUT_OPEN]);
-    if (entry.isTriggered) {
-        entry.isFolded = !entry.isFolded;
-    }
-    if (added) {
-        added->isFolded = entry.isFolded;
-    }
-    return !entry.isFolded;
+    return !entry->isFolded;
 }
 
 int DuskGui_label(DuskGuiParams params)
 {
-    DuskGuiParamsEntry entry = DuskGui_makeEntry(params);
-    DuskGui_addParams(&_duskGuiState.currentParams, &entry);
-    entry = DuskGui_update(entry);
-
-    DuskGui_drawStyle(&entry, &_duskGuiState, &_defaultStyles.groups[DUSKGUI_STYLE_LABEL]);
-    return entry.isTriggered;
+    DuskGuiParamsEntry *entry = DuskGui_makeEntry(params);
+    
+    DuskGui_drawStyle(entry, &_duskGuiState, &_defaultStyles.groups[DUSKGUI_STYLE_LABEL]);
+    return entry->isTriggered;
 }
 
 void DuskGui_horizontalLine(DuskGuiParams params)
 {
-    DuskGuiParamsEntry entry = DuskGui_makeEntry(params);
-    DuskGui_addParams(&_duskGuiState.currentParams, &entry);
-    entry = DuskGui_update(entry);
-
-    DuskGui_drawStyle(&entry, &_duskGuiState, &_defaultStyles.groups[DUSKGUI_STYLE_HORIZONTAL_LINE]);
+    DuskGuiParamsEntry *entry = DuskGui_makeEntry(params);
+    DuskGui_drawStyle(entry, &_duskGuiState, &_defaultStyles.groups[DUSKGUI_STYLE_HORIZONTAL_LINE]);
 }
 
 int DuskGui_button(DuskGuiParams params)
 {
-    DuskGuiParamsEntry entry = DuskGui_makeEntry(params);
-    DuskGui_addParams(&_duskGuiState.currentParams, &entry);
-    entry = DuskGui_update(entry);
-    DuskGui_drawStyle(&entry, &_duskGuiState, &_defaultStyles.groups[DUSKGUI_STYLE_BUTTON]);
-    return entry.isTriggered;
+    DuskGuiParamsEntry *entry = DuskGui_makeEntry(params);
+    DuskGui_drawStyle(entry, &_duskGuiState, &_defaultStyles.groups[DUSKGUI_STYLE_BUTTON]);
+    return entry->isTriggered;
 }
 
 Vector2 DuskGui_getAvailableSpace()
 {
-    Rectangle rect = _duskGuiState.currentPanel->params.bounds;
+    DuskGuiParamsEntry *panel = DuskGui_getCurrentPanel();
+    Rectangle rect = panel->params.bounds;
     return (Vector2) { rect.width, rect.height };
 }
