@@ -3,6 +3,9 @@
 
 #include "raylib.h"
 
+#define DUSKGUI_OVERFLOW_ELLIPSIS 0
+#define DUSKGUI_OVERFLOW_CLIP 1
+
 typedef struct DuskGuiParamsEntry DuskGuiParamsEntry;
 typedef struct DuskGuiParams DuskGuiParams;
 typedef struct DuskGuiStyle DuskGuiStyle;
@@ -24,12 +27,17 @@ typedef struct DuskGuiStyle
 {
     DuskGuiFontStyle *fontStyle;
 
+    float transitionLingerTime;
+    float transitionActivationTime;
+
     Vector2 textAlignment;
 
     int paddingLeft;
     int paddingRight;
     int paddingTop;
     int paddingBottom;
+
+    int textOverflowType;
     
     Color textColor;
     Color backgroundColor;
@@ -66,21 +74,35 @@ typedef struct DuskGuiParams
 {
     const char *text;
     Rectangle bounds;
-    int rayCastTarget;
+    unsigned char rayCastTarget:1;
+    unsigned char isFocusable:1;
     DuskGuiStyleGroup *styleGroup;
 } DuskGuiParams;
 
 typedef struct DuskGuiParamsEntry
 {
     int id;
+    int cursorIndex;
+    int selectionStart;
+    int selectionEnd;
     char *txId;
     char isMouseOver:1;
     char isHovered:1;
     char isPressed:1;
     char isTriggered:1;
     char isFolded:1;
+    char isFocused:1;
     Vector2 contentOffset;
     Vector2 contentSize;
+
+    DuskGuiStyle cachedStartStyle;
+    DuskGuiStyle *origStartStyle;
+    DuskGuiStyle *nextStyle;
+    float transitionTime;
+    float transitionDuration;
+    // set by draw operation
+    Rectangle textBounds;
+    Vector2 textOffset;
 
     DuskGuiParams params;
     int parentIndex;
@@ -93,7 +115,6 @@ typedef struct DuskGuiState {
     int idCounter;
     DuskGuiParamsEntry root;
     int currentPanelIndex;
-
 } DuskGuiState;
 
 typedef enum DuskGuiStyleType {
@@ -104,6 +125,7 @@ typedef enum DuskGuiStyleType {
     DUSKGUI_STYLE_FOLDOUT_CLOSED,
     DUSKGUI_STYLE_PANEL,
     DUSKGUI_STYLE_HORIZONTAL_LINE,
+    DUSKGUI_STYLE_INPUTTEXTFIELD,
     DUSKGUI_MAX_STYLESHEETS
 } DuskGuiStyleType;
 
@@ -118,6 +140,7 @@ DuskGuiStyleGroup* DuskGui_getStyleGroup(int styleType);
 int DuskGui_button(DuskGuiParams params);
 int DuskGui_dragArea(DuskGuiParams params);
 int DuskGui_label(DuskGuiParams params);
+int DuskGui_textInputField(DuskGuiParams params, char** buffer);
 int DuskGui_foldout(DuskGuiParams params);
 void DuskGui_horizontalLine(DuskGuiParams params);
 Vector2 DuskGui_getAvailableSpace();

@@ -134,11 +134,22 @@ void DrawSerializeData_float(const char* key, float* data, GUIDrawState* state)
     DuskGui_label((DuskGuiParams) { .text = buffer, .bounds = (Rectangle) { 10 + state->labelWidth, state->y, space.x - 10 - state->labelWidth, 18 }, .rayCastTarget = 1 });
     state->y += 18;
 }
-void DrawSerializeData_cstr(const char* key, char* data, GUIDrawState* state)
+void DrawSerializeData_cstr(const char* key, char** data, GUIDrawState* state)
 {
     DuskGui_label((DuskGuiParams) { .text = key, .bounds = (Rectangle) { 10 + state->indention * 10, state->y, state->labelWidth, 18 }, .rayCastTarget = 1 });
     Vector2 space = DuskGui_getAvailableSpace();
-    DuskGui_label((DuskGuiParams) { .text = data, .bounds = (Rectangle) { 10 + state->labelWidth, state->y, space.x - state->labelWidth - 10, 18 }, .rayCastTarget = 1 });
+    char *buffer = NULL;
+    char id[strlen(key) + 20];
+    sprintf(id, "%s##%s-textfield", *data, key);
+    DuskGui_textInputField((DuskGuiParams) { .text = id, 
+        .bounds = (Rectangle) { 10 + state->labelWidth, state->y, space.x - state->labelWidth - 10, 18 }, 
+        .rayCastTarget = 1,
+        .isFocusable = 1 },
+        &buffer);
+    if (buffer != NULL) {
+        free(*data);
+        *data = strdup(buffer);
+    }
     state->y += 18;
 }
 
@@ -220,7 +231,7 @@ DrawFunctionOverrides _drawFunctionOverrides;
             state->y += 18;                                                                                                                                                        \
         }                                                                                                                                                                          \
     }
-#define SERIALIZABLE_CSTR(name) DrawSerializeData_cstr(#name, data->name, state);
+#define SERIALIZABLE_CSTR(name) DrawSerializeData_cstr(#name, &data->name, state);
 #define SERIALIZABLE_STRUCT_LIST_ELEMENT(type, name)                                                                                                             \
     DuskGui_label((DuskGuiParams) { .text = #name, .bounds = (Rectangle) { 10 + state->indention * 10, state->y, state->labelWidth, 18 }, .rayCastTarget = 1 }); \
     state->indention++, state->y += 18;                                                                                                                          \
@@ -265,7 +276,7 @@ void DrawSerializedData_SceneObject(const char* key, SceneObject* data, GUIDrawS
 {
     if (key != NULL)
         state->indention++;
-    DrawSerializeData_cstr("name", data->name, state);
+    DrawSerializeData_cstr("name", &data->name, state);
     DuskGui_horizontalLine((DuskGuiParams) { .text = "Transform", .bounds = (Rectangle) { 1, state->y, DuskGui_getAvailableSpace().x - 2, 18 } });
     state->y += 20;
     DrawSerializeData_SceneObjectTransform(NULL, &data->transform, state);
@@ -313,7 +324,7 @@ void ObjectConfiguratorEditorComponent_draw2D(Camera2D camera, SceneObject* scen
     void* componentData, void* userdata)
 {
     ObjectConfiguratorEditorComponent* data = (ObjectConfiguratorEditorComponent*)componentData;
-    if (DuskGui_dragArea((DuskGuiParams) { .text = "drag_base", .bounds = (Rectangle) { 0, 0, GetScreenWidth(), GetScreenHeight() }, .rayCastTarget = 1 })) {
+    if (DuskGui_dragArea((DuskGuiParams) { .text = "drag_base", .bounds = (Rectangle) { 0, 0, GetScreenWidth(), GetScreenHeight() }, .rayCastTarget = 1, .isFocusable = 1 })) {
         Vector2 delta = GetMouseDelta();
         Vector3 rotationYaw = SceneGraph_getLocalRotation(psg.sceneGraph, data->cameraPivotYawId);
         Vector3 rotationPitch = SceneGraph_getLocalRotation(psg.sceneGraph, data->cameraPivotPitchId);
