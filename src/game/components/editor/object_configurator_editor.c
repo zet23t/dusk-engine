@@ -140,7 +140,7 @@ void DrawSerializeData_cstr(const char* key, char** data, GUIDrawState* state)
     Vector2 space = DuskGui_getAvailableSpace();
     char *buffer = NULL;
     char id[strlen(key) + 20];
-    sprintf(id, "%s##%s-textfield", *data, key);
+    sprintf(id, "%s##%s:%d-textfield", *data, key, state->selectedObjectId.id);
     DuskGui_textInputField((DuskGuiParams) { .text = id, 
         .bounds = (Rectangle) { 10 + state->labelWidth, state->y, space.x - state->labelWidth - 10, 18 }, 
         .rayCastTarget = 1,
@@ -148,7 +148,7 @@ void DrawSerializeData_cstr(const char* key, char** data, GUIDrawState* state)
         &buffer);
     if (buffer != NULL) {
         free(*data);
-        *data = strdup(buffer);
+        *data = buffer;
     }
     state->y += 18;
 }

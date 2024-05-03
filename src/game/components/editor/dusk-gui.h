@@ -79,6 +79,13 @@ typedef struct DuskGuiParams
     DuskGuiStyleGroup *styleGroup;
 } DuskGuiParams;
 
+typedef struct DuskGuiTextBuffer
+{
+    char *buffer;
+    int capacity;
+    int refCount;
+} DuskGuiTextBuffer;
+
 typedef struct DuskGuiParamsEntry
 {
     int id;
@@ -104,6 +111,8 @@ typedef struct DuskGuiParamsEntry
     Rectangle textBounds;
     Vector2 textOffset;
 
+    DuskGuiTextBuffer *textBuffer;
+    
     DuskGuiParams params;
     int parentIndex;
 } DuskGuiParamsEntry;

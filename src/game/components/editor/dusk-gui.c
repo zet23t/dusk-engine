@@ -5,6 +5,7 @@
 #include "string.h"
 
 static DuskGuiState _duskGuiState;
+DuskGuiTextBuffer* DuskGui_getTextBuffer(DuskGuiParamsEntry* entry, int createIfNull);
 
 static Color ColorLerp(Color a, Color b, float t)
 {
@@ -104,9 +105,14 @@ static DuskGuiStyle* DuskGuiStyleGroup_selectStyle(DuskGuiParamsEntry* entry, Du
     return style;
 }
 
+const char *DuskGui_getText(DuskGuiParamsEntry* entry)
+{
+    DuskGuiTextBuffer* buffer = DuskGui_getTextBuffer(entry, 0);
+    return buffer ? buffer->buffer : entry->params.text;
+}
+
 static void DuskGui_defaultDrawStyle(DuskGuiParamsEntry* entry, DuskGuiState* state, DuskGuiStyleGroup* styleGroup)
 {
-    int dbg = strcmp(entry->txId, "Vector3 points[4]") == 0;
     DuskGuiStyle* style = DuskGuiStyleGroup_selectStyle(entry, styleGroup);
     DuskGuiStyle lerpedStyle = *style;
     float t = entry->transitionTime / entry->transitionDuration;
@@ -145,7 +151,8 @@ static void DuskGui_defaultDrawStyle(DuskGuiParamsEntry* entry, DuskGuiState* st
             iconPivot, iconRotation, lerpedStyle.iconColor);
     }
 
-    if (entry->params.text && lerpedStyle.textColor.a > 0) {
+    const char *origText = DuskGui_getText(entry);
+    if (origText && lerpedStyle.textColor.a > 0) {
         // draw debug outline
         // DrawRectangleLines(entry->params.bounds.x, entry->params.bounds.y, entry->params.bounds.width, entry->params.bounds.height, RED);
 
@@ -153,8 +160,8 @@ static void DuskGui_defaultDrawStyle(DuskGuiParamsEntry* entry, DuskGuiState* st
         if (font.texture.id == 0) {
             font = GetFontDefault();
         }
-        char text[strlen(entry->params.text) + 4];
-        strcpy(text, entry->params.text);
+        char text[strlen(origText) + 4];
+        strcpy(text, origText);
 
         for (int offset = strlen(text) - 1; offset > 0; offset--) {
             if (text[offset] == '#' && text[offset - 1] == '#') {
@@ -460,7 +467,6 @@ void DuskGui_init()
     textFieldGroup->focused = DuskGui_createGuiStyle(&textFieldGroup->fallbackStyle);
     textFieldGroup->focused->backgroundColor = (Color) { 250, 200, 200, 255 };
     textFieldGroup->focused->iconColor = BLACK;
-    
 
     Image horizontalImage = GenImageColor(8, 8, WHITE);
     Texture2D horizontalLineTexture = LoadTextureFromImage(horizontalImage);
@@ -624,6 +630,13 @@ void DuskGui_evaluate()
         if (_duskGuiState.currentParams.params[i].txId) {
             free(_duskGuiState.currentParams.params[i].txId);
         }
+        if (_duskGuiState.currentParams.params[i].textBuffer) {
+            _duskGuiState.currentParams.params[i].textBuffer->refCount--;
+            if (_duskGuiState.currentParams.params[i].textBuffer->refCount <= 0) {
+                free(_duskGuiState.currentParams.params[i].textBuffer->buffer);
+                free(_duskGuiState.currentParams.params[i].textBuffer);
+            }
+        }
     }
     _duskGuiState.currentParams.count = 0;
 
@@ -692,14 +705,18 @@ void DuskGui_update(DuskGuiParamsEntry* entry, DuskGuiStyleGroup* initStyleGroup
         entry->nextStyle = match->nextStyle;
         entry->transitionTime = match->transitionTime + GetFrameTime();
         entry->transitionDuration = match->transitionDuration;
+
+        entry->textBuffer = match->textBuffer;
+        if (entry->textBuffer != NULL) {
+            entry->textBuffer->refCount++;
+        }
     } else if (initStyleGroup) {
         entry->cachedStartStyle = initStyleGroup->fallbackStyle;
         entry->origStartStyle = initStyleGroup->normal;
         entry->nextStyle = initStyleGroup->normal;
         entry->transitionTime = 0;
         entry->transitionDuration = 1.0f;
-        for (int i=0;entry->params.text[i];i++)
-        {
+        for (int i = 0; entry->params.text[i]; i++) {
             entry->cursorIndex = i;
             if (entry->params.text[i] == '#' && entry->params.text[i + 1] == '#') {
                 break;
@@ -820,17 +837,153 @@ int DuskGui_label(DuskGuiParams params)
     return entry->isTriggered;
 }
 
+static int GetCharacterIndexByPixel(float x, float y, Font font, const char* text, float fontSize, float spacing)
+{
+    if ((font.texture.id == 0) || (text == NULL) || (x <= 0 && y <= 0))
+        return 0;
+
+    int size = TextLength(text); // Get size in bytes of text
+    int byteCounter = 0;
+
+    float textWidth = 0.0f;
+    float tempTextWidth = 0.0f; // Used to count longer text line width
+
+    float textHeight = fontSize;
+    float scaleFactor = fontSize / (float)font.baseSize;
+
+    int letter = 0; // Current character
+    int index = 0; // Index position in sprite font
+
+    float textLineSpacing = GetTextLineSpacing();
+
+    x /= scaleFactor;
+
+    for (int i = 0; i < size;) {
+        byteCounter++;
+
+        int next = 0;
+        letter = GetCodepointNext(&text[i], &next);
+        index = GetGlyphIndex(font, letter);
+
+        i += next;
+
+        float letterWidth = 0.0f;
+        if (letter != '\n') {
+            if (font.glyphs[index].advanceX != 0)
+                letterWidth = font.glyphs[index].advanceX;
+            else
+                letterWidth = (font.recs[index].width + font.glyphs[index].offsetX);
+            textWidth += letterWidth + spacing;
+        } else {
+            if (tempTextWidth < textWidth)
+                tempTextWidth = textWidth;
+            byteCounter = 0;
+            textWidth = 0;
+
+            if (textHeight >= y) {
+                // point is below the baseline and we didn't cross x, means: cursor is to the right of the line
+                return i;
+            }
+
+            // NOTE: Line spacing is a global variable, use SetTextLineSpacing() to setup
+            textHeight += (float)textLineSpacing;
+        }
+
+        if (textWidth + letterWidth * .5f >= x && textHeight >= y)
+            return i;
+    }
+
+    return size;
+}
+
+DuskGuiTextBuffer* DuskGui_getTextBuffer(DuskGuiParamsEntry* entry, int createIfNull)
+{
+    if (entry->textBuffer == NULL && createIfNull) {
+        entry->textBuffer = (DuskGuiTextBuffer*)malloc(sizeof(DuskGuiTextBuffer));
+        entry->textBuffer->buffer = strdup(entry->params.text);
+        entry->textBuffer->capacity = strlen(entry->params.text);
+        for (int i = 0; entry->textBuffer->buffer[i]; i++) {
+            if (entry->textBuffer->buffer[i] == '#' && entry->textBuffer->buffer[i + 1] == '#') {
+                entry->textBuffer->buffer[i] = '\0';
+                break;
+            }
+        }
+        entry->textBuffer->refCount = 1;
+    }
+    return entry->textBuffer;
+}
+
+void DuskGuiTextBuffer_insert(DuskGuiTextBuffer* buffer, int index, const char *tx)
+{
+    int txLen = TextLength(tx);
+    int len = TextLength(buffer->buffer);
+    if (index < 0) {
+        index = 0;
+    }
+    if (index > len) {
+        index = len;
+    }
+    if (txLen + len >= buffer->capacity) {
+        buffer->capacity = (txLen + len) * 2;
+        buffer->buffer = (char*)realloc(buffer->buffer, buffer->capacity + 1);
+    }
+    for (int i = len; i >= index; i--) {
+        buffer->buffer[i + txLen] = buffer->buffer[i];
+    }
+    for (int i = 0; i < txLen; i++) {
+        buffer->buffer[index + i] = tx[i];
+    }
+}
+
+int DuskGuiTextBuffer_delete(DuskGuiTextBuffer* buffer, int index)
+{
+    int len = TextLength(buffer->buffer);
+    if (index >= len) {
+        return 0;
+    }
+    if (index < 0) {
+        return 0;
+    }
+    int codepointLen = 0;
+    GetCodepointNext(&buffer->buffer[index], &codepointLen);
+    for (int i = index; i <= len - codepointLen; i++) {
+        buffer->buffer[i] = buffer->buffer[i + codepointLen];
+    }
+    return codepointLen;
+}
+
+static float _keyCheckTimes[512];
+int _IsKeyPressedRepeated(int k)
+{
+    if (k < 0) return 0;
+    if (k > 512) return 0;
+    if (IsKeyDown(k)) {
+        float t = GetTime();
+        float prev = _keyCheckTimes[k];
+        if (t - prev < 0.1f) {
+            return 0;
+        }
+        _keyCheckTimes[k] = prev < 0.0f ? t + 0.2f : t;
+        return 1;
+    }
+    else
+    {
+        _keyCheckTimes[k] = -1.0f;
+    }
+    return 0;
+}
+
 int DuskGui_textInputField(DuskGuiParams params, char** buffer)
 {
     DuskGuiStyleGroup* group = &_defaultStyles.groups[DUSKGUI_STYLE_INPUTTEXTFIELD];
     DuskGuiParamsEntry* entry = DuskGui_makeEntry(params, group);
     DuskGui_drawStyle(entry, &_duskGuiState, group);
-    if (entry->isFocused && entry->params.text && entry->params.text[0] != '\0') {
-        const char* text = entry->params.text;
+    const char *text = DuskGui_getText(entry);
+    if (entry->isFocused && text && text[0] != '\0') {
         int len = strlen(text);
         char copy[len + 1];
         strcpy(copy, text);
-        for (int i=0;copy[i];i++) {
+        for (int i = 0; copy[i]; i++) {
             if (copy[i] == '#' && copy[i + 1] == '#') {
                 copy[i] = '\0';
                 len = i;
@@ -847,44 +1000,14 @@ int DuskGui_textInputField(DuskGuiParams params, char** buffer)
         Rectangle textBounds = entry->textBounds;
         Vector2 mousePos = GetMousePosition();
         if (IsMouseButtonDown(MOUSE_LEFT_BUTTON) && CheckCollisionPointRec(mousePos, entry->params.bounds)) {
-            // TODO: Fix this. It's badly written and not UTF-8 compatible 🥴
-            if (CheckCollisionPointRec(mousePos, textBounds))
-            {
-                char first = copy[0];
-                char start[2]= {first, 0};
-                Vector2 firstSize = MeasureTextEx(group->fallbackStyle.fontStyle->font, start, group->fallbackStyle.fontStyle->fontSize, group->fallbackStyle.fontStyle->fontSpacing);
-
-                Rectangle boundCheck = textBounds;
-                boundCheck.width -= firstSize.x * .5f;
-                boundCheck.x += firstSize.x * .5f;
-                if (!CheckCollisionPointRec(mousePos, boundCheck)) {
-                    cursorIndex = 0;
-                }
-                else
-                {
-                    Rectangle prevBound = boundCheck;
-                    for (int i = len - 1; i >= 0; i--) {
-                        char chr = copy[i];
-                        copy[i] = '\0';
-                        boundCheck.width = MeasureTextEx(group->fallbackStyle.fontStyle->font, copy, group->fallbackStyle.fontStyle->fontSize, group->fallbackStyle.fontStyle->fontSpacing).x;
-                        Rectangle check = boundCheck;
-                        check.width = Lerp(prevBound.width, boundCheck.width, 0.5f);
-                        prevBound = boundCheck;
-                        cursorIndex = i + 1;
-                        if (!CheckCollisionPointRec(mousePos, check)) {
-                            copy[i] = chr;
-                            break;
-                        }
-                    }
-                    copy[0] = first;
-                }
-            }
-            else if (mousePos.x < textBounds.x)
-            {
+            if (CheckCollisionPointRec(mousePos, textBounds)) {
+                DuskGuiFontStyle* fontStyle = group->fallbackStyle.fontStyle;
+                int x = mousePos.x - textBounds.x;
+                int y = mousePos.y - textBounds.y;
+                cursorIndex = GetCharacterIndexByPixel(x, y, fontStyle->font, copy, fontStyle->fontSize, fontStyle->fontSpacing);
+            } else if (mousePos.x < textBounds.x) {
                 cursorIndex = 0;
-            }
-            else if (mousePos.x > textBounds.x + textBounds.width)
-            {
+            } else if (mousePos.x > textBounds.x + textBounds.width) {
                 cursorIndex = len;
             }
         }
@@ -897,6 +1020,54 @@ int DuskGui_textInputField(DuskGuiParams params, char** buffer)
             dst,
             (Vector2) { 0, 0 },
             0, style->iconColor);
+    }
+    if (entry->isFocused) {
+        int key = GetCharPressed();
+        while (key > 0) {
+            // NOTE: Only allow keys in range [32..125]
+            if ((key >= 32) && (key <= 125)) {
+                DuskGuiTextBuffer* textBuffer = DuskGui_getTextBuffer(entry, 1);
+                int codepointLen = 0;
+                const char* codepoint = CodepointToUTF8(key, &codepointLen);
+                DuskGuiTextBuffer_insert(textBuffer, entry->cursorIndex, codepoint);
+                entry->cursorIndex += codepointLen;
+            }
+            else
+            {
+                printf("K: %d\n", key);
+            }
+
+            key = GetCharPressed(); // Check next character in the queue
+        }
+
+        if (_IsKeyPressedRepeated(KEY_BACKSPACE)) {
+            entry->cursorIndex -= DuskGuiTextBuffer_delete(DuskGui_getTextBuffer(entry, 1), entry->cursorIndex - 1);
+        }
+        if (_IsKeyPressedRepeated(KEY_DELETE)) {
+            DuskGuiTextBuffer_delete(DuskGui_getTextBuffer(entry, 1), entry->cursorIndex);
+        }
+        if (_IsKeyPressedRepeated(KEY_LEFT) && entry->cursorIndex > 0) {
+            int codepointSize;
+            GetCodepointPrevious(&DuskGui_getTextBuffer(entry, 1)->buffer[entry->cursorIndex], &codepointSize);
+            entry->cursorIndex-= codepointSize;
+        }
+        if (_IsKeyPressedRepeated(KEY_RIGHT) && entry->cursorIndex < TextLength(DuskGui_getText(entry))) {
+            int codepointSize;
+            GetCodepointNext(&DuskGui_getTextBuffer(entry, 1)->buffer[entry->cursorIndex], &codepointSize);
+            entry->cursorIndex += codepointSize;
+        }
+        if (_IsKeyPressedRepeated(KEY_HOME)) {
+            entry->cursorIndex = 0;
+        }
+        if (_IsKeyPressedRepeated(KEY_END)) {
+            entry->cursorIndex = TextLength(DuskGui_getText(entry));
+        }
+        if (_IsKeyPressedRepeated(KEY_ENTER)) {
+            entry->isTriggered = 1;
+            if (buffer) {
+                *buffer = strdup(DuskGui_getText(entry));
+            }
+        }
     }
     return entry->isTriggered;
 }
