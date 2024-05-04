@@ -30,7 +30,7 @@ void SceneGraph_destroy(SceneGraph* graph)
     for (int i = 0; i < graph->objects_count; i++) {
         SceneGraph_destroyObject(graph, graph->objects[i].id);
     }
-    for (int i=0; i < graph->componentTypes_count; i++) {
+    for (int i = 0; i < graph->componentTypes_count; i++) {
         SceneComponentType* type = &graph->componentTypes[i];
         free(type->name);
         free(type->componentData);
@@ -56,16 +56,12 @@ STRUCT_LIST_ACQUIRE_FN(SceneObject, SceneObjectId, children)
 SceneComponentTypeId SceneGraph_registerComponentType(SceneGraph* graph, const char* name,
     size_t dataSize, SceneComponentTypeMethods methods)
 {
-    for (int i=0;i<graph->componentTypes_count;i+=1)
-    {
-        if (strcmp(graph->componentTypes[i].name, name) == 0)
-        {
+    for (int i = 0; i < graph->componentTypes_count; i += 1) {
+        if (strcmp(graph->componentTypes[i].name, name) == 0) {
             TraceLog(LOG_WARNING, "SceneGraph_registerComponentType(%s): component type already registered", name);
-            if (graph->componentTypes[i].dataSize != dataSize)
-            {
+            if (graph->componentTypes[i].dataSize != dataSize) {
                 TraceLog(LOG_ERROR, "SceneGraph_registerComponentType(%s): component type already registered with different data size; invalidating existing components", name);
-                for (int j=0;j<graph->componentTypes[i].components_count;j+=1)
-                {
+                for (int j = 0; j < graph->componentTypes[i].components_count; j += 1) {
                     SceneComponent* component = &graph->componentTypes[i].components[j];
                     component->id.version = 0;
                 }
@@ -244,6 +240,19 @@ void SceneGraph_setLocalScale(SceneGraph* graph, SceneObjectId id, Vector3 scale
     object->flags |= SCENE_OBJECT_FLAG_LOCAL_MATRIX_DIRTY | SCENE_OBJECT_FLAG_WORLD_MATRIX_DIRTY;
 }
 
+void SceneGraph_setLocalTransform(SceneGraph* graph, SceneObjectId id, Vector3 position,
+    Vector3 rotation, Vector3 scale)
+{
+    SceneObject* object = SceneGraph_getObject(graph, id);
+    if (object == NULL) {
+        return;
+    }
+    object->transform.position = position;
+    object->transform.eulerRotationDegrees = rotation;
+    object->transform.scale = scale;
+    object->flags |= SCENE_OBJECT_FLAG_LOCAL_MATRIX_DIRTY | SCENE_OBJECT_FLAG_WORLD_MATRIX_DIRTY;
+}
+
 void SceneGraph_setParent(SceneGraph* graph, SceneObjectId id, SceneObjectId parentId)
 {
     SceneObject* object = SceneGraph_getObject(graph, id);
@@ -389,10 +398,9 @@ void SceneGraph_sequentialDraw(SceneGraph* graph, Camera3D camera, void* userdat
             objectStack[depth] = object;
             iterationStack[depth] = 0;
             while (depth >= 0) {
-                SceneObject *o = objectStack[depth];
+                SceneObject* o = objectStack[depth];
                 if (iterationStack[depth] == 0) {
-                    for (int j=0;j<o->components_count;j+=1)
-                    {
+                    for (int j = 0; j < o->components_count; j += 1) {
                         SceneComponent* component = SceneGraph_getComponent(graph, o->components[j], NULL);
                         if (component == NULL || (component->flags & SCENE_COMPONENT_FLAG_ENABLED) == 0) {
                             continue;
@@ -409,8 +417,7 @@ void SceneGraph_sequentialDraw(SceneGraph* graph, Camera3D camera, void* userdat
                     }
                 }
 
-                if (iterationStack[depth] >= o->children_count)
-                {
+                if (iterationStack[depth] >= o->children_count) {
                     depth--;
                     continue;
                 }
@@ -427,7 +434,6 @@ void SceneGraph_sequentialDraw(SceneGraph* graph, Camera3D camera, void* userdat
                     continue;
                 }
             }
-            
         }
     }
 }
@@ -614,10 +620,9 @@ SceneComponentId SceneGraph_addComponent(SceneGraph* graph, SceneObjectId id, Sc
             component->id.version = 0;
             return (SceneComponentId) { 0 };
         }
-    }
-    else if (componentData != NULL && type->dataSize > 0)
+    } else if (componentData != NULL && type->dataSize > 0)
         memcpy(&type->componentData[dataIndex * type->dataSize], componentData, type->dataSize);
-    else if (type->dataSize > 0) 
+    else if (type->dataSize > 0)
         memset(&type->componentData[dataIndex * type->dataSize], 0, type->dataSize);
 
     for (int i = 0; i < object->components_count; i++) {
@@ -682,7 +687,7 @@ SceneComponent* SceneGraph_getComponent(SceneGraph* graph, SceneComponentId id, 
 SceneComponent* SceneGraph_getComponentByType(SceneGraph* graph, SceneObjectId id, SceneComponentTypeId typeId, void** componentData, int atIndex)
 {
     if (id.version == 0) {
-        SceneComponentType *type = SceneGraph_getComponentType(graph, typeId);
+        SceneComponentType* type = SceneGraph_getComponentType(graph, typeId);
         if (type == NULL) {
             if (componentData != NULL)
                 *componentData = NULL;
@@ -725,8 +730,7 @@ SceneComponent* SceneGraph_getComponentOrFindByType(SceneGraph* graph, SceneObje
 {
     SceneComponent* result;
 
-    if (componentId != NULL)
-    {
+    if (componentId != NULL) {
         result = SceneGraph_getComponent(graph, *componentId, componentData);
         if (result != NULL) {
             return result;
@@ -741,7 +745,7 @@ SceneComponent* SceneGraph_getComponentOrFindByType(SceneGraph* graph, SceneObje
     return result;
 }
 
-SceneObject* SceneGraph_findObjectByName(SceneGraph* graph, const char *name, int includeDisabled)
+SceneObject* SceneGraph_findObjectByName(SceneGraph* graph, const char* name, int includeDisabled)
 {
     for (int i = 0; i < graph->objects_count; i++) {
         SceneObject* object = &graph->objects[i];
@@ -749,10 +753,8 @@ SceneObject* SceneGraph_findObjectByName(SceneGraph* graph, const char *name, in
             continue;
         }
         SceneObject* parent = SceneGraph_getObject(graph, object->parent);
-        while (parent)
-        {
-            if ((parent->flags & SCENE_OBJECT_FLAG_ENABLED) == 0)
-            {
+        while (parent) {
+            if ((parent->flags & SCENE_OBJECT_FLAG_ENABLED) == 0) {
                 break;
             }
             parent = SceneGraph_getObject(graph, parent->parent);
@@ -765,7 +767,7 @@ SceneObject* SceneGraph_findObjectByName(SceneGraph* graph, const char *name, in
     return NULL;
 }
 
-SceneComponent* SceneGraph_findComponentByName(SceneGraph* graph, const char *name, int includeDisabled)
+SceneComponent* SceneGraph_findComponentByName(SceneGraph* graph, const char* name, int includeDisabled)
 {
     for (int i = 0; i < graph->componentTypes_count; i++) {
         SceneComponentType* type = &graph->componentTypes[i];
@@ -777,23 +779,18 @@ SceneComponent* SceneGraph_findComponentByName(SceneGraph* graph, const char *na
             if (component->id.version == 0 || ((component->flags & SCENE_COMPONENT_FLAG_ENABLED) == 0 && !includeDisabled)) {
                 continue;
             }
-            if (!includeDisabled)
-            {
+            if (!includeDisabled) {
                 SceneObject* object = SceneGraph_getObject(graph, component->objectId);
-                if (object == NULL)
-                {
+                if (object == NULL) {
                     continue;
                 }
-                while (object)
-                {
-                    if ((object->flags & SCENE_OBJECT_FLAG_ENABLED) == 0)
-                    {
+                while (object) {
+                    if ((object->flags & SCENE_OBJECT_FLAG_ENABLED) == 0) {
                         break;
                     }
                     object = SceneGraph_getObject(graph, object->parent);
                 }
-                if (object)
-                {
+                if (object) {
                     continue;
                 }
             }
@@ -805,57 +802,46 @@ SceneComponent* SceneGraph_findComponentByName(SceneGraph* graph, const char *na
     return NULL;
 }
 
-SceneObject* SceneGraph_findChildByName(SceneGraph* graph, SceneObjectId parentId, const char *name, int includeDisabled)
+SceneObject* SceneGraph_findChildByName(SceneGraph* graph, SceneObjectId parentId, const char* name, int includeDisabled)
 {
     SceneObject* object = SceneGraph_getObject(graph, parentId);
-    if (object == NULL || ((object->flags & SCENE_OBJECT_FLAG_ENABLED) == 0 && !includeDisabled))
-    {
+    if (object == NULL || ((object->flags & SCENE_OBJECT_FLAG_ENABLED) == 0 && !includeDisabled)) {
         return NULL;
     }
 
-    if (strcmp(object->name, name) == 0)
-    {
+    if (strcmp(object->name, name) == 0) {
         return object;
     }
 
-    for (int i = 0; i < object->children_count; i++)
-    {
+    for (int i = 0; i < object->children_count; i++) {
         SceneObject* child = SceneGraph_findChildByName(graph, object->children[i], name, includeDisabled);
-        if (child != NULL)
-        {
+        if (child != NULL) {
             return child;
         }
     }
 
     return NULL;
-
 }
-SceneComponent* SceneGraph_findChildComponentByName(SceneGraph* graph, SceneObjectId parentId, const char *name, int includeDisabled)
+SceneComponent* SceneGraph_findChildComponentByName(SceneGraph* graph, SceneObjectId parentId, const char* name, int includeDisabled)
 {
-    SceneObject *object = SceneGraph_getObject(graph, parentId);
-    if (object == NULL || ((object->flags & SCENE_OBJECT_FLAG_ENABLED) == 0 && !includeDisabled))
-    {
+    SceneObject* object = SceneGraph_getObject(graph, parentId);
+    if (object == NULL || ((object->flags & SCENE_OBJECT_FLAG_ENABLED) == 0 && !includeDisabled)) {
         return NULL;
     }
 
-    for (int i = 0; i < object->components_count; i++)
-    {
+    for (int i = 0; i < object->components_count; i++) {
         SceneComponent* component = SceneGraph_getComponent(graph, object->components[i], NULL);
-        if (component == NULL || ((component->flags & SCENE_COMPONENT_FLAG_ENABLED) == 0 && !includeDisabled))
-        {
+        if (component == NULL || ((component->flags & SCENE_COMPONENT_FLAG_ENABLED) == 0 && !includeDisabled)) {
             continue;
         }
-        if (component->name && strcmp(component->name, name) == 0)
-        {
+        if (component->name && strcmp(component->name, name) == 0) {
             return component;
         }
     }
 
-    for (int i = 0; i < object->children_count; i++)
-    {
+    for (int i = 0; i < object->children_count; i++) {
         SceneComponent* component = SceneGraph_findChildComponentByName(graph, object->children[i], name, includeDisabled);
-        if (component != NULL)
-        {
+        if (component != NULL) {
             return component;
         }
     }
@@ -907,14 +893,13 @@ void SceneGraph_printObject(SceneObject* object, const char* indent, int printCo
     Vector3 rotation = object->transform.eulerRotationDegrees;
     Vector3 worldPos = SceneGraph_getWorldPosition(object->graph, object->id);
 
-    printf("%sObject %3d [%s]: %s (%.2f, %.2f, %.2f) @ (%.2f, %.2f, %.2f) | (%.2f, %.2f, %.2f)\n", indent, object->id.id, 
+    printf("%sObject %3d [%s]: %s (%.2f, %.2f, %.2f) @ (%.2f, %.2f, %.2f) | (%.2f, %.2f, %.2f)\n", indent, object->id.id,
         object->flags & SCENE_OBJECT_FLAG_ENABLED ? "E" : " ",
         object->name,
         position.x, position.y, position.z,
         rotation.x, rotation.y, rotation.z,
         worldPos.x, worldPos.y, worldPos.z);
-    if (printComponents)
-    {
+    if (printComponents) {
         for (int i = 0; i < object->components_count; i++) {
             SceneComponent* component = SceneGraph_getComponent(object->graph, object->components[i], NULL);
             if (component == NULL) {
@@ -926,7 +911,7 @@ void SceneGraph_printObject(SceneObject* object, const char* indent, int printCo
                 printf("%s+Invalid type %3d\n", newIndent, component->typeId.id);
                 continue;
             }
-            printf("%s+Component %3d [%s]: %s\n", newIndent, component->id.id, 
+            printf("%s+Component %3d [%s]: %s\n", newIndent, component->id.id,
                 component->flags & SCENE_COMPONENT_FLAG_ENABLED ? "E" : " ",
                 type->name);
         }
@@ -948,8 +933,7 @@ void SceneGraph_printObject(SceneObject* object, const char* indent, int printCo
 void SceneGraph_print(SceneGraph* graph, int printComponents, int maxRootCount)
 {
     printf("SceneGraph: %d objects\n", graph->objects_count);
-    if (maxRootCount == 0)
-    {
+    if (maxRootCount == 0) {
         maxRootCount = graph->objects_count;
     }
     for (int i = 0; i < graph->objects_count; i++) {
@@ -959,13 +943,11 @@ void SceneGraph_print(SceneGraph* graph, int printComponents, int maxRootCount)
         }
 
         SceneGraph_printObject(object, "", printComponents);
-        if (maxRootCount-- <= 0)
-        {
+        if (maxRootCount-- <= 0) {
             break;
         }
     }
 }
-
 
 void SceneGraph_setComponentEnabled(SceneGraph* graph, SceneComponentId id, int enabled)
 {
@@ -1010,10 +992,9 @@ int SceneGraph_isObjectEnabled(SceneGraph* graph, SceneObjectId id)
     return (object->flags & SCENE_OBJECT_FLAG_ENABLED) != 0;
 }
 
-
-int SceneGraph_getComponentValue(SceneGraph *graph, char* name, SceneComponentId componentId, int bufferSize, void* buffer)
+int SceneGraph_getComponentValue(SceneGraph* graph, char* name, SceneComponentId componentId, int bufferSize, void* buffer)
 {
-    void *componentData;
+    void* componentData;
     SceneComponent* component = SceneGraph_getComponent(graph, componentId, &componentData);
     if (component == NULL) {
         return 0;
@@ -1044,9 +1025,9 @@ int SceneGraph_getComponentValue(SceneGraph *graph, char* name, SceneComponentId
     return type->methods.getValue(object, component, componentData, name, bufferSize, buffer);
 }
 
-int SceneGraph_setComponentValue(SceneGraph *graph, char* name, SceneComponentId componentId, int bufferSize, void* buffer)
+int SceneGraph_setComponentValue(SceneGraph* graph, char* name, SceneComponentId componentId, int bufferSize, void* buffer)
 {
-    void *componentData;
+    void* componentData;
     SceneComponent* component = SceneGraph_getComponent(graph, componentId, &componentData);
     if (component == NULL) {
         return 0;
@@ -1085,7 +1066,6 @@ int SceneComponentIdEquals(SceneComponentId a, SceneComponentId b)
 
 #include "external/cJSON.h"
 
-void SceneComponentType_onSerialized(const char *key, SceneComponentType *componentType, cJSON *json, void *userData)
+void SceneComponentType_onSerialized(const char* key, SceneComponentType* componentType, cJSON* json, void* userData)
 {
-
 }

@@ -468,6 +468,86 @@ void DuskGui_init()
     textFieldGroup->focused->backgroundColor = (Color) { 250, 200, 200, 255 };
     textFieldGroup->focused->iconColor = BLACK;
 
+    Image numberHArrows = GenImageColor(16, 16, (Color) { 255, 255, 255, 0 });
+    Color* numberHArrowsPixels = (Color*)numberHArrows.data;
+    for (int y = 0; y < 16; y++) {
+        int dy = (y - 8) * 2;
+        for (int x = 0; x < 16; x++) {
+            int dx = (x - 8) * 2 + 1;
+            int absDist = abs(dx) + abs(dy);
+            if (absDist < 11 && abs(dx) > 2) {
+                numberHArrowsPixels[y * 16 + x] = (Color) { 255, 255, 255, 255 };
+            }
+        }
+    }
+    Texture2D numberHArrowsTexture = LoadTextureFromImage(numberHArrows);
+    UnloadImage(numberHArrows);
+    DuskGuiStyleGroup* numberInputField = &_defaultStyles.groups[DUSKGUI_STYLE_INPUTNUMBER_FIELD];
+    numberInputField->fallbackStyle = textFieldGroup->fallbackStyle;
+    numberInputField->fallbackStyle.paddingLeft = 16;
+    numberInputField->fallbackStyle.paddingTop = 6;
+    numberInputField->fallbackStyle.iconTexture = numberHArrowsTexture;
+    numberInputField->fallbackStyle.iconSize = (Vector2) { 16, 16 };
+    numberInputField->fallbackStyle.iconPivot = (Vector2) { 8, 8 };
+    numberInputField->fallbackStyle.iconOffset = (Vector2) { 0, 0 };
+    numberInputField->fallbackStyle.iconAlignment = (Vector2) { 0, 0.5f };
+    numberInputField->fallbackStyle.iconColor = BLACK;
+
+    numberInputField->normal = &numberInputField->fallbackStyle;
+    numberInputField->hover = DuskGui_createGuiStyle(&numberInputField->fallbackStyle);
+    numberInputField->hover->backgroundColor = (Color) { 240, 240, 240, 255 };
+    numberInputField->hover->iconColor = (Color) { 80, 80, 120, 255 };
+    numberInputField->pressed = DuskGui_createGuiStyle(&numberInputField->fallbackStyle);
+    numberInputField->pressed->backgroundColor = (Color) { 220, 220, 220, 255 };
+    numberInputField->pressed->iconColor = (Color) { 200, 100, 100, 255 };
+    numberInputField->focused = DuskGui_createGuiStyle(&numberInputField->fallbackStyle);
+    numberInputField->focused->backgroundColor = (Color) { 250, 200, 200, 255 };
+    numberInputField->focused->iconColor = (Color) { 200, 100, 100, 255 };
+
+
+    DuskGuiStyleGroup* horizontalSliderBackgroundGroup = &_defaultStyles.groups[DUSKGUI_STYLE_HORIZONTAL_SLIDER_BACKGROUND];
+    horizontalSliderBackgroundGroup->fallbackStyle = (DuskGuiStyle) {
+        .fontStyle = &_defaultFont,
+        .paddingLeft = 1,
+        .paddingRight = 1,
+        .paddingTop = 1,
+        .paddingBottom = 1,
+        .backgroundColor = (Color) { 200, 200, 200, 255 },
+        .textColor = BLACK,
+        .transitionLingerTime = 0.033f,
+        .backgroundTexture = defaultTexture,
+        .backgroundPatchInfo = GenNPatchInfo(o, o, w, h, n, n, n, n),
+    };
+    horizontalSliderBackgroundGroup->normal = &horizontalSliderBackgroundGroup->fallbackStyle;
+    horizontalSliderBackgroundGroup->hover = DuskGui_createGuiStyle(&horizontalSliderBackgroundGroup->fallbackStyle);
+    horizontalSliderBackgroundGroup->hover->backgroundColor = (Color) { 220, 220, 220, 255 };
+    horizontalSliderBackgroundGroup->pressed = DuskGui_createGuiStyle(&horizontalSliderBackgroundGroup->fallbackStyle);
+    horizontalSliderBackgroundGroup->pressed->backgroundColor = (Color) { 200, 200, 250, 255 };
+    horizontalSliderBackgroundGroup->focused = DuskGui_createGuiStyle(&horizontalSliderBackgroundGroup->fallbackStyle);
+    horizontalSliderBackgroundGroup->focused->backgroundColor = (Color) { 250, 200, 200, 255 };
+
+    DuskGuiStyleGroup* horizontalSliderHandleGroup = &_defaultStyles.groups[DUSKGUI_STYLE_HORIZONTAL_SLIDER_HANDLE];
+    horizontalSliderHandleGroup->fallbackStyle = (DuskGuiStyle) {
+        .fontStyle = &_defaultFont,
+        .paddingLeft = 4,
+        .paddingRight = 4,
+        .paddingTop = 4,
+        .paddingBottom = 4,
+        .backgroundColor = (Color) { 200, 200, 200, 255 },
+        .textColor = BLACK,
+        .textAlignment = (Vector2) { 0.5f, 0.5f },
+        .transitionLingerTime = 0.033f,
+        .backgroundTexture = defaultTexture,
+        .backgroundPatchInfo = GenNPatchInfo(o, o, w, h, n, n, n, n),
+    };
+    horizontalSliderHandleGroup->normal = &horizontalSliderHandleGroup->fallbackStyle;
+    horizontalSliderHandleGroup->hover = DuskGui_createGuiStyle(&horizontalSliderHandleGroup->fallbackStyle);
+    horizontalSliderHandleGroup->hover->backgroundColor = (Color) { 220, 220, 220, 255 };
+    horizontalSliderHandleGroup->pressed = DuskGui_createGuiStyle(&horizontalSliderHandleGroup->fallbackStyle);
+    horizontalSliderHandleGroup->pressed->backgroundColor = (Color) { 200, 200, 250, 255 };
+    horizontalSliderHandleGroup->focused = DuskGui_createGuiStyle(&horizontalSliderHandleGroup->fallbackStyle);
+    horizontalSliderHandleGroup->focused->backgroundColor = (Color) { 250, 200, 200, 255 };
+
     Image horizontalImage = GenImageColor(8, 8, WHITE);
     Texture2D horizontalLineTexture = LoadTextureFromImage(horizontalImage);
     UnloadImage(horizontalImage);
@@ -503,7 +583,7 @@ int DuskGui_isNotLocked(DuskGuiParamsEntry* params)
     return _duskGuiState.locked.txId == NULL || DuskGui_idEquals(&_duskGuiState.locked, params);
 }
 
-int DuskGui_tryLock(DuskGuiParamsEntry* params)
+int DuskGui_tryLock(DuskGuiParamsEntry* params, int x, int y, int relX, int relY)
 {
     if (_duskGuiState.locked.txId != NULL) {
         return strcmp(_duskGuiState.locked.txId, params->txId) == 0;
@@ -514,6 +594,8 @@ int DuskGui_tryLock(DuskGuiParamsEntry* params)
     }
     _duskGuiState.locked = *params;
     _duskGuiState.locked.txId = strdup(params->txId);
+    _duskGuiState.lockScreenPos = (Vector2) { x, y };
+    _duskGuiState.lockRelativePos = (Vector2) { relX, relY };
     return 1;
 }
 
@@ -594,7 +676,9 @@ void DuskGui_evaluate()
         }
 
         if (isHit && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
-            DuskGui_tryLock(entry);
+            int relX = GetMouseX() - entry->params.bounds.x;
+            int relY = GetMouseY() - entry->params.bounds.y;
+            DuskGui_tryLock(entry, GetMouseX(), GetMouseY(), relX, relY);
         }
 
         if (isHit && IsMouseButtonDown(MOUSE_LEFT_BUTTON) && !DuskGui_hasLock(entry)) {
@@ -686,12 +770,8 @@ void DuskGui_update(DuskGuiParamsEntry* entry, DuskGuiStyleGroup* initStyleGroup
 {
     DuskGuiParamsEntry* match = DuskGui_findParams(&_duskGuiState.prevParams, entry);
     if (match) {
-        entry->isMouseOver = match->isMouseOver;
-        entry->isHovered = match->isHovered;
-        entry->isPressed = match->isPressed;
-        entry->isTriggered = match->isTriggered;
-        entry->isFolded = match->isFolded;
-        entry->isFocused = match->isFocused;
+        entry->flags = match->flags;
+
         entry->contentOffset = match->contentOffset;
         entry->contentSize = match->contentSize;
 
@@ -706,9 +786,16 @@ void DuskGui_update(DuskGuiParamsEntry* entry, DuskGuiStyleGroup* initStyleGroup
         entry->transitionTime = match->transitionTime + GetFrameTime();
         entry->transitionDuration = match->transitionDuration;
 
-        entry->textBuffer = match->textBuffer;
-        if (entry->textBuffer != NULL) {
-            entry->textBuffer->refCount++;
+        if (entry->isFocused)
+        {
+            entry->textBuffer = match->textBuffer;
+            if (entry->textBuffer != NULL) {
+                entry->textBuffer->refCount++;
+            }
+        }
+        else
+        {
+            entry->textBuffer = NULL;
         }
     } else if (initStyleGroup) {
         entry->cachedStartStyle = initStyleGroup->fallbackStyle;
@@ -835,6 +922,70 @@ int DuskGui_label(DuskGuiParams params)
 
     DuskGui_drawStyle(entry, &_duskGuiState, &_defaultStyles.groups[DUSKGUI_STYLE_LABEL]);
     return entry->isTriggered;
+}
+
+int DuskGui_floatInputField(DuskGuiParams params, float *value, float min, float max)
+{
+    DuskGuiStyleGroup* styleGroup = &_defaultStyles.groups[DUSKGUI_STYLE_INPUTNUMBER_FIELD];
+    
+    DuskGuiParamsEntry* entry = DuskGui_makeEntry(params, styleGroup);
+    DuskGui_drawStyle(entry, &_duskGuiState, styleGroup);
+    int modified = 0;
+    if (DuskGui_hasLock(entry)) {
+        float delta = GetMouseDelta().x;
+        SetMousePosition(_duskGuiState.lockScreenPos.x, _duskGuiState.lockScreenPos.y);
+        if (IsKeyDown(KEY_LEFT_CONTROL)) {
+            delta *= 0.1f;
+        }
+        *value += delta;
+        *value = *value < min ? min : (*value > max ? max : *value);
+        modified = 1;
+    }
+    return modified;
+}
+
+int DuskGui_horizontalFloatSlider(DuskGuiParams params, float* value, float min, float max)
+{
+    DuskGuiStyleGroup* handleStyle = &_defaultStyles.groups[DUSKGUI_STYLE_HORIZONTAL_SLIDER_HANDLE];
+    DuskGuiStyleGroup* backgroundStyle = &_defaultStyles.groups[DUSKGUI_STYLE_HORIZONTAL_SLIDER_BACKGROUND];
+    DuskGuiParams sliderBackgroundParams = params;
+    const char *text = sliderBackgroundParams.text;
+    while (text && text[0] != '\0' && (text[0] != '#' || text[1] != '#')) {
+        text++;
+    }
+    sliderBackgroundParams.text = text;
+    DuskGuiParamsEntry* entryBackground = DuskGui_makeEntry(sliderBackgroundParams, backgroundStyle);
+    DuskGui_drawStyle(entryBackground, &_duskGuiState, backgroundStyle);
+    DuskGuiStyle *bgStyle = &backgroundStyle->fallbackStyle;
+    float invValue = (*value - min) / (max - min);
+    float handleWidth = handleStyle->fallbackStyle.paddingLeft + handleStyle->fallbackStyle.paddingRight;
+    float handleHeight = params.bounds.height - bgStyle->paddingTop - bgStyle->paddingBottom;
+    char handleId[64];
+    snprintf(handleId, 64, "%s_handle", text);
+    float handleX = params.bounds.x + bgStyle->paddingLeft + invValue * (params.bounds.width - bgStyle->paddingLeft - bgStyle->paddingRight - handleWidth);
+    float handleY = params.bounds.y + bgStyle->paddingTop;
+    Rectangle handleBounds = (Rectangle) { handleX, handleY, handleWidth, handleHeight };
+
+    DuskGuiParams sliderHandleParams = {
+        .bounds = handleBounds,
+        .text = handleId,
+        .rayCastTarget = 1,
+        .isFocusable = 0,
+    };
+    DuskGuiParamsEntry* entryHandle = DuskGui_makeEntry(sliderHandleParams, handleStyle);
+
+    if (DuskGui_hasLock(entryHandle)) {
+        float x = GetMouseX() - _duskGuiState.lockRelativePos.x - entryBackground->params.bounds.x - bgStyle->paddingLeft;
+        float t = x / (params.bounds.width - bgStyle->paddingLeft - bgStyle->paddingRight - handleWidth);
+        t = t < 0.0f ? 0.0f : (t > 1.0f ? 1.0f : t);
+        *value = min + t * (max - min);
+        float newX = params.bounds.x + bgStyle->paddingLeft + t * (params.bounds.width - bgStyle->paddingLeft - bgStyle->paddingRight - handleWidth);
+        entryHandle->params.bounds.x += newX - handleX;
+    }
+
+    DuskGui_drawStyle(entryHandle, &_duskGuiState, handleStyle);
+
+    return entryBackground->isTriggered;
 }
 
 static int GetCharacterIndexByPixel(float x, float y, Font font, const char* text, float fontSize, float spacing)

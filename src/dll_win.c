@@ -23,7 +23,7 @@ static char dllPath[MAX_PATH];
 double GetTime(void);
 
 
-void Host_InitializeGameCode(void* storedState)
+const char* Host_InitializeGameCode(void* storedState)
 {
     if (dllPath[0] == 0)
     {
@@ -31,13 +31,13 @@ void Host_InitializeGameCode(void* storedState)
         HMODULE test = LoadLibraryA("game.dll");
         if (!test) {
             printf("Failed to load DLL: %lu\n", GetLastError());
-            return;
+            return "Failed to load DLL";
         }
         // Get the full path of the loaded DLL
         if (GetModuleFileNameA(test, dllPath, sizeof(dllPath)) == 0) {
             printf("Failed to get DLL path: %lu\n", GetLastError());
             FreeLibrary(test);
-            return;
+            return "Failed to get DLL path";
         } else {
             printf("Loaded DLL from: %s\n", dllPath);
         }
@@ -58,13 +58,13 @@ void Host_InitializeGameCode(void* storedState)
 
     if (compileResult != 0) {
         printf("Failed to compile DLL: %d\n", compileResult);
-        return;
+        return "Failed to compile DLL";
     }
 
     float copyStart = GetTime();
     if (!CopyFileA(dllPath, "game_copy.dll", FALSE)) {
         printf("Failed to copy DLL: %lu\n", GetLastError());
-        return;
+        return "Failed to copy DLL";
     }
     float copyDt = GetTime() - copyStart;
     printf("Copied DLL in %.2fms\n", copyDt * 1000.0f);
@@ -86,7 +86,10 @@ void Host_InitializeGameCode(void* storedState)
         dlUpdate = (UpdateGameCodeFn)GetProcAddress(GameCodeDLL, "GameCodeUpdate");
         float initDt = GetTime() - initStart;
         printf("Initialized game code in %.2fms\n", initDt * 1000.0f);
+        return NULL;
     }
+
+    return "Failed to load DLL";
 }
 
 void* Host_UnloadGameCode()
@@ -111,11 +114,12 @@ void InitializeGameCode(void*);
 void GameCodeDraw();
 void GameCodeUpdate(float dt);
 
-void Host_InitializeGameCode(void* storedState)
+const char* Host_InitializeGameCode(void* storedState)
 {
     InitializeGameCode(0);
     dlDraw = GameCodeDraw;
     dlUpdate = GameCodeUpdate;
+    return 0;
 }
 
 void* Host_UnloadGameCode()

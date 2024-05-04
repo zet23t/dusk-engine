@@ -7,8 +7,9 @@ COMPONENT(MeshRendererComponent)
 #elif defined(COMPONENT_DECLARATION)
 
 // === DECLARATIONS ===
-#include "../util/component_macros.h"
+
 SERIALIZABLE_STRUCT_START(MeshRendererComponent)
+    SERIALIZABLE_ANNOTATION(Range, Vector2, (&(Vector2){0.0f, 1.0f}))
     SERIALIZABLE_FIELD(float, litAmount)
     NONSERIALIZED_FIELD(Material*, material)
     NONSERIALIZED_FIELD(Mesh*, mesh)

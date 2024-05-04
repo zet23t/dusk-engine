@@ -1,5 +1,12 @@
+#ifndef SVAL
+#define SVAL(...) __VA_ARGS__
+#endif
 #ifndef SERIALIZABLE_STRUCT_START
 #define SERIALIZABLE_STRUCT_START(name)
+#endif
+
+#ifndef SERIALIZABLE_ANNOTATION
+#define SERIALIZABLE_ANNOTATION(key, type, value)
 #endif
 
 #ifndef SERIALIZABLE_FIELD

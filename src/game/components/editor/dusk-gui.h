@@ -93,12 +93,17 @@ typedef struct DuskGuiParamsEntry
     int selectionStart;
     int selectionEnd;
     char *txId;
-    char isMouseOver:1;
-    char isHovered:1;
-    char isPressed:1;
-    char isTriggered:1;
-    char isFolded:1;
-    char isFocused:1;
+    union {
+        uint8_t flags;
+        struct {
+            char isMouseOver:1;
+            char isHovered:1;
+            char isPressed:1;
+            char isTriggered:1;
+            char isFolded:1;
+            char isFocused:1;
+        };
+    };
     Vector2 contentOffset;
     Vector2 contentSize;
 
@@ -121,6 +126,8 @@ typedef struct DuskGuiState {
     DuskGuiParamsList currentParams;
     DuskGuiParamsList prevParams;
     DuskGuiParamsEntry locked;
+    Vector2 lockScreenPos;
+    Vector2 lockRelativePos;
     int idCounter;
     DuskGuiParamsEntry root;
     int currentPanelIndex;
@@ -135,6 +142,9 @@ typedef enum DuskGuiStyleType {
     DUSKGUI_STYLE_PANEL,
     DUSKGUI_STYLE_HORIZONTAL_LINE,
     DUSKGUI_STYLE_INPUTTEXTFIELD,
+    DUSKGUI_STYLE_INPUTNUMBER_FIELD,
+    DUSKGUI_STYLE_HORIZONTAL_SLIDER_BACKGROUND,
+    DUSKGUI_STYLE_HORIZONTAL_SLIDER_HANDLE,
     DUSKGUI_MAX_STYLESHEETS
 } DuskGuiStyleType;
 
@@ -153,6 +163,8 @@ int DuskGui_textInputField(DuskGuiParams params, char** buffer);
 int DuskGui_foldout(DuskGuiParams params);
 void DuskGui_horizontalLine(DuskGuiParams params);
 Vector2 DuskGui_getAvailableSpace();
+int DuskGui_horizontalFloatSlider(DuskGuiParams params, float* value, float min, float max);
+int DuskGui_floatInputField(DuskGuiParams params, float *value, float min, float max);
 
 DuskGuiParamsEntry* DuskGui_beginScrollArea(DuskGuiParams params);
 void DuskGui_endScrollArea(DuskGuiParamsEntry* entry);
