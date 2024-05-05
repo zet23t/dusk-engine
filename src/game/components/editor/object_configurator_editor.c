@@ -56,8 +56,8 @@ void* Arena_alloc(Arena10KB* arena, size_t size)
 }
 
 typedef struct AnnotationData {
-    const char *key;
-    const char *type;
+    const char* key;
+    const char* type;
     size_t size;
     void* data;
 } AnnotationData;
@@ -74,19 +74,19 @@ typedef struct GUIDrawState {
     Arena10KB annotationData;
 } GUIDrawState;
 
-static void GUIDrawState_pushAnnotation(GUIDrawState *state, const char *key, const char *type, size_t size, void *data)
+static void GUIDrawState_pushAnnotation(GUIDrawState* state, const char* key, const char* type, size_t size, void* data)
 {
     if (state->annotationStackCount >= ANNOTATION_MAX_STACK_SIZE) {
         TraceLog(LOG_ERROR, "Annotation stack overflow: %s %s %d", key, type, size);
         return;
     }
-    void *memory = Arena_alloc(&state->annotationData, size);
+    void* memory = Arena_alloc(&state->annotationData, size);
     if (memory == NULL) {
         TraceLog(LOG_ERROR, "Annotation memory overflow: %s %s %d", key, type, size);
         return;
     }
 
-    AnnotationData *annotation = &state->annotationStack[state->annotationStackCount++];
+    AnnotationData* annotation = &state->annotationStack[state->annotationStackCount++];
     annotation->key = key;
     annotation->type = type;
     annotation->size = size;
@@ -94,16 +94,16 @@ static void GUIDrawState_pushAnnotation(GUIDrawState *state, const char *key, co
     memcpy(memory, data, size);
 }
 
-static void GUIDrawState_clearAnnotationStack(GUIDrawState *state)
+static void GUIDrawState_clearAnnotationStack(GUIDrawState* state)
 {
     state->annotationData.used = 0;
     state->annotationStackCount = 0;
 }
 
-static int GUIDrawState_getAnnotation(GUIDrawState *state, const char *key, const char *type, size_t size, void *data)
+static int GUIDrawState_getAnnotation(GUIDrawState* state, const char* key, const char* type, size_t size, void* data)
 {
     for (int i = 0; i < state->annotationStackCount; i++) {
-        AnnotationData *annotation = &state->annotationStack[i];
+        AnnotationData* annotation = &state->annotationStack[i];
         if (strcmp(annotation->key, key) == 0 && strcmp(annotation->type, type) == 0) {
             if (annotation->size != size) {
                 TraceLog(LOG_ERROR, "Annotation size mismatch: %s %s %d != %d", key, type, size, annotation->size);
@@ -115,7 +115,6 @@ static int GUIDrawState_getAnnotation(GUIDrawState *state, const char *key, cons
     }
     return 0;
 }
-
 
 static void DrawSerializeData_rangedInt(const char* key, int* data, GUIDrawState* state, int min, int max, int showSlider, int showNumber)
 {
@@ -153,7 +152,7 @@ void DrawSerializeData_int(const char* key, int* data, GUIDrawState* state)
     DrawSerializeData_rangedInt(key, data, state, min, max, showSlider, showNumber);
 }
 void DrawSerializeData_bool(const char* key, bool* data, GUIDrawState* state)
-{ 
+{
     DuskGui_label((DuskGuiParams) { .text = key, .bounds = (Rectangle) { 10 + state->indention * 10, state->y, state->labelWidth, 18 }, .rayCastTarget = 1 });
     char buffer[32];
     sprintf(buffer, "%s", *data ? "true" : "false");
@@ -226,8 +225,6 @@ int DrawSerializeData_Vector3(const char* key, Vector3* data, GUIDrawState* stat
     sprintf(buffer, "%.2f##%s:%d-z", data->z, key, state->selectedObjectId.id);
     int modZ = DuskGui_floatInputField((DuskGuiParams) { .text = buffer, .bounds = (Rectangle) { offsetX, y, cellWidth, h }, .rayCastTarget = 1 }, &data->z, -FLT_MAX, FLT_MAX);
 
-
-    
     state->y += 18;
 
     return modX || modY || modZ;
@@ -257,29 +254,28 @@ void DrawSerializeData_float(const char* key, float* data, GUIDrawState* state)
     char buffer[64];
     sprintf(buffer, "%.2f##%s:%d-float", *data, key, state->selectedObjectId.id);
     Vector2 space = DuskGui_getAvailableSpace();
-    if (showSlider && max > min)
-    {
-        DuskGui_horizontalFloatSlider((DuskGuiParams) { 
-            .text = buffer, .bounds = (Rectangle) { 10 + state->labelWidth, state->y, space.x - state->labelWidth - 10 - 10, 18 }, .rayCastTarget = 1 }, data, min, max);
-    }
-    else
-        DuskGui_floatInputField((DuskGuiParams) { .text = buffer, .bounds = (Rectangle) { 10 + state->labelWidth, state->y, space.x - 10 - state->labelWidth - 10, 18 }, .rayCastTarget = 1 }, 
+    if (showSlider && max > min) {
+        DuskGui_horizontalFloatSlider((DuskGuiParams) {
+                                          .text = buffer, .bounds = (Rectangle) { 10 + state->labelWidth, state->y, space.x - state->labelWidth - 10 - 10, 18 }, .rayCastTarget = 1 },
+            data, min, max);
+    } else
+        DuskGui_floatInputField((DuskGuiParams) { .text = buffer, .bounds = (Rectangle) { 10 + state->labelWidth, state->y, space.x - 10 - state->labelWidth - 10, 18 }, .rayCastTarget = 1 },
             data, min, max);
 
-        // DuskGui_label((DuskGuiParams) { .text = buffer, .bounds = (Rectangle) { 10 + state->labelWidth, state->y, space.x - 10 - state->labelWidth, 18 }, .rayCastTarget = 1 });
+    // DuskGui_label((DuskGuiParams) { .text = buffer, .bounds = (Rectangle) { 10 + state->labelWidth, state->y, space.x - 10 - state->labelWidth, 18 }, .rayCastTarget = 1 });
     state->y += 18;
 }
 void DrawSerializeData_cstr(const char* key, char** data, GUIDrawState* state)
 {
     DuskGui_label((DuskGuiParams) { .text = key, .bounds = (Rectangle) { 10 + state->indention * 10, state->y, state->labelWidth, 18 }, .rayCastTarget = 1 });
     Vector2 space = DuskGui_getAvailableSpace();
-    char *buffer = NULL;
+    char* buffer = NULL;
     char id[strlen(key) + 20];
     sprintf(id, "%s##%s:%d-textfield", *data, key, state->selectedObjectId.id);
-    DuskGui_textInputField((DuskGuiParams) { .text = id, 
-        .bounds = (Rectangle) { 10 + state->labelWidth, state->y, space.x - state->labelWidth - 10, 18 }, 
-        .rayCastTarget = 1,
-        .isFocusable = 1 },
+    DuskGui_textInputField((DuskGuiParams) { .text = id,
+                               .bounds = (Rectangle) { 10 + state->labelWidth, state->y, space.x - state->labelWidth - 10, 18 },
+                               .rayCastTarget = 1,
+                               .isFocusable = 1 },
         &buffer);
     if (buffer != NULL) {
         free(*data);
@@ -353,10 +349,10 @@ DrawFunctionOverrides _drawFunctionOverrides;
         }
 #define SERIALIZABLE_ANNOTATION(key, type, value) \
     GUIDrawState_pushAnnotation(state, #key, #type, sizeof(value), value);
-#define SERIALIZABLE_FIELD(type, name)                  \
-    if (_drawFunctionOverrides._##type == NULL)              \
-        DrawSerializeData_##type(#name, &data->name, state); \
-    else                                                     \
+#define SERIALIZABLE_FIELD(type, name)                             \
+    if (_drawFunctionOverrides._##type == NULL)                    \
+        DrawSerializeData_##type(#name, &data->name, state);       \
+    else                                                           \
         _drawFunctionOverrides._##type(#name, &data->name, state); \
     GUIDrawState_clearAnnotationStack(state);
 #define SERIALIZABLE_FIXED_ARRAY(type, name, count)                                                                                                                                \
@@ -378,9 +374,10 @@ DrawFunctionOverrides _drawFunctionOverrides;
         } else {                                                                                                                                                                   \
             state->y += 18;                                                                                                                                                        \
         }                                                                                                                                                                          \
-    }\
+    }                                                                                                                                                                              \
     GUIDrawState_clearAnnotationStack(state);
-#define SERIALIZABLE_CSTR(name) DrawSerializeData_cstr(#name, &data->name, state);\
+#define SERIALIZABLE_CSTR(name)                        \
+    DrawSerializeData_cstr(#name, &data->name, state); \
     GUIDrawState_clearAnnotationStack(state);
 #define SERIALIZABLE_STRUCT_LIST_ELEMENT(type, name)                                                                                                             \
     DuskGui_label((DuskGuiParams) { .text = #name, .bounds = (Rectangle) { 10 + state->indention * 10, state->y, state->labelWidth, 18 }, .rayCastTarget = 1 }); \
@@ -393,7 +390,7 @@ DrawFunctionOverrides _drawFunctionOverrides;
         else                                                                                                                                                     \
             _drawFunctionOverrides._##type(num, &data->name[i], state);                                                                                          \
     }                                                                                                                                                            \
-    state->indention--;\
+    state->indention--;                                                                                                                                          \
     GUIDrawState_clearAnnotationStack(state);
 // #define POST_SERIALIZE_CALLBACK(type, name) name(key, data, element, userData);
 #define SERIALIZABLE_STRUCT_END(name) \
@@ -490,7 +487,7 @@ void ObjectConfiguratorEditorComponent_draw2D(Camera2D camera, SceneObject* scen
         SceneGraph_setLocalRotation(psg.sceneGraph, data->cameraPivotPitchId, rotationPitch);
     }
 
-    DuskGuiParamsEntry *panel = DuskGui_beginPanel((DuskGuiParams) {
+    DuskGuiParamsEntry* panel = DuskGui_beginPanel((DuskGuiParams) {
         .text = "##hierarchy_view",
         .bounds = (Rectangle) { -1, -2, 200, GetScreenHeight() + 4 },
         .rayCastTarget = 1 });
@@ -508,6 +505,39 @@ void ObjectConfiguratorEditorComponent_draw2D(Camera2D camera, SceneObject* scen
         SerializeData_SceneGraph(NULL, psg.sceneGraph, obj, NULL);
         char* serialized = cJSON_Print(obj);
         printf("Serialized:\n%s\n", serialized);
+    }
+
+    if (DuskGui_button((DuskGuiParams) { .text = "Menu test", .bounds = (Rectangle) { 100, 70, 85, 20 }, .rayCastTarget = 1 })) {
+        printf("Opening menu\n");
+        DuskGui_openMenu("test_menu");
+    }
+
+    if (DuskGui_beginMenu((DuskGuiParams) { .text = "test_menu", .bounds = (Rectangle) { 100, 85, 200, 200 } })) {
+
+        for (int i = 0; i < 5; i++) {
+            char buffer[32];
+            sprintf(buffer, i % 2 ? "Submenu %d" : "Test %d", i);
+            if (DuskGui_menuItem(i % 2, (DuskGuiParams) { .text = buffer, .bounds = DuskGui_fillHorizontally(20 * i, 0, 0, 20), .rayCastTarget = 1 })) {
+                if (i % 2) {
+                    sprintf(buffer, "test_menu_%d", i);
+                    DuskGui_openMenu(buffer);
+                } else {
+                    printf("%s clicked\n", buffer);
+                }
+            }
+        }
+        if (DuskGui_menuItem(0, (DuskGuiParams) { .text = "Close", .bounds = DuskGui_fillHorizontally(20 * 5, 0, 0, 20), .rayCastTarget = 1 })) {
+            DuskGui_closeMenu("test_menu");
+        }
+        
+        for (int i = 1; i < 5; i += 2) {
+            char buffer[32];
+            sprintf(buffer, "test_menu_%d", i);
+            if (DuskGui_beginMenu((DuskGuiParams) { .text = buffer, .bounds = (Rectangle) { 100, 20 * i, 200, 200 } })) {
+                DuskGui_endMenu();
+            }
+        }
+        DuskGui_endMenu();
     }
 
     int y = 90;
@@ -532,8 +562,8 @@ void ObjectConfiguratorEditorComponent_draw2D(Camera2D camera, SceneObject* scen
 
     const int inspectorHeight = 400;
     const int inspectorWidth = 350;
-    DuskGuiParamsEntry *inspector_panel = DuskGui_beginPanel((DuskGuiParams) { .text = "##object_view", .bounds = (Rectangle) { GetScreenWidth() - inspectorWidth, GetScreenHeight() - inspectorHeight, inspectorWidth, inspectorHeight }, .rayCastTarget = 1 });
-    DuskGuiParamsEntry *inspector_scroll = DuskGui_beginScrollArea((DuskGuiParams) { .text = "##object_scroll", .bounds = (Rectangle) { 0, 0, inspectorWidth, inspectorHeight }, .rayCastTarget = 1 });
+    DuskGuiParamsEntry* inspector_panel = DuskGui_beginPanel((DuskGuiParams) { .text = "##object_view", .bounds = (Rectangle) { GetScreenWidth() - inspectorWidth, GetScreenHeight() - inspectorHeight, inspectorWidth, inspectorHeight }, .rayCastTarget = 1 });
+    DuskGuiParamsEntry* inspector_scroll = DuskGui_beginScrollArea((DuskGuiParams) { .text = "##object_scroll", .bounds = (Rectangle) { 0, 0, inspectorWidth, inspectorHeight }, .rayCastTarget = 1 });
     SceneObject* selectedObj = SceneGraph_getObject(psg.sceneGraph, data->selectedObjectId);
     if (selectedObj != NULL) {
         GUIDrawState state = { .labelWidth = 140, .sceneGraph = psg.sceneGraph, .selectedObjectId = data->selectedObjectId };
@@ -550,7 +580,7 @@ void ObjectConfiguratorEditorComponent_draw2D(Camera2D camera, SceneObject* scen
     DuskGui_endScrollArea(inspector_scroll);
     DuskGui_endPanel(inspector_panel);
 
-    DuskGui_evaluate();
+    DuskGui_finalize();
 }
 void ObjectConfiguratorEditorComponent_draw(Camera3D camera, SceneObject* sceneObject, SceneComponentId sceneComponent,
     void* componentData, void* userdata)

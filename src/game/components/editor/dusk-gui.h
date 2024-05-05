@@ -10,6 +10,9 @@ typedef struct DuskGuiParamsEntry DuskGuiParamsEntry;
 typedef struct DuskGuiParams DuskGuiParams;
 typedef struct DuskGuiStyle DuskGuiStyle;
 typedef struct DuskGuiState DuskGuiState;
+typedef struct DuskGuiStyleGroup DuskGuiStyleGroup;
+
+typedef void (*DuskGuiDrawFn)(DuskGuiParamsEntry *params, DuskGuiState *state, DuskGuiStyleGroup *style);
 
 typedef struct DuskGuiParamsEntryList {
     DuskGuiParamsEntry *params;
@@ -58,6 +61,7 @@ typedef struct DuskGuiStyle
 
 typedef struct DuskGuiStyleGroup
 {
+    const char *name;
     void (*draw)(DuskGuiParamsEntry *params, DuskGuiState *state, struct DuskGuiStyleGroup *fallback);
 
     DuskGuiStyle fallbackStyle;
@@ -89,6 +93,7 @@ typedef struct DuskGuiTextBuffer
 typedef struct DuskGuiParamsEntry
 {
     int id;
+    Rectangle originalBounds;
     int cursorIndex;
     int selectionStart;
     int selectionEnd;
@@ -102,6 +107,8 @@ typedef struct DuskGuiParamsEntry
             char isTriggered:1;
             char isFolded:1;
             char isFocused:1;
+            char isMenu:1;
+            char isOpen:1;
         };
     };
     Vector2 contentOffset;
@@ -120,7 +127,13 @@ typedef struct DuskGuiParamsEntry
     
     DuskGuiParams params;
     int parentIndex;
+
+    DuskGuiDrawFn drawFn;
+    DuskGuiStyleGroup *drawStyleGroup;
+    void *drawUserData;
 } DuskGuiParamsEntry;
+
+#define DUSKGUI_MAX_MENU_DEPTH 16
 
 typedef struct DuskGuiState {
     DuskGuiParamsList currentParams;
@@ -131,6 +144,14 @@ typedef struct DuskGuiState {
     int idCounter;
     DuskGuiParamsEntry root;
     int currentPanelIndex;
+
+    // null terminated list of null terminated strings
+    const char **activeMenus;
+    
+    DuskGuiParamsEntry *menuStack[DUSKGUI_MAX_MENU_DEPTH];
+    int menuStackCount;
+
+    DuskGuiParamsEntry *lastEntry;
 } DuskGuiState;
 
 typedef enum DuskGuiStyleType {
@@ -145,6 +166,8 @@ typedef enum DuskGuiStyleType {
     DUSKGUI_STYLE_INPUTNUMBER_FIELD,
     DUSKGUI_STYLE_HORIZONTAL_SLIDER_BACKGROUND,
     DUSKGUI_STYLE_HORIZONTAL_SLIDER_HANDLE,
+    DUSKGUI_STYLE_MENU,
+    DUSKGUI_STYLE_MENU_ITEM,
     DUSKGUI_MAX_STYLESHEETS
 } DuskGuiStyleType;
 
@@ -153,9 +176,24 @@ typedef struct DuskGuiStyleSheet {
 } DuskGuiStyleSheet;
 
 void DuskGui_init();
-void DuskGui_evaluate();
+// finalizes the frame operation; draws menus as a last step
+void DuskGui_finalize();
+
+// style management
 void DuskGui_setDefaultFont(Font font, float fontSize, int fontSpacing);
 DuskGuiStyleGroup* DuskGui_getStyleGroup(int styleType);
+
+// menu management
+void DuskGui_openMenu(const char *menuName);
+int DuskGui_isMenuOpen(const char *menuName);
+int DuskGui_closeMenu(const char *menuName);
+void DuskGui_closeAllMenus();
+
+// layouting helpers
+Rectangle DuskGui_fillHorizontally(int yOffset, int left, int right, int height);
+
+
+// widgets
 int DuskGui_button(DuskGuiParams params);
 int DuskGui_dragArea(DuskGuiParams params);
 int DuskGui_label(DuskGuiParams params);
@@ -165,12 +203,17 @@ void DuskGui_horizontalLine(DuskGuiParams params);
 Vector2 DuskGui_getAvailableSpace();
 int DuskGui_horizontalFloatSlider(DuskGuiParams params, float* value, float min, float max);
 int DuskGui_floatInputField(DuskGuiParams params, float *value, float min, float max);
+int DuskGui_menuItem(int opensSubmenu, DuskGuiParams params);
 
+// containers
 DuskGuiParamsEntry* DuskGui_beginScrollArea(DuskGuiParams params);
 void DuskGui_endScrollArea(DuskGuiParamsEntry* entry);
 
 DuskGuiParamsEntry* DuskGui_beginPanel(DuskGuiParams params);
 void DuskGui_endPanel(DuskGuiParamsEntry* entry);
+
+DuskGuiParamsEntry* DuskGui_beginMenu(DuskGuiParams params);
+void DuskGui_endMenu();
 
 #ifdef DUSK_GUI_IMPLEMENTATION
 
