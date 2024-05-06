@@ -134,6 +134,14 @@ typedef struct DuskGuiParamsEntry
 } DuskGuiParamsEntry;
 
 #define DUSKGUI_MAX_MENU_DEPTH 16
+#define DUSKGUI_MAX_ACTIVE_MENU_COUNT 16
+
+typedef struct DuskGuiActiveMenuStats
+{
+    char *menuName;
+    float lastTriggerTime;
+    float firstActiveTime;
+} DuskGuiActiveMenuStats;
 
 typedef struct DuskGuiState {
     DuskGuiParamsList currentParams;
@@ -145,8 +153,8 @@ typedef struct DuskGuiState {
     DuskGuiParamsEntry root;
     int currentPanelIndex;
 
-    // null terminated list of null terminated strings
-    const char **activeMenus;
+    // active menus, persisted between frames
+    DuskGuiActiveMenuStats activeMenus[DUSKGUI_MAX_ACTIVE_MENU_COUNT];
     
     DuskGuiParamsEntry *menuStack[DUSKGUI_MAX_MENU_DEPTH];
     int menuStackCount;

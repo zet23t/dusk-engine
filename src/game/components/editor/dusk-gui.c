@@ -105,7 +105,7 @@ static DuskGuiStyle* DuskGuiStyleGroup_selectStyle(DuskGuiParamsEntry* entry, Du
     return style;
 }
 
-const char *DuskGui_getText(DuskGuiParamsEntry* entry)
+const char* DuskGui_getText(DuskGuiParamsEntry* entry)
 {
     DuskGuiTextBuffer* buffer = DuskGui_getTextBuffer(entry, 0);
     return buffer ? buffer->buffer : entry->params.text;
@@ -151,7 +151,7 @@ static void DuskGui_defaultDrawStyle(DuskGuiParamsEntry* entry, DuskGuiState* st
             iconPivot, iconRotation, lerpedStyle.iconColor);
     }
 
-    const char *origText = DuskGui_getText(entry);
+    const char* origText = DuskGui_getText(entry);
     if (origText && lerpedStyle.textColor.a > 0) {
         // draw debug outline
         // DrawRectangleLines(entry->params.bounds.x, entry->params.bounds.y, entry->params.bounds.width, entry->params.bounds.height, RED);
@@ -245,47 +245,47 @@ static DuskGuiParamsEntry* DuskGui_getParent(DuskGuiParamsEntry* entry, int defa
     return DuskGui_getParentById(entry->parentIndex, defaultToRoot);
 }
 
-void DuskGui_openMenu(const char *menuName)
+void DuskGui_openMenu(const char* menuName)
 {
-    if (DuskGui_isMenuOpen(menuName))
+    int n = DuskGui_isMenuOpen(menuName);
+    if (n > 0) {
+        _duskGuiState.activeMenus[n - 1].lastTriggerTime = GetTime();
         return;
-    printf("Opening menu: %s\n", menuName);
-    
+    }
+
     // opening a submenu from a menu should close other submenus of the same level
     // this means, we need to figure out the currently active menu, find the index in the activeMenus array
-    // and close all menus after that index. 
-    if (_duskGuiState.menuStackCount > 0)
-    {
+    // and close all menus after that index.
+    if (_duskGuiState.menuStackCount > 0) {
         DuskGuiParamsEntry* currentMenu = _duskGuiState.menuStack[_duskGuiState.menuStackCount - 1];
-        for (int i = 0; _duskGuiState.activeMenus[i]; i++) {
-            if (strcmp(_duskGuiState.activeMenus[i], currentMenu->txId) == 0) {
+        for (int i = 0; i < DUSKGUI_MAX_ACTIVE_MENU_COUNT && _duskGuiState.activeMenus[i].menuName; i++) {
+            if (strcmp(_duskGuiState.activeMenus[i].menuName, currentMenu->txId) == 0) {
                 i++;
-                while (_duskGuiState.activeMenus[i]) {
-                    free((void*)_duskGuiState.activeMenus[i]);
-                    _duskGuiState.activeMenus[i] = NULL;
+                while (i < DUSKGUI_MAX_ACTIVE_MENU_COUNT && _duskGuiState.activeMenus[i].menuName) {
+                    free(_duskGuiState.activeMenus[i].menuName);
+                    _duskGuiState.activeMenus[i].menuName = NULL;
                     i++;
                 }
                 break;
             }
         }
     }
-    
+
     int openMenuCount = 0;
-    while (_duskGuiState.activeMenus != NULL && _duskGuiState.activeMenus[openMenuCount]) {
+    while (openMenuCount < DUSKGUI_MAX_ACTIVE_MENU_COUNT && _duskGuiState.activeMenus[openMenuCount].menuName) {
         openMenuCount++;
     }
-    _duskGuiState.activeMenus = (const char**)realloc(_duskGuiState.activeMenus, sizeof(const char*) * (openMenuCount + 2));
-    _duskGuiState.activeMenus[openMenuCount] = strdup(menuName);
-    _duskGuiState.activeMenus[openMenuCount + 1] = NULL;
+    _duskGuiState.activeMenus[openMenuCount].menuName = strdup(menuName);
+    _duskGuiState.activeMenus[openMenuCount].firstActiveTime = GetTime();
+    _duskGuiState.activeMenus[openMenuCount].lastTriggerTime = GetTime();
+    _duskGuiState.activeMenus[openMenuCount + 1].menuName = NULL;
 }
 
-int DuskGui_isMenuOpen(const char *menuName)
+int DuskGui_isMenuOpen(const char* menuName)
 {
-    if (_duskGuiState.activeMenus == NULL)
-        return 0;
-    for (int i = 0; _duskGuiState.activeMenus[i]; i++) {
-        if (strcmp(_duskGuiState.activeMenus[i], menuName) == 0) {
-            return 1;
+    for (int i = 0; i < DUSKGUI_MAX_ACTIVE_MENU_COUNT && _duskGuiState.activeMenus[i].menuName; i++) {
+        if (strcmp(_duskGuiState.activeMenus[i].menuName, menuName) == 0) {
+            return 1 + i;
         }
     }
     return 0;
@@ -293,31 +293,20 @@ int DuskGui_isMenuOpen(const char *menuName)
 
 void DuskGui_closeAllMenus()
 {
-    if (_duskGuiState.activeMenus == NULL)
-        return;
-    for (int i = 0; _duskGuiState.activeMenus[i]; i++) {
-        free((void*)_duskGuiState.activeMenus[i]);
+    for (int i = 0; i < DUSKGUI_MAX_ACTIVE_MENU_COUNT && _duskGuiState.activeMenus[i].menuName; i++) {
+        free(_duskGuiState.activeMenus[i].menuName);
+        _duskGuiState.activeMenus[i].menuName = NULL;
     }
-    free(_duskGuiState.activeMenus);
-    _duskGuiState.activeMenus = NULL;
 }
 
-int DuskGui_closeMenu(const char *menuName)
+// closes the first menu of given name and also all subsequent menus
+int DuskGui_closeMenu(const char* menuName)
 {
-    if (_duskGuiState.activeMenus == NULL)
-        return 0;
-    for (int i = 0; _duskGuiState.activeMenus[i]; i++) {
-        if (strcmp(_duskGuiState.activeMenus[i], menuName) == 0) {
-            free((void*)_duskGuiState.activeMenus[i]);
-            if (i == 0) {
-                free(_duskGuiState.activeMenus);
-                _duskGuiState.activeMenus = NULL;
-                return 1;
-            }
-
-            while (_duskGuiState.activeMenus[i]) {
-                free((void*)_duskGuiState.activeMenus[i]);
-                _duskGuiState.activeMenus[i] = NULL;
+    for (int i = 0; i < DUSKGUI_MAX_ACTIVE_MENU_COUNT && _duskGuiState.activeMenus[i].menuName; i++) {
+        if (strcmp(_duskGuiState.activeMenus[i].menuName, menuName) == 0) {
+            while (i < DUSKGUI_MAX_ACTIVE_MENU_COUNT && _duskGuiState.activeMenus[i].menuName) {
+                free(_duskGuiState.activeMenus[i].menuName);
+                _duskGuiState.activeMenus[i].menuName = NULL;
                 i++;
             }
             return 1;
@@ -453,10 +442,10 @@ void DuskGui_init()
                 menuPixels[y * 16 + x] = (Color) { 0, 0, 0, 255 };
         }
     }
-    for (int x=0;x<16;x++) {
+    for (int x = 0; x < 16; x++) {
         menuPixels[15 * 16 + x] = (Color) { 0, 0, 0, x == 0 ? 0 : 127 };
     }
-    for (int y=0;y<16;y++) {
+    for (int y = 0; y < 16; y++) {
         menuPixels[y * 16 + 15] = (Color) { 0, 0, 0, y == 0 ? 0 : 127 };
     }
     menuPixels[0xff] = (Color) { 0, 0, 0, 64 };
@@ -473,7 +462,7 @@ void DuskGui_init()
         .backgroundColor = (Color) { 220, 220, 220, 255 },
         .textColor = BLACK,
         .backgroundTexture = menuBackground,
-        .backgroundPatchInfo = GenNPatchInfo(0, 0, 16, 16, 3,3,3,3),
+        .backgroundPatchInfo = GenNPatchInfo(0, 0, 16, 16, 3, 3, 3, 3),
     };
     menuGroup->fallbackStyle.textColor = BLANK;
 
@@ -495,7 +484,6 @@ void DuskGui_init()
     menuItemGroup->pressed->backgroundColor = (Color) { 200, 200, 200, 255 };
     menuItemGroup->pressed->textColor = RED;
     menuItemGroup->pressed->transitionActivationTime = -.15f;
-
 
     DuskGuiStyleGroup* labelGroup = &_defaultStyles.groups[DUSKGUI_STYLE_LABEL];
     labelGroup->fallbackStyle = (DuskGuiStyle) {
@@ -651,7 +639,6 @@ void DuskGui_init()
     numberInputField->focused->backgroundColor = (Color) { 250, 200, 200, 255 };
     numberInputField->focused->iconColor = (Color) { 200, 100, 100, 255 };
 
-
     DuskGuiStyleGroup* horizontalSliderBackgroundGroup = &_defaultStyles.groups[DUSKGUI_STYLE_HORIZONTAL_SLIDER_BACKGROUND];
     horizontalSliderBackgroundGroup->fallbackStyle = (DuskGuiStyle) {
         .fontStyle = &_defaultFont,
@@ -717,7 +704,7 @@ void DuskGui_init()
 
 Rectangle DuskGui_fillHorizontally(int yOffset, int left, int right, int height)
 {
-    DuskGuiParamsEntry *parent = DuskGui_getParentById(_duskGuiState.currentPanelIndex, 1);
+    DuskGuiParamsEntry* parent = DuskGui_getParentById(_duskGuiState.currentPanelIndex, 1);
     Rectangle origBounds = parent->originalBounds;
     return (Rectangle) {
         left + parent->cachedStartStyle.paddingLeft,
@@ -797,25 +784,45 @@ static DuskGuiParamsEntry* DuskGui_getFocusedEntry()
 
 void DuskGui_finalize()
 {
+    // auto close behavior of menus:
+    // Menus have a last trigger time
+    // when a parent menu has a higher last trigger time (+ threshold) than a child menu, the child menu is closed
+    float t = GetTime();
+    float autoCloseTime = t - 1.5f;
+    int openMenuCount = 0;
+    while (openMenuCount < DUSKGUI_MAX_ACTIVE_MENU_COUNT && _duskGuiState.activeMenus[openMenuCount].menuName) {
+        openMenuCount++;
+    }
+    if (openMenuCount > 1) {
+        DuskGuiActiveMenuStats* am = _duskGuiState.activeMenus;
+        // printf("openMenuCount: %i; %f.1 / %f.1 %f.1\n", openMenuCount, am[openMenuCount - 1].lastTriggerTime, am[openMenuCount - 2].lastTriggerTime, autoCloseTime);
+        // printf("  %i %i\n", am[openMenuCount - 1].lastTriggerTime < autoCloseTime, am[openMenuCount - 2].lastTriggerTime > am[openMenuCount - 1].lastTriggerTime);
+        if (am[openMenuCount - 1].lastTriggerTime < autoCloseTime && am[openMenuCount - 2].lastTriggerTime > am[openMenuCount - 1].lastTriggerTime) {
+            DuskGui_closeMenu(am[openMenuCount - 1].menuName);
+        }
+    }
+
     // draw all deferred entries (the ones with drawFn set)
     for (int i = 0; i < _duskGuiState.currentParams.count; i++) {
         DuskGuiParamsEntry* entry = &_duskGuiState.currentParams.params[i];
         if (entry->drawFn) {
             entry->drawFn(entry, &_duskGuiState, entry->drawStyleGroup);
             // it's a dupped string, so we can free it
-            free((char*) entry->params.text);
+            free((char*)entry->params.text);
         }
     }
 
     _duskGuiState.idCounter = 0;
+    for (int i = _duskGuiState.currentParams.count - 1; i >= 0; i--) {
+        _duskGuiState.currentParams.params[i].isMouseOver = 0;
+    }
 
     // reversed raycast hit test
     int blocked = 0;
     const int maxBlockingParents = 64;
     DuskGuiParamsEntry* blockingParents[maxBlockingParents];
     int blockingParentsCount = 0;
-    for (int pass = 0; pass < 2; pass++)
-    {
+    for (int pass = 0; pass < 2; pass++) {
         for (int i = _duskGuiState.currentParams.count - 1; i >= 0; i--) {
             DuskGuiParamsEntry* entry = &_duskGuiState.currentParams.params[i];
             if (entry->params.rayCastTarget == 0 || ((entry->drawFn == NULL) ^ (pass == 1)))
@@ -837,7 +844,7 @@ void DuskGui_finalize()
                 DuskGuiParamsEntry* parent = entry;
                 while (parent != NULL) {
                     if (blockingParentsCount == maxBlockingParents) {
-                        printf("Warning, parent chain too long\n");
+                        TraceLog(LOG_ERROR, "Error, parent chain too long\n");
                         break;
                     }
                     blockingParents[blockingParentsCount++] = parent;
@@ -945,6 +952,7 @@ static DuskGuiParamsEntry* DuskGui_makeEntry(DuskGuiParams params, DuskGuiStyleG
 void DuskGui_update(DuskGuiParamsEntry* entry, DuskGuiStyleGroup* initStyleGroup)
 {
     DuskGuiParamsEntry* match = DuskGui_findParams(&_duskGuiState.prevParams, entry);
+    entry->isMouseOver = 0;
     if (match) {
         entry->flags = match->flags;
 
@@ -962,15 +970,12 @@ void DuskGui_update(DuskGuiParamsEntry* entry, DuskGuiStyleGroup* initStyleGroup
         entry->transitionTime = match->transitionTime + GetFrameTime();
         entry->transitionDuration = match->transitionDuration;
 
-        if (entry->isFocused)
-        {
+        if (entry->isFocused) {
             entry->textBuffer = match->textBuffer;
             if (entry->textBuffer != NULL) {
                 entry->textBuffer->refCount++;
             }
-        }
-        else
-        {
+        } else {
             entry->textBuffer = NULL;
         }
     } else if (initStyleGroup) {
@@ -1011,14 +1016,12 @@ int DuskGui_dragArea(DuskGuiParams params)
 
 static void DuskGui_drawStyle(DuskGuiParamsEntry* params, DuskGuiState* state, DuskGuiStyleGroup* styleGroup)
 {
-    if (state->menuStackCount > 0)
-    {
+    if (state->menuStackCount > 0) {
         // we have a menu open, draw the content in the deferred
         params->drawStyleGroup = styleGroup;
         params->params.text = strdup(params->params.text);
         params->drawFn = DuskGui_drawStyle;
-    }
-    else if (params->params.styleGroup && params->params.styleGroup->draw) {
+    } else if (params->params.styleGroup && params->params.styleGroup->draw) {
         params->params.styleGroup->draw(params, state, styleGroup);
     } else {
         DuskGui_defaultDrawStyle(params, state, styleGroup);
@@ -1106,10 +1109,10 @@ int DuskGui_label(DuskGuiParams params)
     return entry->isTriggered;
 }
 
-int DuskGui_floatInputField(DuskGuiParams params, float *value, float min, float max)
+int DuskGui_floatInputField(DuskGuiParams params, float* value, float min, float max)
 {
     DuskGuiStyleGroup* styleGroup = &_defaultStyles.groups[DUSKGUI_STYLE_INPUTNUMBER_FIELD];
-    
+
     DuskGuiParamsEntry* entry = DuskGui_makeEntry(params, styleGroup);
     DuskGui_drawStyle(entry, &_duskGuiState, styleGroup);
     int modified = 0;
@@ -1129,7 +1132,7 @@ int DuskGui_floatInputField(DuskGuiParams params, float *value, float min, float
 int DuskGui_pushMenuEntry(DuskGuiParamsEntry* entry)
 {
     if (_duskGuiState.menuStackCount >= DUSKGUI_MAX_MENU_DEPTH) {
-        printf("Warning: Menu stack overflow\n");
+        TraceLog(LOG_ERROR, "Menu stack overflow\n");
         return 0;
     }
     _duskGuiState.menuStack[_duskGuiState.menuStackCount++] = entry;
@@ -1139,7 +1142,7 @@ int DuskGui_pushMenuEntry(DuskGuiParamsEntry* entry)
 DuskGuiParamsEntry* DuskGui_popMenuEntry()
 {
     if (_duskGuiState.menuStackCount <= 0) {
-        printf("Warning: Menu stack underflow\n");
+        TraceLog(LOG_ERROR, "Menu stack underflow\n");
         return NULL;
     }
     return _duskGuiState.menuStack[--_duskGuiState.menuStackCount];
@@ -1147,7 +1150,6 @@ DuskGuiParamsEntry* DuskGui_popMenuEntry()
 
 static void DuskGui_drawStyleNop(DuskGuiParamsEntry* params, DuskGuiState* state, DuskGuiStyleGroup* styleGroup)
 {
-
 }
 int DuskGui_fullScreenBlocker()
 {
@@ -1169,33 +1171,35 @@ int DuskGui_menuItem(int opensSubmenu, DuskGuiParams params)
 
 DuskGuiParamsEntry* DuskGui_beginMenu(DuskGuiParams params)
 {
-    int isOpen = DuskGui_isMenuOpen(params.text);
+    int isOpen = DuskGui_isMenuOpen(params.text) != 0;
     params.rayCastTarget = isOpen;
     DuskGuiParamsEntry* entry = DuskGui_makeEntry(params, &_defaultStyles.groups[DUSKGUI_STYLE_MENU]);
 
     entry->isMenu = 1;
     entry->isOpen = isOpen;
     if (isOpen) {
-        if (_duskGuiState.menuStackCount == 0 && DuskGui_fullScreenBlocker())
-        {
+        if (_duskGuiState.menuStackCount == 0 && DuskGui_fullScreenBlocker()) {
             isOpen = 0;
             DuskGui_closeAllMenus();
-        }
-        else
-        {
+        } else {
             _duskGuiState.currentPanelIndex = DuskGui_toParentIndex(entry);
             DuskGui_pushMenuEntry(entry);
             DuskGui_drawStyle(entry, &_duskGuiState, &_defaultStyles.groups[DUSKGUI_STYLE_MENU]);
         }
-    }
 
+        if (entry->isMouseOver) {
+            // update last trigger time of menu
+            // printf("updating last trigger time %s\n", params.text);
+            DuskGui_openMenu(params.text);
+        }
+    }
 
     return isOpen ? entry : NULL;
 }
 
 void DuskGui_endMenu()
 {
-    DuskGuiParamsEntry *entry = DuskGui_popMenuEntry();
+    DuskGuiParamsEntry* entry = DuskGui_popMenuEntry();
     if (entry != NULL)
         _duskGuiState.currentPanelIndex = entry->parentIndex;
 }
@@ -1205,14 +1209,14 @@ int DuskGui_horizontalFloatSlider(DuskGuiParams params, float* value, float min,
     DuskGuiStyleGroup* handleStyle = &_defaultStyles.groups[DUSKGUI_STYLE_HORIZONTAL_SLIDER_HANDLE];
     DuskGuiStyleGroup* backgroundStyle = &_defaultStyles.groups[DUSKGUI_STYLE_HORIZONTAL_SLIDER_BACKGROUND];
     DuskGuiParams sliderBackgroundParams = params;
-    const char *text = sliderBackgroundParams.text;
+    const char* text = sliderBackgroundParams.text;
     while (text && text[0] != '\0' && (text[0] != '#' || text[1] != '#')) {
         text++;
     }
     sliderBackgroundParams.text = text;
     DuskGuiParamsEntry* entryBackground = DuskGui_makeEntry(sliderBackgroundParams, backgroundStyle);
     DuskGui_drawStyle(entryBackground, &_duskGuiState, backgroundStyle);
-    DuskGuiStyle *bgStyle = &backgroundStyle->fallbackStyle;
+    DuskGuiStyle* bgStyle = &backgroundStyle->fallbackStyle;
     float invValue = (*value - min) / (max - min);
     float handleWidth = handleStyle->fallbackStyle.paddingLeft + handleStyle->fallbackStyle.paddingRight;
     float handleHeight = params.bounds.height - bgStyle->paddingTop - bgStyle->paddingBottom;
@@ -1320,7 +1324,7 @@ DuskGuiTextBuffer* DuskGui_getTextBuffer(DuskGuiParamsEntry* entry, int createIf
     return entry->textBuffer;
 }
 
-void DuskGuiTextBuffer_insert(DuskGuiTextBuffer* buffer, int index, const char *tx)
+void DuskGuiTextBuffer_insert(DuskGuiTextBuffer* buffer, int index, const char* tx)
 {
     int txLen = TextLength(tx);
     int len = TextLength(buffer->buffer);
@@ -1362,8 +1366,10 @@ int DuskGuiTextBuffer_delete(DuskGuiTextBuffer* buffer, int index)
 static float _keyCheckTimes[512];
 int _IsKeyPressedRepeated(int k)
 {
-    if (k < 0) return 0;
-    if (k > 512) return 0;
+    if (k < 0)
+        return 0;
+    if (k > 512)
+        return 0;
     if (IsKeyDown(k)) {
         float t = GetTime();
         float prev = _keyCheckTimes[k];
@@ -1372,9 +1378,7 @@ int _IsKeyPressedRepeated(int k)
         }
         _keyCheckTimes[k] = prev < 0.0f ? t + 0.2f : t;
         return 1;
-    }
-    else
-    {
+    } else {
         _keyCheckTimes[k] = -1.0f;
     }
     return 0;
@@ -1385,7 +1389,7 @@ int DuskGui_textInputField(DuskGuiParams params, char** buffer)
     DuskGuiStyleGroup* group = &_defaultStyles.groups[DUSKGUI_STYLE_INPUTTEXTFIELD];
     DuskGuiParamsEntry* entry = DuskGui_makeEntry(params, group);
     DuskGui_drawStyle(entry, &_duskGuiState, group);
-    const char *text = DuskGui_getText(entry);
+    const char* text = DuskGui_getText(entry);
     if (entry->isFocused && text && text[0] != '\0') {
         int len = strlen(text);
         char copy[len + 1];
@@ -1438,9 +1442,7 @@ int DuskGui_textInputField(DuskGuiParams params, char** buffer)
                 const char* codepoint = CodepointToUTF8(key, &codepointLen);
                 DuskGuiTextBuffer_insert(textBuffer, entry->cursorIndex, codepoint);
                 entry->cursorIndex += codepointLen;
-            }
-            else
-            {
+            } else {
                 printf("K: %d\n", key);
             }
 
@@ -1456,7 +1458,7 @@ int DuskGui_textInputField(DuskGuiParams params, char** buffer)
         if (_IsKeyPressedRepeated(KEY_LEFT) && entry->cursorIndex > 0) {
             int codepointSize;
             GetCodepointPrevious(&DuskGui_getTextBuffer(entry, 1)->buffer[entry->cursorIndex], &codepointSize);
-            entry->cursorIndex-= codepointSize;
+            entry->cursorIndex -= codepointSize;
         }
         if (_IsKeyPressedRepeated(KEY_RIGHT) && entry->cursorIndex < TextLength(DuskGui_getText(entry))) {
             int codepointSize;
