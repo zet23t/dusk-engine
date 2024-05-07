@@ -533,9 +533,18 @@ void ObjectConfiguratorEditorComponent_draw2D(Camera2D camera, SceneObject* scen
         for (int i = 1; i < 5; i += 2) {
             char buffer[32];
             sprintf(buffer, "test_menu_%d", i);
+            char buffer2[32];
+            sprintf(buffer2, "test_menu_2_%d", i);
             if (DuskGui_beginMenu((DuskGuiParams) { .text = buffer, .bounds = (Rectangle) { 100, 20 * i, 200, 200 } })) {
                 DuskGui_menuItem(0, (DuskGuiParams) { .text = "Test-1", .bounds = DuskGui_fillHorizontally(0, 0, 0, 20), .rayCastTarget = 1 });
-                DuskGui_menuItem(0, (DuskGuiParams) { .text = "Test-2", .bounds = DuskGui_fillHorizontally(20, 0, 0, 20), .rayCastTarget = 1 });
+                if (DuskGui_menuItem(1, (DuskGuiParams) { .text = "Test-2", .bounds = DuskGui_fillHorizontally(20, 0, 0, 20), .rayCastTarget = 1 }))
+                {
+                    DuskGui_openMenu(buffer2);
+                }
+                if (DuskGui_beginMenu((DuskGuiParams) { .text = buffer2, .bounds = (Rectangle) { 100, 20 * i, 200, 200 } })) {
+                
+                    DuskGui_endMenu();
+                }
                 DuskGui_endMenu();
             }
         }
