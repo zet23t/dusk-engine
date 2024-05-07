@@ -10,24 +10,27 @@
 #include <emscripten.h>
 #endif
 
-const char* Host_InitializeGameCode(void* storedState);
+const char* Host_InitializeGameCode(void* storedState, const char *projectPath);
 void* Host_UnloadGameCode();
 
 void Host_GameCodeDraw();
 void Host_GameCodeUpdate(float dt);
 void OSSleep(long duration);
 
+#if PLATFORM_WEB
 int main(void)
 {
-#if PLATFORM_WEB
-
+    const char *projectDir = ".";
     emscripten_run_script(
         "window.addEventListener('keydown', function(e) {"
         "    if([32, 37, 38, 39, 40].indexOf(e.keyCode) > -1) {"
         "        e.preventDefault();"
         "    }"
         "}, false);");
-
+#else
+int main(int argc, char* argv[])
+{
+    const char *projectDir = argc > 1 ? argv[1] : ".";
 #endif
 #ifndef DEBUG
     SetTraceLogLevel(LOG_WARNING);
@@ -59,7 +62,7 @@ int main(void)
     memset(drawTimes, 0, sizeof(drawTimes));
     memset(updateTimes, 0, sizeof(updateTimes));
 
-    const char *errorState = Host_InitializeGameCode(NULL);
+    const char *errorState = Host_InitializeGameCode(NULL, projectDir);
 
 // #if PLATFORM_WEB
 //     DisableCursor();
@@ -125,9 +128,9 @@ int main(void)
             float unloadTime = GetTime();
             TraceLog(LOG_WARNING, "Reloading game code\n");
             if (IsKeyPressed(KEY_F8)) {
-                errorState = Host_InitializeGameCode(NULL);
+                errorState = Host_InitializeGameCode(NULL, projectDir);
             } else {
-                errorState = Host_InitializeGameCode(storedState);
+                errorState = Host_InitializeGameCode(storedState, projectDir);
             }
             float loadedTime = GetTime();
 

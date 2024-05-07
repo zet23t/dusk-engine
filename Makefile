@@ -19,6 +19,7 @@ CFLAGS := -Wall -Isubmodules/raylib/src -D$(PLATFORM) -Isrc -MMD -MP
 SRCDIR := src
 BUILDDIR := _build/$(BUILD)/$(PLATFORM)
 LIBDIR := submodules/raylib/$(BUILD)/$(PLATFORM)
+PROJECTDIR ?= ../bnav
 
 LIBDIR := $(shell echo $(LIBDIR) | tr A-Z a-z)
 BUILDDIR := $(shell echo $(BUILDDIR) | tr A-Z a-z)
@@ -27,7 +28,7 @@ BUILDDIR := $(shell echo $(BUILDDIR) | tr A-Z a-z)
 # SRCS := $(shell find $(SRCDIR) -name '*.c')
 # SRCS := $(filter-out src/stu.c, $(SRCS))
 SRCS := src/stu.c src/dll_win.c
-SRCS_DLL := src/stu_dll.c
+SRCS_DLL := $(PROJECTDIR)/Assets/src/stu_dll.c
 RAYLIB_LIB := raylibdll
 
 # Output file
@@ -148,7 +149,7 @@ PLATFORMS = PLATFORM_DESKTOP PLATFORM_WEB PLATFORM_RPI
 MODES = DEBUG RELEASE
 
 # Default target
-all: dll main
+all: main
 
 main: $(TARGET)
 
@@ -167,8 +168,8 @@ raylib-all:
 	$(MAKE) -C $(dir $(RAYLIB_MAKEFILE)) PLATFORM=PLATFORM_WEB RAYLIB_BUILD_MODE=RELEASE
 	cp submodules/raylib/release/platform_desktop/raylib.dll .
 
-run: dll $(TARGET)
-	./$(TARGET)
+run: main $(TARGET)
+	./$(TARGET) $(PROJECTDIR)
 
 # Run target
 run-node: $(OUTPUT)

@@ -7,7 +7,11 @@ static DrawGameCodeFn dlDraw;
 static UpdateGameCodeFn dlUpdate;
 void TraceLog(int logType, const char *text, ...);
 
-#if PLATFORM_DESKTOP
+#if !defined(PLATFORM_WEB) && !defined(PLATFORM_DESKTOP)
+#define PLATFORM_DESKTOP
+#endif
+
+#ifdef PLATFORM_DESKTOP
 
 #include <stdio.h>
 #include <windows.h>
@@ -23,7 +27,7 @@ static char dllPath[MAX_PATH];
 double GetTime(void);
 
 
-const char* Host_InitializeGameCode(void* storedState)
+const char* Host_InitializeGameCode(void* storedState, const char *projectPath)
 {
     if (dllPath[0] == 0)
     {
@@ -51,7 +55,10 @@ const char* Host_InitializeGameCode(void* storedState)
 #if defined(DEBUG)
     int compileResult = system("make dll BUILD=debug");
 #else
+    char command[1024];
+    snprintf(command, sizeof(command), "make dll PROJECTDIR=%s", projectPath);
     int compileResult = system("make dll");
+    
 #endif
     float compileDt = GetTime() - compileStart;
     printf("Compiled DLL in %.2fms\n", compileDt * 1000.0f);
@@ -114,7 +121,7 @@ void InitializeGameCode(void*);
 void GameCodeDraw();
 void GameCodeUpdate(float dt);
 
-const char* Host_InitializeGameCode(void* storedState)
+const char* Host_InitializeGameCode(void* storedState, const char *projectPath)
 {
     InitializeGameCode(0);
     dlDraw = GameCodeDraw;
