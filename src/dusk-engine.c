@@ -65,6 +65,8 @@ int main(int argc, char* argv[])
     memset(drawTimes, 0, sizeof(drawTimes));
     memset(updateTimes, 0, sizeof(updateTimes));
 
+    Font font = LoadFont("assets/myfont.png");
+
     const char *errorState = Host_InitializeGameCode(NULL, projectDir);
 
 // #if PLATFORM_WEB
@@ -107,8 +109,8 @@ int main(int argc, char* argv[])
         }
         else
         {
-            DrawText(errorState, 12, 12, 30, BLACK);
-            DrawText(errorState, 10, 10, 30, WHITE);
+            DrawTextEx(font, errorState, (Vector2){12, 12}, 18, 1, BLACK);
+            DrawTextEx(font, errorState, (Vector2){10, 10}, 18, 1, WHITE);
         }
         float drawDt = GetTime() - t;
         drawTimes[trackIndex % trackCount] = drawDt;

@@ -10,16 +10,16 @@
 PLATFORM_OS          ?= WINDOWS
 PLATFORM             ?= PLATFORM_DESKTOP
 BUILD                ?= release
+PROJECTDIR           ?= ./
 
 # Compiler and flags
 CC := gcc
-CFLAGS := -Wall -Isubmodules/raylib/src -D$(PLATFORM) -Isrc -MMD -MP
+CFLAGS := -Wall -Isubmodules/raylib/src -D$(PLATFORM) -I$(PROJECTDIR)/src -Isrc -MMD -MP
 
 # Directories
 SRCDIR := src
 BUILDDIR := _build/$(BUILD)/$(PLATFORM)
 LIBDIR := submodules/raylib/$(BUILD)/$(PLATFORM)
-PROJECTDIR ?= ./
 
 LIBDIR := $(shell echo $(LIBDIR) | tr A-Z a-z)
 BUILDDIR := $(shell echo $(BUILDDIR) | tr A-Z a-z)

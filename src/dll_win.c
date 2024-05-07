@@ -53,20 +53,38 @@ const char* Host_InitializeGameCode(void* storedState, const char *projectPath)
     float compileStart = GetTime();
     // compile the DLL
     char command[1024];
+    char commandResultBuffer[0x1000];
+    static char *commandResult = NULL;
+    if (commandResult) {
+        free(commandResult);
+        commandResult = NULL;
+    }
+
 #if defined(DEBUG)
-    snprintf(command, sizeof(command), "make BUILD=debug dll PROJECTDIR=%s", projectPath);
-    int compileResult = system(command);
+    snprintf(command, sizeof(command), "make BUILD=debug dll PROJECTDIR=%s 2>&1", projectPath);
 #else
-    snprintf(command, sizeof(command), "make dll PROJECTDIR=%s", projectPath);
-    int compileResult = system(command);
-    
+    snprintf(command, sizeof(command), "make dll PROJECTDIR=%s 2>&1", projectPath);
 #endif
+    FILE* pipe = _popen(command, "r");
+    if (!pipe) {
+        return "Failed to open pipe";
+    }
+    while (!feof(pipe)) {
+        if (fgets(commandResultBuffer, sizeof(commandResultBuffer), pipe) == NULL) {
+            break;
+        }
+        commandResult = realloc(commandResult, (commandResult!=NULL ? strlen(commandResult) : 0) + strlen(commandResultBuffer) + 1);
+        strcat(commandResult, commandResultBuffer);
+    }
+
+    int compileResult = _pclose(pipe);
+
     float compileDt = GetTime() - compileStart;
     printf("Compiled DLL in %.2fms\n", compileDt * 1000.0f);
 
     if (compileResult != 0) {
         printf("Failed to compile DLL: %d\n", compileResult);
-        return "Failed to compile DLL";
+        return commandResult;
     }
 
     float copyStart = GetTime();
