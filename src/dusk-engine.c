@@ -10,6 +10,8 @@
 #include <emscripten.h>
 #endif
 
+#include "shared/resource_manager.h"
+
 const char* Host_InitializeGameCode(void* storedState, const char *projectPath);
 void* Host_UnloadGameCode();
 
@@ -31,6 +33,7 @@ int main(void)
 int main(int argc, char* argv[])
 {
     const char *projectDir = argc > 1 ? argv[1] : ".";
+    printf("Project dir: %s\n", projectDir);
 #endif
 #ifndef DEBUG
     SetTraceLogLevel(LOG_WARNING);

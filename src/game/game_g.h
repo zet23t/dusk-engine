@@ -4,7 +4,7 @@
 #include "external/cjson.h"
 #include "shared/scene_graph/scene_graph.h"
 #include "shared/touch_util.h"
-#include "resource_manager.h"
+#include "shared/resource_manager.h"
 #include "messagehub.h"
 #include <inttypes.h>
 #include <memory.h>

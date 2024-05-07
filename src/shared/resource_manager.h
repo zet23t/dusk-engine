@@ -4,6 +4,8 @@
 #include <raylib.h>
 #include <inttypes.h>
 
+extern const char* ResourceAssetPath;
+
 typedef struct Resource {
     const char* path;
     int32_t hash;

@@ -52,12 +52,13 @@ const char* Host_InitializeGameCode(void* storedState, const char *projectPath)
 
     float compileStart = GetTime();
     // compile the DLL
-#if defined(DEBUG)
-    int compileResult = system("make dll BUILD=debug");
-#else
     char command[1024];
+#if defined(DEBUG)
+    snprintf(command, sizeof(command), "make BUILD=debug dll PROJECTDIR=%s", projectPath);
+    int compileResult = system(command);
+#else
     snprintf(command, sizeof(command), "make dll PROJECTDIR=%s", projectPath);
-    int compileResult = system("make dll");
+    int compileResult = system(command);
     
 #endif
     float compileDt = GetTime() - compileStart;

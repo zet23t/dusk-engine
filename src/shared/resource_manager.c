@@ -5,6 +5,8 @@
 #include <stdio.h>
 #include <sys/stat.h>
 
+const char* ResourceAssetPath;
+
 static int32_t fileModHash(const char *filePath)
 {
     int32_t hash = 0;
