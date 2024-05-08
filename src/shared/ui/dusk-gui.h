@@ -130,6 +130,12 @@ typedef struct DuskGuiParamsEntry
 
     DuskGuiDrawFn drawFn;
     DuskGuiStyleGroup *drawStyleGroup;
+    Texture2D iconTexture;
+    Rectangle iconDst;
+    Rectangle iconSrc;
+    Vector2 iconPivot;
+    Color iconColor;
+    float iconRotationDegrees;
     void *drawUserData;
 } DuskGuiParamsEntry;
 
@@ -170,6 +176,7 @@ typedef enum DuskGuiStyleType {
     DUSKGUI_STYLE_FOLDOUT_CLOSED,
     DUSKGUI_STYLE_PANEL,
     DUSKGUI_STYLE_HORIZONTAL_LINE,
+    DUSKGUI_STYLE_ICON,
     DUSKGUI_STYLE_INPUTTEXTFIELD,
     DUSKGUI_STYLE_INPUTNUMBER_FIELD,
     DUSKGUI_STYLE_HORIZONTAL_SLIDER_BACKGROUND,
@@ -203,6 +210,7 @@ Rectangle DuskGui_fillHorizontally(int yOffset, int left, int right, int height)
 
 // widgets
 int DuskGui_button(DuskGuiParams params);
+void DuskGui_icon(Rectangle dst, Texture2D icon, Rectangle src);
 int DuskGui_dragArea(DuskGuiParams params);
 int DuskGui_label(DuskGuiParams params);
 int DuskGui_textInputField(DuskGuiParams params, char** buffer);

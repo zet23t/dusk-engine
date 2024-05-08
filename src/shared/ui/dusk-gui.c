@@ -151,6 +151,15 @@ static void DuskGui_defaultDrawStyle(DuskGuiParamsEntry* entry, DuskGuiState* st
             iconPivot, iconRotation, lerpedStyle.iconColor);
     }
 
+    if (entry->iconTexture.id != 0 && entry->iconColor.a > 0) {
+        Vector2 iconSize = entry->iconDst.width != 0 && entry->iconDst.height != 0 ? (Vector2) { entry->iconDst.width, entry->iconDst.height } : (Vector2) { entry->originalBounds.width, entry->originalBounds.height };
+        Vector2 iconOffset = (Vector2) { entry->iconDst.x, entry->iconDst.y };
+        float iconRotation = entry->iconRotationDegrees;
+        DrawTexturePro(entry->iconTexture, entry->iconSrc,
+            (Rectangle) { iconOffset.x + entry->iconPivot.x, iconOffset.y + entry->iconPivot.y, iconSize.x, iconSize.y },
+            entry->iconPivot, iconRotation, entry->iconColor);
+    }
+
     const char* origText = DuskGui_getText(entry);
     if (origText && lerpedStyle.textColor.a > 0) {
         // draw debug outline
@@ -1485,6 +1494,15 @@ void DuskGui_horizontalLine(DuskGuiParams params)
 {
     DuskGuiParamsEntry* entry = DuskGui_makeEntry(params, &_defaultStyles.groups[DUSKGUI_STYLE_HORIZONTAL_LINE]);
     DuskGui_drawStyle(entry, &_duskGuiState, &_defaultStyles.groups[DUSKGUI_STYLE_HORIZONTAL_LINE]);
+}
+
+void DuskGui_icon(Rectangle dst, Texture2D icon, Rectangle src)
+{
+    DuskGuiParamsEntry* entry = DuskGui_makeEntry((DuskGuiParams) { .bounds = dst }, &_defaultStyles.groups[DUSKGUI_STYLE_ICON]);
+    entry->iconTexture = icon;
+    entry->iconSrc = src;
+    entry->iconDst = (Rectangle){0};
+    DuskGui_drawStyle(entry, &_duskGuiState, &_defaultStyles.groups[DUSKGUI_STYLE_ICON]);
 }
 
 int DuskGui_button(DuskGuiParams params)
