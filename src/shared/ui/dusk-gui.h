@@ -101,14 +101,14 @@ typedef struct DuskGuiParamsEntry
     union {
         uint8_t flags;
         struct {
-            char isMouseOver:1;
-            char isHovered:1;
-            char isPressed:1;
-            char isTriggered:1;
-            char isFolded:1;
-            char isFocused:1;
-            char isMenu:1;
-            char isOpen:1;
+            uint8_t isMouseOver:1;
+            uint8_t isHovered:1;
+            uint8_t isPressed:1;
+            uint8_t isTriggered:1;
+            uint8_t isFolded:1;
+            uint8_t isFocused:1;
+            uint8_t isMenu:1;
+            uint8_t isOpen:1;
         };
     };
     Vector2 contentOffset;
@@ -210,7 +210,7 @@ Rectangle DuskGui_fillHorizontally(int yOffset, int left, int right, int height)
 
 // widgets
 int DuskGui_button(DuskGuiParams params);
-DuskGuiParamsEntry* DuskGui_icon(Rectangle dst, Texture2D icon, Rectangle src);
+DuskGuiParamsEntry* DuskGui_icon(const char *id, Rectangle dst, Texture2D icon, Rectangle src, int raycastTarget);
 int DuskGui_dragArea(DuskGuiParams params);
 int DuskGui_label(DuskGuiParams params);
 int DuskGui_textInputField(DuskGuiParams params, char** buffer);

@@ -1498,9 +1498,11 @@ void DuskGui_horizontalLine(DuskGuiParams params)
     DuskGui_drawStyle(entry, &_duskGuiState, &_defaultStyles.groups[DUSKGUI_STYLE_HORIZONTAL_LINE]);
 }
 
-DuskGuiParamsEntry* DuskGui_icon(Rectangle dst, Texture2D icon, Rectangle src)
+DuskGuiParamsEntry* DuskGui_icon(const char *id, Rectangle dst, Texture2D icon, Rectangle src, int raycastTarget)
 {
-    DuskGuiParamsEntry* entry = DuskGui_makeEntry((DuskGuiParams) { .bounds = dst }, &_defaultStyles.groups[DUSKGUI_STYLE_ICON]);
+    DuskGuiParamsEntry* entry = DuskGui_makeEntry((DuskGuiParams) { 
+        .text = id, 
+        .bounds = dst, .rayCastTarget = raycastTarget }, &_defaultStyles.groups[DUSKGUI_STYLE_ICON]);
     entry->iconTexture = icon;
     entry->iconSrc = src;
     entry->iconDst = (Rectangle){0};
