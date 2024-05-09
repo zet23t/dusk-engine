@@ -1,5 +1,5 @@
-typedef void (*InitializeGameCodeFn)(void* storedState);
-typedef void* (*UnloadGameCodeFn)();
+typedef void (*InitializeGameCodeFn)(void* context);
+typedef void (*UnloadGameCodeFn)();
 typedef void (*DrawGameCodeFn)();
 typedef void (*UpdateGameCodeFn)(float dt);
 
@@ -73,7 +73,10 @@ const char* Host_InitializeGameCode(void* storedState, const char *projectPath)
         if (fgets(commandResultBuffer, sizeof(commandResultBuffer), pipe) == NULL) {
             break;
         }
-        commandResult = realloc(commandResult, (commandResult!=NULL ? strlen(commandResult) : 0) + strlen(commandResultBuffer) + 1);
+        int oldLen = commandResult!=NULL ? strlen(commandResult) : 0;
+        int len = oldLen + strlen(commandResultBuffer) + 1;
+        commandResult = realloc(commandResult, len);
+        memset(commandResult + oldLen, 0, len - oldLen);
         strcat(commandResult, commandResultBuffer);
     }
 
@@ -118,20 +121,17 @@ const char* Host_InitializeGameCode(void* storedState, const char *projectPath)
     return "Failed to load DLL";
 }
 
-void* Host_UnloadGameCode()
+void Host_UnloadGameCode()
 {
     if (!GameCodeDLL) {
-        return NULL;
+        return;
     }
     UnloadGameCodeFn unload = (UnloadGameCodeFn)GetProcAddress(GameCodeDLL, "UnloadGameCode");
-    void* storedState = NULL;
     if (unload) {
-        storedState = unload();
+        unload();
     }
 
     FreeLibrary(GameCodeDLL);
-
-    return storedState;
 }
 #else
 
@@ -142,13 +142,13 @@ void GameCodeUpdate(float dt);
 
 const char* Host_InitializeGameCode(void* storedState, const char *projectPath)
 {
-    InitializeGameCode(0);
+    InitializeGameCode(storedState);
     dlDraw = GameCodeDraw;
     dlUpdate = GameCodeUpdate;
     return 0;
 }
 
-void* Host_UnloadGameCode()
+void Host_UnloadGameCode()
 {
     return 0;
 }

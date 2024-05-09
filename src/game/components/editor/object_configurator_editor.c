@@ -3,7 +3,7 @@
 #include "shared/serialization/serializers.h"
 
 #define DUSK_GUI_IMPLEMENTATION
-#include "dusk-gui.h"
+#include "shared/ui/dusk-gui.h"
 #include "float.h"
 
 void ObjectConfiguratorEditorComponent_init(SceneObject* sceneObject, SceneComponentId SceneComponent, void* componentData, void* initArg)

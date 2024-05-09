@@ -1,5 +1,5 @@
 #include "shared/ecs/pico_ecs.c"
 
-// #include "stu_dll.c"
+#include "shared/resource_manager.c"
 
 #include "dusk-engine.c"

@@ -1,6 +1,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#include "RuntimeContext.h"
+
 #include "external/cjson.c"
 #include "shared/scene_graph/scene_graph.c"
 #include "shared/touch_util.c"
@@ -42,13 +44,8 @@
 #define DLL_EXPORT __declspec(dllexport)
 #endif
 
-DLL_EXPORT void InitializeGameCode(void *storedState)
+DLL_EXPORT void InitializeGameCode(RuntimeContext *storedState)
 {
-    if (storedState)
-    {
-        memcpy(&psg, storedState, sizeof(PSG));
-        free(storedState);
-    }
     if (game_init()) {
         printf("InitializeGameCode failed\n");
         return;
@@ -57,12 +54,10 @@ DLL_EXPORT void InitializeGameCode(void *storedState)
     printf("InitializeGameCode successfully\n");
 }
 
-DLL_EXPORT void* UnloadGameCode()
+DLL_EXPORT void UnloadGameCode()
 {
     printf("UnloadGameCode successfully\n");
-    PSG* psgCopy = malloc(sizeof(PSG));
-    memcpy(psgCopy, &psg, sizeof(PSG));
-    return psgCopy;
+    
 }
 
 DLL_EXPORT void GameCodeDraw()

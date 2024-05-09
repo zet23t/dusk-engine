@@ -210,7 +210,7 @@ Rectangle DuskGui_fillHorizontally(int yOffset, int left, int right, int height)
 
 // widgets
 int DuskGui_button(DuskGuiParams params);
-void DuskGui_icon(Rectangle dst, Texture2D icon, Rectangle src);
+DuskGuiParamsEntry* DuskGui_icon(Rectangle dst, Texture2D icon, Rectangle src);
 int DuskGui_dragArea(DuskGuiParams params);
 int DuskGui_label(DuskGuiParams params);
 int DuskGui_textInputField(DuskGuiParams params, char** buffer);

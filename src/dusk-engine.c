@@ -5,6 +5,7 @@
 #include <raylib.h>
 #include <raymath.h>
 #include <rlgl.h>
+#include "RuntimeContext.h"
 
 #if PLATFORM_WEB
 #include <emscripten.h>
@@ -13,11 +14,13 @@
 #include "shared/resource_manager.h"
 
 const char* Host_InitializeGameCode(void* storedState, const char *projectPath);
-void* Host_UnloadGameCode();
+void Host_UnloadGameCode();
 
 void Host_GameCodeDraw();
 void Host_GameCodeUpdate(float dt);
 void OSSleep(long duration);
+
+static RuntimeContext _runtimeContext;
 
 #if PLATFORM_WEB
 int main(void)
@@ -41,6 +44,9 @@ int main(int argc, char* argv[])
     // Initialization
     const int screenWidth = 640;
     const int screenHeight = 480;
+
+    _runtimeContext.projectPath = projectDir;
+    ResourceManager_init(&_runtimeContext.resourceManager, projectDir);
 
     SetConfigFlags(FLAG_VSYNC_HINT | FLAG_WINDOW_RESIZABLE);
     InitWindow(screenWidth, screenHeight, "Scene graph testing");
@@ -67,7 +73,7 @@ int main(int argc, char* argv[])
 
     Font font = LoadFont("assets/myfont.png");
 
-    const char *errorState = Host_InitializeGameCode(NULL, projectDir);
+    const char *errorState = Host_InitializeGameCode(&_runtimeContext, projectDir);
 
 // #if PLATFORM_WEB
 //     DisableCursor();
@@ -128,15 +134,14 @@ int main(int argc, char* argv[])
 
         if (/*IsKeyPressed(KEY_F7) ||*/ IsKeyPressed(KEY_F8)) {
             float reloadStart = GetTime();
+            char reloadWindowTitle[128];
+            sprintf(reloadWindowTitle, "Reloading @ %f", reloadStart);
+            SetWindowTitle(reloadWindowTitle);
             TraceLog(LOG_WARNING, "Unloading game code\n");
-            void* storedState = Host_UnloadGameCode();
+            Host_UnloadGameCode();
             float unloadTime = GetTime();
             TraceLog(LOG_WARNING, "Reloading game code\n");
-            if (IsKeyPressed(KEY_F8)) {
-                errorState = Host_InitializeGameCode(NULL, projectDir);
-            } else {
-                errorState = Host_InitializeGameCode(storedState, projectDir);
-            }
+            errorState = Host_InitializeGameCode(&_runtimeContext, projectDir);
             float loadedTime = GetTime();
 
             TraceLog(LOG_WARNING, "Reloaded game code in %.2fms (unloaded in %.2fms)\n", (loadedTime - reloadStart) * 1000.0f, (unloadTime - reloadStart) * 1000.0f);

@@ -7,7 +7,7 @@
 
 const char* ResourceAssetPath;
 
-static int32_t fileModHash(const char *filePath)
+static int32_t fileModHash(const char *filePath, const char *projectPath)
 {
     int32_t hash = 0;
     for (int i = 0; filePath[i] != '\0'; i++)
@@ -16,10 +16,23 @@ static int32_t fileModHash(const char *filePath)
     }
 
     struct stat attr;
-    if (stat(filePath, &attr) == 0)
+    char projectFilePath[(projectPath ? strlen(projectPath) : 0) + strlen(filePath) + 2];
+    if (projectPath)
+    {
+        strcpy(projectFilePath, projectPath);
+        strcat(projectFilePath, "/");
+    }
+    strcat(projectFilePath, filePath);
+    
+    if (stat(projectFilePath, &attr) == 0)
     {
         hash = hash * 31 + (int32_t) attr.st_mtime;
     }
+    else if (stat(filePath, &attr) == 0)
+    {
+        hash = hash * 31 + (int32_t) attr.st_mtime;
+    }
+    
 
     return hash;
 }
@@ -30,7 +43,7 @@ static Resource* findEntry(ResourceManager *resourceManager, const char* path)
     {
         if (strcmp(resourceManager->resources[i].path, path) == 0)
         {
-            int hash = fileModHash(path);
+            int hash = fileModHash(path, resourceManager->projectPath);
             if (hash != resourceManager->resources[i].hash)
             {
                 printf("Unloading resource due to hash change: %s\n", path);
@@ -43,6 +56,8 @@ static Resource* findEntry(ResourceManager *resourceManager, const char* path)
                 continue;
             }
 
+            printf("Resource found: %s (%8x)\n", path, hash);
+
             return &resourceManager->resources[i];
         }
     }
@@ -50,8 +65,17 @@ static Resource* findEntry(ResourceManager *resourceManager, const char* path)
     return NULL;
 }
 
+void ResourceManager_init(ResourceManager *resourceManager, const char* projectPath)
+{
+    resourceManager->resources = NULL;
+    resourceManager->count = 0;
+    resourceManager->capacity = 0;
+    resourceManager->projectPath = projectPath;
+}
+
 static Resource* addEntry(ResourceManager *resourceManager, const char* path)
 {
+    // char projectPath = 
     if (resourceManager->count >= resourceManager->capacity)
     {
         resourceManager->capacity = resourceManager->capacity == 0 ? 16 : resourceManager->capacity * 2;
@@ -59,9 +83,24 @@ static Resource* addEntry(ResourceManager *resourceManager, const char* path)
     }
 
     Resource *resource = &resourceManager->resources[resourceManager->count++];
-    resource->path = path;
+    resource->path = strdup(path);
+    char filePath[(resourceManager->projectPath ? strlen(resourceManager->projectPath) : 0) + strlen(path) + 2];
+    if (resourceManager->projectPath)
+    {
+        strcpy(filePath, resourceManager->projectPath);
+        strcat(filePath, "/");
+    }
+    strcat(filePath, path);
+    if (FileExists(filePath))
+    {
+        resource->filePath = strdup(filePath);
+    }
+    else
+    {
+        resource->filePath = strdup(path);
+    }
     resource->data = NULL;
-    resource->hash = fileModHash(path);
+    resource->hash = fileModHash(path, resourceManager->projectPath);
 
     return resource;
 }
@@ -79,7 +118,7 @@ Model ResourceManager_loadModel(ResourceManager *resourceManager, const char* pa
     {
         printf("Loading model: %s\n", path);
         resource = addEntry(resourceManager, path);
-        Model model = LoadModel(path);
+        Model model = LoadModel(resource->filePath);
         resource->data = malloc(sizeof(Model));
         memcpy(resource->data, &model, sizeof(Model));
         resource->freeData = freeModel;
@@ -101,7 +140,7 @@ Texture2D ResourceManager_loadTexture(ResourceManager *resourceManager, const ch
     {
         printf("Loading texture: %s\n", path);
         resource = addEntry(resourceManager, path);
-        Texture2D texture = LoadTexture(path);
+        Texture2D texture = LoadTexture(resource->filePath);
         resource->data = malloc(sizeof(Texture2D));
         memcpy(resource->data, &texture, sizeof(Texture2D));
         resource->freeData = freeTexture;
@@ -124,7 +163,7 @@ Font ResourceManager_loadFont(ResourceManager *ResourceManager, const char *path
     {
         printf("Loading font: %s\n", path);
         resource = addEntry(ResourceManager, path);
-        Font font = LoadFont(path);
+        Font font = LoadFont(resource->filePath);
         resource->data = malloc(sizeof(Font));
         memcpy(resource->data, &font, sizeof(Font));
         resource->freeData = freeFont;

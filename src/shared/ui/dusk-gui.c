@@ -1,4 +1,4 @@
-#include "dusk-gui.h"
+#include "shared/ui/dusk-gui.h"
 #include "raymath.h"
 #include "stdio.h"
 #include "stdlib.h"
@@ -146,17 +146,19 @@ static void DuskGui_defaultDrawStyle(DuskGuiParamsEntry* entry, DuskGuiState* st
             (entry->params.bounds.width - iconSize.x) * iconAlignment.x + entry->params.bounds.x + iconOffset.x,
             (entry->params.bounds.height - iconSize.y) * iconAlignment.y + entry->params.bounds.y + iconOffset.y
         };
+        printf("iconPosition: %f, %f\n", iconPosition.x, iconPosition.y);
         DrawTexturePro(lerpedStyle.iconTexture, (Rectangle) { 0, 0, lerpedStyle.iconTexture.width, lerpedStyle.iconTexture.height },
             (Rectangle) { iconPosition.x + iconPivot.x, iconPosition.y + iconPivot.y, iconSize.x, iconSize.y },
             iconPivot, iconRotation, lerpedStyle.iconColor);
     }
 
     if (entry->iconTexture.id != 0 && entry->iconColor.a > 0) {
-        Vector2 iconSize = entry->iconDst.width != 0 && entry->iconDst.height != 0 ? (Vector2) { entry->iconDst.width, entry->iconDst.height } : (Vector2) { entry->originalBounds.width, entry->originalBounds.height };
-        Vector2 iconOffset = (Vector2) { entry->iconDst.x, entry->iconDst.y };
+        Vector2 iconSize = entry->iconDst.width != 0 && entry->iconDst.height != 0 ? (Vector2) { entry->iconDst.width, entry->iconDst.height } : (Vector2) { entry->params.bounds.width, entry->params.bounds.height };
+        Vector2 iconOffset = (Vector2) { entry->iconDst.x + entry->params.bounds.x, entry->iconDst.y + entry->params.bounds.y };
         float iconRotation = entry->iconRotationDegrees;
+        Rectangle dest = (Rectangle) { iconOffset.x + entry->iconPivot.x, iconOffset.y + entry->iconPivot.y, iconSize.x, iconSize.y };
         DrawTexturePro(entry->iconTexture, entry->iconSrc,
-            (Rectangle) { iconOffset.x + entry->iconPivot.x, iconOffset.y + entry->iconPivot.y, iconSize.x, iconSize.y },
+            dest,
             entry->iconPivot, iconRotation, entry->iconColor);
     }
 
@@ -1496,13 +1498,16 @@ void DuskGui_horizontalLine(DuskGuiParams params)
     DuskGui_drawStyle(entry, &_duskGuiState, &_defaultStyles.groups[DUSKGUI_STYLE_HORIZONTAL_LINE]);
 }
 
-void DuskGui_icon(Rectangle dst, Texture2D icon, Rectangle src)
+DuskGuiParamsEntry* DuskGui_icon(Rectangle dst, Texture2D icon, Rectangle src)
 {
     DuskGuiParamsEntry* entry = DuskGui_makeEntry((DuskGuiParams) { .bounds = dst }, &_defaultStyles.groups[DUSKGUI_STYLE_ICON]);
     entry->iconTexture = icon;
     entry->iconSrc = src;
     entry->iconDst = (Rectangle){0};
+    entry->iconColor = WHITE;
+
     DuskGui_drawStyle(entry, &_duskGuiState, &_defaultStyles.groups[DUSKGUI_STYLE_ICON]);
+    return entry;
 }
 
 int DuskGui_button(DuskGuiParams params)
