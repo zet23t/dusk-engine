@@ -50,6 +50,12 @@ void SerializeData_uint8_t(const char *key, uint8_t *data, cJSON *obj, void *use
 void SerializeData_int8_t(const char *key, int8_t *data, cJSON *obj, void *userData) {
     cJSON_AddNumberToObject(obj, key, *data);
 }
+void SerializeData_uint16_t(const char *key, uint16_t *data, cJSON *obj, void *userData) {
+    cJSON_AddNumberToObject(obj, key, *data);
+}
+void SerializeData_int16_t(const char *key, int16_t *data, cJSON *obj, void *userData) {
+    cJSON_AddNumberToObject(obj, key, *data);
+}
 
 #define SERIALIZABLE_STRUCT_START(name) \
     void SerializeData_##name(const char *key, name* data, cJSON *obj, void *userData) {\
