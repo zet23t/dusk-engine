@@ -960,6 +960,11 @@ static DuskGuiParamsEntry* DuskGui_makeEntry(DuskGuiParams params, DuskGuiStyleG
     return added;
 }
 
+DuskGuiParamsEntry* DuskGui_getLastEntry()
+{
+    return _duskGuiState.lastEntry;
+}
+
 void DuskGui_update(DuskGuiParamsEntry* entry, DuskGuiStyleGroup* initStyleGroup)
 {
     DuskGuiParamsEntry* match = DuskGui_findParams(&_duskGuiState.prevParams, entry);
@@ -1022,6 +1027,7 @@ void DuskGui_setContentSize(DuskGuiParamsEntry entry, Vector2 contentSize)
 int DuskGui_dragArea(DuskGuiParams params)
 {
     DuskGuiParamsEntry* entry = DuskGui_makeEntry(params, NULL);
+    // DrawRectangle(entry->params.bounds.x, entry->params.bounds.y, entry->params.bounds.width, entry->params.bounds.height, (Color) { 0, 0, 0, 255 });
     return DuskGui_hasLock(entry);
 }
 

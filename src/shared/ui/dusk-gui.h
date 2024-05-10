@@ -194,6 +194,8 @@ void DuskGui_init();
 // finalizes the frame operation; draws menus as a last step
 void DuskGui_finalize();
 
+DuskGuiParamsEntry* DuskGui_getLastEntry();
+
 // style management
 void DuskGui_setDefaultFont(Font font, float fontSize, int fontSpacing);
 DuskGuiStyleGroup* DuskGui_getStyleGroup(int styleType);
