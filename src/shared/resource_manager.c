@@ -37,6 +37,47 @@ static int32_t fileModHash(const char *filePath, const char *projectPath)
     return hash;
 }
 
+
+static void freeFont(void *data)
+{
+    UnloadFont(*(Font*)data);
+    free(data);
+}
+
+void freeModel (void *data)
+{
+    UnloadModel(*(Model*)data);
+    free(data);
+}
+
+void freeTexture (void *data)
+{
+    UnloadTexture(*(Texture2D*)data);
+    free(data);
+}
+
+
+void ResourceManager_unload(ResourceManager *resourceManager, Resource *resource)
+{
+    switch (resource->resourceType)
+    {
+    case RESOURCE_TYPE_MODEL:
+        freeModel(resource->data);
+        break;
+    case RESOURCE_TYPE_TEXTURE:
+        freeTexture(resource->data);
+        break;
+    case RESOURCE_TYPE_FONT:
+        freeFont(resource->data);
+        break;
+    default:
+        TraceLog(LOG_WARNING, "Unknown resource type: %d (%s)", resource->resourceType, resource->path);
+        break;
+    }
+
+    resource->data = NULL;
+}
+
 static Resource* findEntry(ResourceManager *resourceManager, const char* path)
 {
     for (int i = 0; i < resourceManager->count; i++)
@@ -47,10 +88,7 @@ static Resource* findEntry(ResourceManager *resourceManager, const char* path)
             if (hash != resourceManager->resources[i].hash)
             {
                 printf("Unloading resource due to hash change: %s\n", path);
-                if (resourceManager->resources[i].freeData != NULL)
-                {
-                    resourceManager->resources[i].freeData(resourceManager->resources[i].data);
-                }
+                ResourceManager_unload(resourceManager, &resourceManager->resources[i]);
                 resourceManager->resources[i] = resourceManager->resources[resourceManager->count - 1];
                 resourceManager->count--;
                 continue;
@@ -105,11 +143,6 @@ static Resource* addEntry(ResourceManager *resourceManager, const char* path)
     return resource;
 }
 
-void freeModel (void *data)
-{
-    UnloadModel(*(Model*)data);
-    free(data);
-}
 
 Model ResourceManager_loadModel(ResourceManager *resourceManager, const char* path)
 {
@@ -118,19 +151,19 @@ Model ResourceManager_loadModel(ResourceManager *resourceManager, const char* pa
     {
         printf("Loading model: %s\n", path);
         resource = addEntry(resourceManager, path);
+        resource->resourceType = RESOURCE_TYPE_MODEL;
         Model model = LoadModel(resource->filePath);
         resource->data = malloc(sizeof(Model));
         memcpy(resource->data, &model, sizeof(Model));
-        resource->freeData = freeModel;
+    }
+    else if (resource->data == NULL)
+    {
+        Model model = LoadModel(resource->filePath);
+        resource->data = malloc(sizeof(Model));
+        memcpy(resource->data, &model, sizeof(Model));
     }
 
     return *(Model*)resource->data;
-}
-
-void freeTexture (void *data)
-{
-    UnloadTexture(*(Texture2D*)data);
-    free(data);
 }
 
 Texture2D ResourceManager_loadTexture(ResourceManager *resourceManager, const char* path, int filter)
@@ -140,20 +173,21 @@ Texture2D ResourceManager_loadTexture(ResourceManager *resourceManager, const ch
     {
         printf("Loading texture: %s\n", path);
         resource = addEntry(resourceManager, path);
+        resource->resourceType = RESOURCE_TYPE_TEXTURE;
         Texture2D texture = LoadTexture(resource->filePath);
         resource->data = malloc(sizeof(Texture2D));
         memcpy(resource->data, &texture, sizeof(Texture2D));
-        resource->freeData = freeTexture;
+        SetTextureFilter(texture, filter);
+    }
+    else if (resource->data == NULL)
+    {
+        Texture2D texture = LoadTexture(resource->filePath);
+        resource->data = malloc(sizeof(Texture2D));
+        memcpy(resource->data, &texture, sizeof(Texture2D));
         SetTextureFilter(texture, filter);
     }
 
     return *(Texture2D*)resource->data;
-}
-
-static void freeFont(void *data)
-{
-    UnloadFont(*(Font*)data);
-    free(data);
 }
 
 Font ResourceManager_loadFont(ResourceManager *ResourceManager, const char *path)
@@ -163,11 +197,44 @@ Font ResourceManager_loadFont(ResourceManager *ResourceManager, const char *path
     {
         printf("Loading font: %s\n", path);
         resource = addEntry(ResourceManager, path);
+        resource->resourceType = RESOURCE_TYPE_FONT;
         Font font = LoadFont(resource->filePath);
         resource->data = malloc(sizeof(Font));
         memcpy(resource->data, &font, sizeof(Font));
-        resource->freeData = freeFont;
+    }
+    else if (resource->data == NULL)
+    {
+        Font font = LoadFont(resource->filePath);
+        resource->data = malloc(sizeof(Font));
+        memcpy(resource->data, &font, sizeof(Font));
     }
 
     return *(Font*)resource->data;
+}
+
+void ResourceManager_reloadAll(ResourceManager *resourceManager)
+{
+    printf("Reloading all resources\n");
+    for (int i = 0; i < resourceManager->count; i++)
+    {
+        Resource *resource = &resourceManager->resources[i];
+        switch (resource->resourceType)
+        {
+        case RESOURCE_TYPE_MODEL:
+            ResourceManager_unload(resourceManager, resource);
+            ResourceManager_loadModel(resourceManager, resource->path);
+            break;
+        case RESOURCE_TYPE_TEXTURE:
+            ResourceManager_unload(resourceManager, resource);
+            ResourceManager_loadTexture(resourceManager, resource->path, 0);
+            break;
+        case RESOURCE_TYPE_FONT:
+            ResourceManager_unload(resourceManager, resource);
+            ResourceManager_loadFont(resourceManager, resource->path);
+            break;
+        
+        default:
+            break;
+        }
+    }
 }

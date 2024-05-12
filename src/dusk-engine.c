@@ -132,6 +132,12 @@ int main(int argc, char* argv[])
             step = 1;
         }
 
+        // reload changes pointers which breaks the game - have to do this differently
+        // if (IsKeyPressed(KEY_F5))
+        // {
+        //     ResourceManager_reloadAll(&_runtimeContext.resourceManager);
+        // }
+
         if (/*IsKeyPressed(KEY_F7) ||*/ IsKeyPressed(KEY_F8)) {
             float reloadStart = GetTime();
             char reloadWindowTitle[128];
