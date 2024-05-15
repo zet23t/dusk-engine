@@ -185,11 +185,11 @@ typedef struct TrailRendererComponent {
     Vector3 lastPosition;
 } TrailRendererComponent;
 
-typedef struct CameraComponent {
-    float fov;
-    float nearPlane;
-    float farPlane;
-} CameraComponent;
+// typedef struct CameraComponent {
+//     float fov;
+//     float nearPlane;
+//     float farPlane;
+// } CameraComponent;
 
 typedef struct GroundTileModification {
     int x, y, width, height;

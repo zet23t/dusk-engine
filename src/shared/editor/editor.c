@@ -1,45 +1,19 @@
-#include "../../game_g.h"
-#include "../../game_state_level.h"
-#include "shared/serialization/serializers.h"
-#include "shared/util/arena.h"
-
-#define DUSK_GUI_IMPLEMENTATION
+#include "editor.h"
 #include "shared/ui/dusk-gui.h"
-#include "float.h"
+#include "shared/util/arena.h"
+#include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
 
-void ObjectConfiguratorEditorComponent_init(SceneObject* sceneObject, SceneComponentId SceneComponent, void* componentData, void* initArg)
-{
-    Font font = ResourceManager_loadFont(&psg.resourceManager, "assets/myfont-regular.png");
 
-    SceneObjectId camera = SceneGraph_createObject(psg.sceneGraph, "Camera");
-    psg.camera = camera;
-    SceneGraph_addComponent(psg.sceneGraph, camera, psg.cameraComponentId, &(CameraComponent) {
-                                                                               .fov = 45,
-                                                                               .nearPlane = 0.1f,
-                                                                               .farPlane = 1000,
-                                                                           });
-    SceneGraph_setLocalPosition(psg.sceneGraph, camera, (Vector3) { 0, 0, -10 });
-    SceneObjectId cameraPivotYaw = SceneGraph_createObject(psg.sceneGraph, "CameraPivotYaw");
-    SceneObjectId cameraPivotPitch = SceneGraph_createObject(psg.sceneGraph, "CameraPivotPitch");
-    SceneGraph_setParent(psg.sceneGraph, camera, cameraPivotPitch);
-    SceneGraph_setParent(psg.sceneGraph, cameraPivotPitch, cameraPivotYaw);
-    SceneGraph_setLocalRotation(psg.sceneGraph, cameraPivotPitch, (Vector3) { 30, 0, 0 });
+static DuskGuiStyleGroup _editor_titleStyleGroup = {0};
+static DuskGuiStyleGroup _editor_closeButtonStyleGroup = {0};
+static DuskGuiStyleGroup _editor_resizeAreaStyleGroup = {0};
+static DuskGuiStyleGroup _editor_invisibleStyleGroup = {0};
 
-    // SceneObjectId plane = SceneGraph_createObject(psg.sceneGraph, "Plane");
-    // AddMeshRendererComponentByName(plane, "fighter-plane-1", 1.0f);
-    SpawnEnemy(psg.sceneGraph, 0, 0, (EnemyBehaviorComponent) { 0 });
+void Editor_drawHierarchy(EditorState* state, SceneGraph *graph);
+void Editor_drawInspector(EditorState* state, SceneGraph *graph);
 
-    ObjectConfiguratorEditorComponent* data = (ObjectConfiguratorEditorComponent*)componentData;
-    data->cameraPivotYawId = cameraPivotYaw;
-    data->cameraPivotPitchId = cameraPivotPitch;
-
-    DuskGui_init();
-    DuskGui_setDefaultFont(font, font.baseSize, 1);
-}
-
-void ObjectConfiguratorEditorComponent_update(SceneObject* node, SceneComponentId id, float dt, void* componentData)
-{
-}
 
 typedef struct AnnotationData {
     const char* key;
@@ -59,6 +33,7 @@ typedef struct GUIDrawState {
     int annotationStackCount;
     Arena10KB annotationData;
 } GUIDrawState;
+
 
 static void GUIDrawState_pushAnnotation(GUIDrawState* state, const char* key, const char* type, size_t size, void* data)
 {
@@ -164,6 +139,18 @@ void DrawSerializeData_int8_t(const char* key, int8_t* data, GUIDrawState* userD
     *data = (int8_t)v;
 }
 
+void DrawSerializeData_uint16_t(const char* key, uint16_t* data, GUIDrawState* userData)
+{
+    int v = *data;
+    DrawSerializeData_int(key, &v, userData);
+    *data = (uint16_t)v;
+}
+void DrawSerializeData_int16_t(const char* key, int16_t* data, GUIDrawState* userData)
+{
+    int v = *data;
+    DrawSerializeData_int(key, &v, userData);
+    *data = (int16_t)v;
+}
 void DrawSerializeData_uint32_t(const char* key, uint32_t* data, GUIDrawState* userData)
 {
     int v = *data;
@@ -229,7 +216,7 @@ void DrawSerializeData_float(const char* key, float* data, GUIDrawState* state)
     float min = -FLT_MAX;
     float max = FLT_MAX;
     int showSlider = 0;
-    int showNumber = 1;
+    // int showNumber = 1;
     Vector2 range;
     if (GUIDrawState_getAnnotation(state, "Range", "Vector2", sizeof(Vector2), &range)) {
         min = range.x;
@@ -311,6 +298,8 @@ void DrawSerializeData_SceneObjectIdOverride(const char* key, SceneObjectId* dat
 typedef struct DrawFunctionOverrides {
     void (*_uint32_t)(const char* key, uint32_t* data, GUIDrawState* userData);
     void (*_int32_t)(const char* key, int32_t* data, GUIDrawState* userData);
+    void (*_uint16_t)(const char* key, uint16_t* data, GUIDrawState* userData);
+    void (*_int16_t)(const char* key, uint16_t* data, GUIDrawState* userData);
     void (*_uint8_t)(const char* key, uint8_t* data, GUIDrawState* userData);
     void (*_int8_t)(const char* key, int8_t* data, GUIDrawState* userData);
     void (*_size_t)(const char* key, size_t* data, GUIDrawState* userData);
@@ -324,7 +313,7 @@ typedef struct DrawFunctionOverrides {
 #include "shared/serialization/serializable_file_headers.h"
 } DrawFunctionOverrides;
 
-DrawFunctionOverrides _drawFunctionOverrides;
+static DrawFunctionOverrides _drawFunctionOverrides;
 
 #define SERIALIZABLE_STRUCT_START(name)                                                                                                                                \
     void DrawSerializeData_##name(const char* key, name* data, GUIDrawState* state)                                                                                    \
@@ -413,7 +402,7 @@ void DrawSerializedData_SceneObject(const char* key, SceneObject* data, GUIDrawS
     DrawSerializeData_cstr("name", &data->name, state);
     DuskGui_horizontalLine((DuskGuiParams) { .text = "Transform", .bounds = (Rectangle) { 1, state->y, DuskGui_getAvailableSpace().x - 2, 18 } });
     state->y += 20;
-    DrawSerializeData_SceneObjectTransform(NULL, &data->transform, state);
+    DrawSerializeData_SceneObjectTransformOverride(NULL, &data->transform, state);
     state->y += 3;
 
     for (int i = 0; i < data->components_count; i++) {
@@ -425,6 +414,7 @@ void DrawSerializedData_SceneObject(const char* key, SceneObject* data, GUIDrawS
         DuskGui_horizontalLine((DuskGuiParams) { .text = componentType->name, .bounds = (Rectangle) { 1, state->y, DuskGui_getAvailableSpace().x - 2, 18 } });
         state->y += 20;
         DrawFunction drawFunction = GetDrawFunction(componentType->name);
+        // printf("Drawing %s\n", componentType->name);
         if (drawFunction != NULL) {
             drawFunction(NULL, componentData, state);
         } else {
@@ -434,154 +424,212 @@ void DrawSerializedData_SceneObject(const char* key, SceneObject* data, GUIDrawS
     if (key != NULL)
         state->indention--;
 }
-static void DrawHierarchyNode(SceneGraph* sceneGraph, ObjectConfiguratorEditorComponent* cfgEdit, SceneObjectId objId, int depth, int* y)
+
+static void Editor_drawHierarchyNode(EditorState* state, SceneGraph* sceneGraph, SceneObjectId objId, int depth, int* y)
 {
     SceneObject* obj = SceneGraph_getObject(sceneGraph, objId);
     if (obj == NULL)
         return;
-    int x = 10 + depth * 10;
+    int x = depth * 10;
     int h = 16;
     int availableSpace = DuskGui_getAvailableSpace().x;
     char name[strlen(obj->name) + 10];
     sprintf(name, "%s (%d)", obj->name, objId.id);
     if (DuskGui_label((DuskGuiParams) { .text = name, .bounds = (Rectangle) { x, *y, availableSpace - 10 - x, h }, .rayCastTarget = 1, .styleGroup = DuskGui_getStyleGroup(DUSKGUI_STYLE_LABELBUTTON) })) {
-        printf("Clicked on %s\n", obj->name);
-        cfgEdit->selectedObjectId = objId;
+        state->selectedObjectId = objId;
+        state->displayInspector = true;
     }
     *y += h;
     for (int i = 0; i < obj->children_count; i++) {
-        DrawHierarchyNode(sceneGraph, cfgEdit, obj->children[i], depth + 1, y);
+        Editor_drawHierarchyNode(state, sceneGraph, obj->children[i], depth + 1, y);
     }
 }
 
-void ObjectConfiguratorEditorComponent_draw2D(Camera2D camera, SceneObject* sceneObject, SceneComponentId sceneComponent,
-    void* componentData, void* userdata)
+void Editor_draw(EditorState* state, SceneGraph *graph)
 {
-    ObjectConfiguratorEditorComponent* data = (ObjectConfiguratorEditorComponent*)componentData;
-    if (DuskGui_dragArea((DuskGuiParams) { .text = "drag_base", .bounds = (Rectangle) { 0, 0, GetScreenWidth(), GetScreenHeight() }, .rayCastTarget = 1, .isFocusable = 1 })) {
-        Vector2 delta = GetMouseDelta();
-        Vector3 rotationYaw = SceneGraph_getLocalRotation(psg.sceneGraph, data->cameraPivotYawId);
-        Vector3 rotationPitch = SceneGraph_getLocalRotation(psg.sceneGraph, data->cameraPivotPitchId);
+    if (_editor_titleStyleGroup.normal == NULL)
+    {
+        _editor_titleStyleGroup.fallbackStyle = DuskGui_getStyleGroup(DUSKGUI_STYLE_PANEL)->fallbackStyle;
+        _editor_titleStyleGroup.fallbackStyle.backgroundColor = (Color){100,120,180,255};
+        _editor_titleStyleGroup.fallbackStyle.backgroundPatchInfo.source.height -=4;
+        _editor_titleStyleGroup.fallbackStyle.backgroundPatchInfo.bottom = 0;
+        _editor_titleStyleGroup.fallbackStyle.textColor = WHITE;
+        _editor_titleStyleGroup.normal = DuskGui_createGuiStyle(&_editor_titleStyleGroup.fallbackStyle);
+        _editor_titleStyleGroup.hover = DuskGui_createGuiStyle(&_editor_titleStyleGroup.fallbackStyle);
+        _editor_titleStyleGroup.hover->backgroundColor = (Color){120,140,200,255};
+        _editor_titleStyleGroup.pressed = DuskGui_createGuiStyle(&_editor_titleStyleGroup.fallbackStyle);
+        _editor_titleStyleGroup.pressed->backgroundColor = (Color){80,100,160,255};
 
-        rotationPitch.x += delta.y;
-        rotationYaw.y -= delta.x;
-        if (rotationPitch.x > 90)
-            rotationPitch.x = 90;
-        if (rotationPitch.x < -90)
-            rotationPitch.x = -90;
-        SceneGraph_setLocalRotation(psg.sceneGraph, data->cameraPivotYawId, rotationYaw);
-        SceneGraph_setLocalRotation(psg.sceneGraph, data->cameraPivotPitchId, rotationPitch);
+        _editor_closeButtonStyleGroup = *DuskGui_getStyleGroup(DUSKGUI_STYLE_BUTTON);
+        _editor_closeButtonStyleGroup.fallbackStyle.backgroundColor = (Color){200,0,0,255};
+        _editor_closeButtonStyleGroup.fallbackStyle.textColor = WHITE;
+        _editor_closeButtonStyleGroup.fallbackStyle.paddingBottom = 6;
+        _editor_closeButtonStyleGroup.normal = DuskGui_createGuiStyle(&_editor_closeButtonStyleGroup.fallbackStyle);
+        _editor_closeButtonStyleGroup.hover = DuskGui_createGuiStyle(&_editor_closeButtonStyleGroup.fallbackStyle);
+        _editor_closeButtonStyleGroup.hover->backgroundColor = (Color){255,0,0,255};
+        _editor_closeButtonStyleGroup.pressed = DuskGui_createGuiStyle(&_editor_closeButtonStyleGroup.fallbackStyle);
+        _editor_closeButtonStyleGroup.pressed->backgroundColor = (Color){150,0,0,255};
+        _editor_closeButtonStyleGroup.active = DuskGui_createGuiStyle(&_editor_closeButtonStyleGroup.fallbackStyle);
+
+        _editor_resizeAreaStyleGroup.fallbackStyle = (DuskGuiStyle){
+            .backgroundColor = {0,0,0,128},
+        };
     }
-
-    DuskGuiParamsEntry* panel = DuskGui_beginPanel((DuskGuiParams) {
-        .text = "##hierarchy_view",
-        .bounds = (Rectangle) { -1, -2, 200, GetScreenHeight() + 4 },
-        .rayCastTarget = 1 });
-    DuskGui_label((DuskGuiParams) { .text = "Hierarchy", .bounds = (Rectangle) { 10, 40, 100, 50 }, .rayCastTarget = 1 });
-    if (DuskGui_button((DuskGuiParams) { .text = "<- back", .bounds = (Rectangle) { 10, 10, 85, 20 }, .rayCastTarget = 1 })) {
-        GameStateLevel_Init();
-    }
-    if (DuskGui_button((DuskGuiParams) { .text = "Reset view", .bounds = (Rectangle) { 100, 10, 85, 20 }, .rayCastTarget = 1 })) {
-        SceneGraph_setLocalRotation(psg.sceneGraph, data->cameraPivotYawId, (Vector3) { 0, 0, 0 });
-        SceneGraph_setLocalRotation(psg.sceneGraph, data->cameraPivotPitchId, (Vector3) { 30, 0, 0 });
-    }
-
-    if (DuskGui_button((DuskGuiParams) { .text = "Serialize", .bounds = (Rectangle) { 10, 70, 85, 20 }, .rayCastTarget = 1 })) {
-        cJSON* obj = cJSON_CreateObject();
-        SerializeData_SceneGraph(NULL, psg.sceneGraph, obj, NULL);
-        char* serialized = cJSON_Print(obj);
-        printf("Serialized:\n%s\n", serialized);
-    }
-
-    if (DuskGui_button((DuskGuiParams) { .text = "Menu test", .bounds = (Rectangle) { 100, 70, 85, 20 }, .rayCastTarget = 1 })) {
-        printf("Opening menu\n");
-        DuskGui_openMenu("test_menu");
-    }
-
-    if (DuskGui_beginMenu((DuskGuiParams) { .text = "test_menu", .bounds = (Rectangle) { 100, 85, 200, 200 } })) {
-
-        for (int i = 0; i < 5; i++) {
-            char buffer[32];
-            sprintf(buffer, i % 2 ? "Submenu %d" : "Test %d", i);
-            if (DuskGui_menuItem(i % 2, (DuskGuiParams) { .text = buffer, .bounds = DuskGui_fillHorizontally(20 * i, 0, 0, 20), .rayCastTarget = 1 })) {
-                if (i % 2) {
-                    sprintf(buffer, "test_menu_%d", i);
-                    DuskGui_openMenu(buffer);
-                } else {
-                    printf("%s clicked\n", buffer);
-                }
-            }
-        }
-        if (DuskGui_menuItem(0, (DuskGuiParams) { .text = "Close", .bounds = DuskGui_fillHorizontally(20 * 5, 0, 0, 20), .rayCastTarget = 1 })) {
-            DuskGui_closeMenu("test_menu");
-        }
-
-        for (int i = 1; i < 5; i += 2) {
-            char buffer[32];
-            sprintf(buffer, "test_menu_%d", i);
-            char buffer2[32];
-            sprintf(buffer2, "test_menu_2_%d", i);
-            if (DuskGui_beginMenu((DuskGuiParams) { .text = buffer, .bounds = (Rectangle) { 100, 20 * i, 200, 200 } })) {
-                DuskGui_menuItem(0, (DuskGuiParams) { .text = "Test-1", .bounds = DuskGui_fillHorizontally(0, 0, 0, 20), .rayCastTarget = 1 });
-                if (DuskGui_menuItem(1, (DuskGuiParams) { .text = "Test-2", .bounds = DuskGui_fillHorizontally(20, 0, 0, 20), .rayCastTarget = 1 }))
-                {
-                    DuskGui_openMenu(buffer2);
-                }
-                if (DuskGui_beginMenu((DuskGuiParams) { .text = buffer2, .bounds = (Rectangle) { 100, 20 * i, 200, 200 } })) {
-                
-                    DuskGui_endMenu();
-                }
-                DuskGui_endMenu();
-            }
-        }
-        DuskGui_endMenu();
-    }
-
-    int y = 90;
-    for (int i = 0; i < psg.sceneGraph->objects_count; i++) {
-        SceneObjectId objId = psg.sceneGraph->objects[i].id;
-        SceneObject* obj = SceneGraph_getObject(psg.sceneGraph, objId);
-        if (obj == NULL)
-            continue;
-
-        SceneObject* parent = SceneGraph_getObject(psg.sceneGraph, obj->parent);
-        if (parent != NULL)
-            continue;
-
-        DrawHierarchyNode(psg.sceneGraph, data, objId, 0, &y);
-    }
-    DuskGui_endPanel(panel);
 
     _drawFunctionOverrides._SceneComponentId = DrawSerializeData_SceneComponentIdOverride;
     _drawFunctionOverrides._SceneObjectId = DrawSerializeData_SceneObjectIdOverride;
     _drawFunctionOverrides._SceneObject = DrawSerializedData_SceneObject;
     _drawFunctionOverrides._SceneObjectTransform = DrawSerializeData_SceneObjectTransformOverride;
 
-    const int inspectorHeight = 400;
-    const int inspectorWidth = 350;
-    DuskGuiParamsEntry* inspector_panel = DuskGui_beginPanel((DuskGuiParams) { .text = "##object_view", .bounds = (Rectangle) { GetScreenWidth() - inspectorWidth, GetScreenHeight() - inspectorHeight, inspectorWidth, inspectorHeight }, .rayCastTarget = 1 });
-    DuskGuiParamsEntry* inspector_scroll = DuskGui_beginScrollArea((DuskGuiParams) { .text = "##object_scroll", .bounds = (Rectangle) { 0, 0, inspectorWidth, inspectorHeight }, .rayCastTarget = 1 });
-    SceneObject* selectedObj = SceneGraph_getObject(psg.sceneGraph, data->selectedObjectId);
+
+    if (state->displayHierarchy)
+        Editor_drawHierarchy(state, graph);
+    if (state->displayInspector)
+        Editor_drawInspector(state, graph);
+}
+
+static DuskGuiParamsEntry* Editor_beginPanelWindow(const char *title, Rectangle* bounds, bool *display)
+{
+    char textId[128];
+    sprintf(textId, "##editor_%s_panel", title);
+    DuskGuiParamsEntry* panel = DuskGui_beginPanel((DuskGuiParams){
+        .bounds = *bounds,
+        .rayCastTarget = 1,
+        .text = textId
+    });
+    
+    DuskGui_label((DuskGuiParams){
+        .text = title,
+        .bounds = (Rectangle){0,0,bounds->width, 22},
+        .rayCastTarget = 1,
+        .styleGroup = &_editor_titleStyleGroup
+    });
+
+    if (DuskGui_hasLock(DuskGui_getLastEntry()))
+    {
+        Vector2 delta = GetMouseDelta();
+        bounds->x += delta.x;
+        bounds->y += delta.y;
+    }
+
+    sprintf(textId, "x##editor_%s_close_button", title);
+
+    if (DuskGui_button((DuskGuiParams){
+        .text = textId,
+        .bounds = (Rectangle){bounds->width - 20, 2, 18, 18},
+        .rayCastTarget = 1,
+        .styleGroup = &_editor_closeButtonStyleGroup
+    }))
+    {
+        *display = false;
+    }
+    return panel;
+}
+
+void Editor_endPanelWindow(DuskGuiParamsEntry* panel, Rectangle *bounds)
+{
+    char textId[128];
+    sprintf(textId, "##editor_%s_resize_area", panel->txId);
+    DuskGui_label((DuskGuiParams){
+        .text = textId,
+        .bounds = (Rectangle){bounds->width - 15, bounds->height-15, 14, 14},
+        .rayCastTarget = 1,
+        .styleGroup = &_editor_resizeAreaStyleGroup
+    });
+    if (DuskGui_hasLock(DuskGui_getLastEntry()))
+    {
+        Vector2 delta = GetMouseDelta();
+        bounds->width += delta.x;
+        bounds->height += delta.y;
+    }
+
+    DuskGui_endPanel(panel);
+}
+
+void Editor_drawHierarchy(EditorState* state, SceneGraph *graph)
+{
+    if (state->hierarchyPanelBounds.width == 0)
+    {
+        state->hierarchyPanelBounds = (Rectangle) {
+            .x = 0,
+            .y = 0,
+            .width = 380,
+            .height = GetScreenHeight()
+        };
+    }
+
+    DuskGuiParamsEntry* panel = Editor_beginPanelWindow("Hierarchy", &state->hierarchyPanelBounds, &state->displayHierarchy);
+
+    DuskGuiParamsEntry* scrollArea = DuskGui_beginScrollArea((DuskGuiParams){
+        .bounds = (Rectangle){.x = 5,
+                              .y = 25,
+                              .width = state->hierarchyPanelBounds.width - 10,
+                              .height = state->hierarchyPanelBounds.height - 30},
+        .rayCastTarget = 1,
+        .styleGroup = &_editor_invisibleStyleGroup,
+        .text = "##editor_hierarchy_scroll_area"
+    });
+
+    int y = 0;
+    for (int i = 0; i < graph->objects_count; i++)
+    {
+        SceneObjectId objId = graph->objects[i].id;
+        SceneObject* obj = SceneGraph_getObject(graph, objId);
+        if (obj == NULL)
+            continue;
+
+        SceneObject* parent = SceneGraph_getObject(graph, obj->parent);
+        if (parent != NULL)
+            continue;
+
+        Editor_drawHierarchyNode(state, graph, objId, 0, &y);
+    }
+    scrollArea->contentSize = (Vector2) { 300, y };
+
+    DuskGui_endScrollArea(scrollArea);
+
+    Editor_endPanelWindow(panel, &state->hierarchyPanelBounds);
+}
+
+
+void Editor_drawInspector(EditorState* state, SceneGraph *graph)
+{
+    if (state->inspectorPanelBounds.width == 0)
+    {
+        state->inspectorPanelBounds = (Rectangle) {
+            .x = GetScreenWidth() - 380,
+            .y = 0,
+            .width = 380,
+            .height = GetScreenHeight()
+        };
+    }
+
+    DuskGuiParamsEntry* panel = Editor_beginPanelWindow("Inspector", &state->inspectorPanelBounds, &state->displayInspector);
+
+    DuskGuiParamsEntry* scrollArea = DuskGui_beginScrollArea((DuskGuiParams){
+        .bounds = (Rectangle){.x = 5,
+                              .y = 25,
+                              .width = state->inspectorPanelBounds.width - 10,
+                              .height = state->inspectorPanelBounds.height - 30},
+        .rayCastTarget = 1,
+        .styleGroup = &_editor_invisibleStyleGroup,
+        .text = "##editor_inspector_scroll_area"
+    });
+
+    SceneObject* selectedObj = SceneGraph_getObject(graph, state->selectedObjectId);
     if (selectedObj != NULL) {
-        GUIDrawState state = { .labelWidth = 140, .sceneGraph = psg.sceneGraph, .selectedObjectId = data->selectedObjectId };
-        state.y = 0;
-        DrawSerializedData_SceneObject(NULL, selectedObj, &state);
-        inspector_scroll->contentSize = (Vector2) { 300, state.y };
-        if (data->selectedObjectId.id != state.selectedObjectId.id) {
-            data->selectedObjectId = state.selectedObjectId;
-            inspector_scroll->contentOffset = (Vector2) { 0, 0 };
+        GUIDrawState guiState = { .labelWidth = 140, .sceneGraph = graph, .selectedObjectId = state->selectedObjectId };
+        guiState.y = 0;
+        DrawSerializedData_SceneObject(NULL, selectedObj, &guiState);
+        scrollArea->contentSize = (Vector2) { 300, guiState.y };
+        if (state->selectedObjectId.id != guiState.selectedObjectId.id) {
+            state->selectedObjectId = guiState.selectedObjectId;
+            scrollArea->contentOffset = (Vector2) { 0, 0 };
         }
     } else {
-        inspector_scroll->contentOffset = (Vector2) { 0, 0 };
+        scrollArea->contentOffset = (Vector2) { 0, 0 };
     }
-    DuskGui_endScrollArea(inspector_scroll);
-    DuskGui_endPanel(inspector_panel);
 
-    DuskGui_finalize();
-}
-void ObjectConfiguratorEditorComponent_draw(Camera3D camera, SceneObject* sceneObject, SceneComponentId sceneComponent,
-    void* componentData, void* userdata)
-{
-    // printf("Camera: %f %f %f -> %f %f %f\n", camera.position.x, camera.position.y, camera.position.z,
-    //     camera.target.x, camera.target.y, camera.target.z);
+    DuskGui_endScrollArea(scrollArea);
+    Editor_endPanelWindow(panel, &state->inspectorPanelBounds);
 }

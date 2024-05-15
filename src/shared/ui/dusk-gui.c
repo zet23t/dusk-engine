@@ -146,7 +146,7 @@ static void DuskGui_defaultDrawStyle(DuskGuiParamsEntry* entry, DuskGuiState* st
             (entry->params.bounds.width - iconSize.x) * iconAlignment.x + entry->params.bounds.x + iconOffset.x,
             (entry->params.bounds.height - iconSize.y) * iconAlignment.y + entry->params.bounds.y + iconOffset.y
         };
-        printf("iconPosition: %f, %f\n", iconPosition.x, iconPosition.y);
+        // printf("iconPosition: %f, %f\n", iconPosition.x, iconPosition.y);
         DrawTexturePro(lerpedStyle.iconTexture, (Rectangle) { 0, 0, lerpedStyle.iconTexture.width, lerpedStyle.iconTexture.height },
             (Rectangle) { iconPosition.x + iconPivot.x, iconPosition.y + iconPivot.y, iconSize.x, iconSize.y },
             iconPivot, iconRotation, lerpedStyle.iconColor);
@@ -725,7 +725,7 @@ Rectangle DuskGui_fillHorizontally(int yOffset, int left, int right, int height)
     };
 }
 
-DuskGuiStyleGroup* DuskGui_getStyle(int styleType)
+DuskGuiStyleGroup* DuskGui_getStyleGroup(int styleType)
 {
     return &_defaultStyles.groups[styleType];
 }
@@ -994,10 +994,11 @@ void DuskGui_update(DuskGuiParamsEntry* entry, DuskGuiStyleGroup* initStyleGroup
         } else {
             entry->textBuffer = NULL;
         }
-    } else if (initStyleGroup) {
-        entry->cachedStartStyle = initStyleGroup->fallbackStyle;
-        entry->origStartStyle = initStyleGroup->normal;
-        entry->nextStyle = initStyleGroup->normal;
+    } else if (initStyleGroup != NULL || entry->params.styleGroup != NULL) {
+        DuskGuiStyleGroup* styleGroup = entry->params.styleGroup != NULL ? entry->params.styleGroup : initStyleGroup;
+        entry->cachedStartStyle = styleGroup->fallbackStyle;
+        entry->origStartStyle = styleGroup->normal;
+        entry->nextStyle = styleGroup->normal;
         entry->transitionTime = 0;
         entry->transitionDuration = 1.0f;
         for (int i = 0; entry->params.text && entry->params.text[i]; i++) {
@@ -1035,7 +1036,8 @@ static void DuskGui_drawStyle(DuskGuiParamsEntry* params, DuskGuiState* state, D
 {
     if (state->menuStackCount > 0) {
         // we have a menu open, draw the content in the deferred
-        params->drawStyleGroup = styleGroup;
+        if (params->drawStyleGroup == NULL)
+            params->drawStyleGroup = styleGroup;
         params->params.text = strdup(params->params.text);
         params->drawFn = DuskGui_drawStyle;
     } else if (params->params.styleGroup && params->params.styleGroup->draw) {

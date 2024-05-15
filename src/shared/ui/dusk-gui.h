@@ -2,6 +2,7 @@
 #define __DUSK_GUI_H__
 
 #include "raylib.h"
+#include <inttypes.h>
 
 #define DUSKGUI_OVERFLOW_ELLIPSIS 0
 #define DUSKGUI_OVERFLOW_CLIP 1
@@ -199,6 +200,8 @@ DuskGuiParamsEntry* DuskGui_getLastEntry();
 // style management
 void DuskGui_setDefaultFont(Font font, float fontSize, int fontSpacing);
 DuskGuiStyleGroup* DuskGui_getStyleGroup(int styleType);
+// copies the style and allocates memory for it
+DuskGuiStyle* DuskGui_createGuiStyle(DuskGuiStyle* fallbackStyle);
 
 // menu management
 void DuskGui_openMenu(const char *menuName);
