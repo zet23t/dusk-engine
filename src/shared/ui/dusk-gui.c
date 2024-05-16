@@ -793,6 +793,14 @@ static DuskGuiParamsEntry* DuskGui_getFocusedEntry()
     return NULL;
 }
 
+void Rectangle_getMinMax(Rectangle* r, int* minX, int* minY, int* maxX, int* maxY)
+{
+    *minX = r->x;
+    *minY = r->y;
+    *maxX = r->x + r->width;
+    *maxY = r->y + r->height;
+}
+
 void DuskGui_finalize()
 {
     // auto close behavior of menus:
@@ -838,7 +846,19 @@ void DuskGui_finalize()
             DuskGuiParamsEntry* entry = &_duskGuiState.currentParams.params[i];
             if (entry->params.rayCastTarget == 0 || ((entry->drawFn == NULL) ^ (pass == 1)))
                 continue;
+            
             int isHit = CheckCollisionPointRec(GetMousePosition(), entry->params.bounds);
+
+            if (isHit)
+            {
+                DuskGuiParamsEntry* parent = DuskGui_getParent(entry, 0);
+                while (parent != NULL && isHit) {
+                    if (parent->params.rayCastTarget) {
+                        isHit = CheckCollisionPointRec(GetMousePosition(), parent->params.bounds);
+                    }
+                    parent = DuskGui_getParent(parent, 0);
+                }
+            }
             if (isHit && blocked) {
                 isHit = 0;
                 for (int j = 0; j < blockingParentsCount; j++) {

@@ -81,7 +81,7 @@ static void DrawSerializeData_rangedInt(const char* key, int* data, GUIDrawState
 {
     DuskGui_label((DuskGuiParams) { .text = key, .bounds = (Rectangle) { 10 + state->indention * 10, state->y, state->labelWidth, 18 }, .rayCastTarget = 1 });
     char buffer[64];
-    sprintf(buffer, "%d##%s:%d-int", *data, key, state->selectedObjectId.id);
+    sprintf(buffer, "%d##%s:%p-int", *data, key, data);
     Vector2 space = DuskGui_getAvailableSpace();
     if (showSlider) {
         // if (DuskGui_slider((DuskGuiParams) { .text = buffer, .bounds = (Rectangle) { 10 + state->labelWidth, state->y, space.x - 10 - state->labelWidth, 18 }, .rayCastTarget = 1 }, data, min, max)) {
@@ -225,7 +225,7 @@ void DrawSerializeData_float(const char* key, float* data, GUIDrawState* state)
     }
     DuskGui_label((DuskGuiParams) { .text = key, .bounds = (Rectangle) { 10 + state->indention * 10, state->y, state->labelWidth, 18 }, .rayCastTarget = 1 });
     char buffer[64];
-    sprintf(buffer, "%.2f##%s:%d-float", *data, key, state->selectedObjectId.id);
+    sprintf(buffer, "%.2f##%s:%p-float", *data, key, data);
     Vector2 space = DuskGui_getAvailableSpace();
     if (showSlider && max > min) {
         DuskGui_horizontalFloatSlider((DuskGuiParams) {
