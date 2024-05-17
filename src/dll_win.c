@@ -29,26 +29,34 @@ double GetTime(void);
 
 const char* Host_InitializeGameCode(void* storedState, const char *projectPath)
 {
-    if (dllPath[0] == 0)
+    if (dllPath[0]== 0)
     {
-        float testStart = GetTime();
-        HMODULE test = LoadLibraryA("game.dll");
-        if (!test) {
-            printf("Failed to load DLL: %lu\n", GetLastError());
-            return "Failed to load DLL";
-        }
-        // Get the full path of the loaded DLL
-        if (GetModuleFileNameA(test, dllPath, sizeof(dllPath)) == 0) {
-            printf("Failed to get DLL path: %lu\n", GetLastError());
-            FreeLibrary(test);
-            return "Failed to get DLL path";
-        } else {
-            printf("Loaded DLL from: %s\n", dllPath);
-        }
-        FreeLibrary(test);
-        float testStartDt = GetTime() - testStart;
-        printf("Found DLL path in %.2fms\n", testStartDt * 1000.0f);
+        #if defined(DEBUG)
+        sprintf(dllPath, "%s/_build/debug/platform_desktop/game.dll", projectPath);
+        #else
+        sprintf(dllPath, "%s/_build/release/platform_desktop/game.dll", projectPath);
+        #endif
     }
+    // if (dllPath[0] == 0)
+    // {
+    //     float testStart = GetTime();
+    //     HMODULE test = LoadLibraryA("game.dll");
+    //     if (!test) {
+    //         printf("Failed to load DLL: %lu\n", GetLastError());
+    //         return "Failed to load DLL";
+    //     }
+    //     // Get the full path of the loaded DLL
+    //     if (GetModuleFileNameA(test, dllPath, sizeof(dllPath)) == 0) {
+    //         printf("Failed to get DLL path: %lu\n", GetLastError());
+    //         FreeLibrary(test);
+    //         return "Failed to get DLL path";
+    //     } else {
+    //         printf("Loaded DLL from: %s\n", dllPath);
+    //     }
+    //     FreeLibrary(test);
+    //     float testStartDt = GetTime() - testStart;
+    //     printf("Found DLL path in %.2fms\n", testStartDt * 1000.0f);
+    // }
 
     float compileStart = GetTime();
     // compile the DLL
@@ -150,7 +158,6 @@ const char* Host_InitializeGameCode(void* storedState, const char *projectPath)
 
 void Host_UnloadGameCode()
 {
-    return 0;
 }
 
 

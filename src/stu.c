@@ -1,5 +1,5 @@
-#include "shared/ecs/pico_ecs.c"
-
+#ifndef PLATFORM_WEB
 #include "shared/resource_manager.c"
+#endif
 
 #include "dusk-engine.c"

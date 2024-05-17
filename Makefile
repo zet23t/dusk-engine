@@ -11,6 +11,8 @@ PLATFORM_OS          ?= WINDOWS
 PLATFORM             ?= PLATFORM_DESKTOP
 BUILD                ?= release
 PROJECTDIR           ?= 
+# vpath %.c $(SRCDIR) $(PROJECTDIR)src
+
 
 # Compiler and flags
 CC := gcc
@@ -18,7 +20,7 @@ CFLAGS := -Wall -Isubmodules/raylib/src -D$(PLATFORM) -I$(PROJECTDIR)src -Isrc -
 
 # Directories
 SRCDIR := src
-BUILDDIR := _build/$(BUILD)/$(PLATFORM)
+BUILDDIR := $(PROJECTDIR)_build/$(BUILD)/$(PLATFORM)
 LIBDIR := submodules/raylib/$(BUILD)/$(PLATFORM)
 
 LIBDIR := $(shell echo $(LIBDIR) | tr A-Z a-z)
@@ -45,15 +47,6 @@ endif
 
 OBJDIR := $(BUILDDIR)
 
-ifeq ($(PLATFORM),PLATFORM_WEB)
-    # HTML5 emscripten compiler
-    CC = emcc
-    AR = emar
-    TARGET := $(BUILDDIR)/dusk-engine.html
-    RAYLIB_LIB = raylib
-    SRCS := $(SRCS) $(SRCS_DLL)
-    SRCS_DLL =
-endif
 
 
 # ifeq ($(PLATFORM),PLATFORM_WEB)
@@ -127,7 +120,7 @@ endif
 
 ifeq ($(BUILD),release)
     ifeq ($(PLATFORM),PLATFORM_WEB)
-        CFLAGS += -Os --preload-file $(PROJECTDIR)Assets/ -s USE_GLFW=3 -s ASSERTIONS=1 -s WASM=1 -s ASYNCIFY
+        CFLAGS += -Os --preload-file $(PROJECTDIR)assets/ -s USE_GLFW=3 -s ASSERTIONS=1 -s WASM=1 -s ASYNCIFY
     endif
     ifeq ($(PLATFORM),PLATFORM_DESKTOP)
         CFLAGS += -O1
@@ -137,11 +130,27 @@ ifeq ($(BUILD),release)
     endif
 endif
 
-OBJS := $(patsubst $(SRCDIR)/%.c,$(OBJDIR)/%.o,$(SRCS))
+
+$(info Building for $(PLATFORM) on $(PLATFORM_OS) in $(BUILD) mode)
+ifeq ($(PLATFORM),PLATFORM_WEB)
+    # HTML5 emscripten compiler
+    CC = emcc
+    AR = emar
+    TARGET := $(BUILDDIR)/dusk-engine.html
+    RAYLIB_LIB = raylib
+    SRCS := $(SRCS) $(SRCS_DLL)
+    $(info SRCS => $(SRCS))
+
+    OBJS := $(addprefix $(OBJDIR)/, $(patsubst %.c,%.o,$(notdir $(SRCS))))
+    SRCS_DLL =
+else
+    OBJS := $(patsubst $(SRCDIR)/%.c,$(OBJDIR)/%.o,$(SRCS))
+endif
+
 DEPS := $(OBJS:.o=.d)
 
-$(info $(SRCS))
-$(info $(OBJS))
+$(info SRCS = $(SRCS))
+$(info OBJS = $(OBJS))
 
 RAYLIB_MAKEFILE := submodules/raylib/src/Makefile
 
@@ -174,7 +183,7 @@ run: main $(TARGET)
 # Run target
 run-node: $(OUTPUT)
 	@which http-server >/dev/null || npm install -g http-server
-	http-server _build/release/platform_web
+	http-server $(BUILDDIR)
 
 # Rule to build the target
 $(TARGET): $(OBJS)
@@ -183,12 +192,24 @@ $(TARGET): $(OBJS)
 -include $(DEPS)
 
 # Rule to build object files
-$(OBJDIR)/%.o: $(SRCDIR)/%.c
+# $(OBJDIR)/%.o: %.c
+# 	mkdir -p $(dir $@)
+# 	$(CC) $(CFLAGS) -c -o $@ $<
+# Explicit rules for object files
+$(OBJDIR)/stu.o: src/stu.c
+	mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) -c -o $@ $<
+
+$(OBJDIR)/dll_win.o: src/dll_win.c
+	mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) -c -o $@ $<
+
+$(PROJECTDIR)_build/release/platform_web/stu_dll.o: $(PROJECTDIR)src/stu_dll.c
 	mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 # Clean rule
 clean:
-	rm -rf _build $(TARGET)
+	rm -rf $(PROJECTDIR)_build $(TARGET)
 
 .PHONY: all clean
