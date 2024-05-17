@@ -133,9 +133,16 @@ static Resource* addEntry(ResourceManager *resourceManager, const char* path)
     {
         resource->filePath = strdup(filePath);
     }
-    else
+    else if (FileExists(path))
     {
         resource->filePath = strdup(path);
+    }
+    else
+    {
+        char engineAssetsPath[strlen(path) + strlen("engine/") + 1];
+        strcpy(engineAssetsPath, "engine/");
+        strcat(engineAssetsPath, path);
+        resource->filePath = strdup(engineAssetsPath);
     }
     resource->data = NULL;
     resource->hash = fileModHash(path, resourceManager->projectPath);

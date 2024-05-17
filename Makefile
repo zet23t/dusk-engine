@@ -120,7 +120,7 @@ endif
 
 ifeq ($(BUILD),release)
     ifeq ($(PLATFORM),PLATFORM_WEB)
-        CFLAGS += -Os --preload-file $(PROJECTDIR)assets/ -s USE_GLFW=3 -s ASSERTIONS=1 -s WASM=1 -s ASYNCIFY
+        CFLAGS += -Os --preload-file $(PROJECTDIR)assets/@/assets --preload-file assets/@/engine/assets -s USE_GLFW=3 -s ASSERTIONS=1 -s WASM=1 -s ASYNCIFY
     endif
     ifeq ($(PLATFORM),PLATFORM_DESKTOP)
         CFLAGS += -O1

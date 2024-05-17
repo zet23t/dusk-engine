@@ -23,6 +23,20 @@ void OSSleep(long duration);
 static RuntimeContext _runtimeContext;
 
 #if PLATFORM_WEB
+// no idea why, but these declarations are not in the emscripten.h file
+int emscripten_get_element_css_size(const char * target, double * width, double * height);
+int emscripten_set_canvas_element_size(const char *target, int width, int height);
+typedef struct EmscriptenFullscreenChangeEvent {
+    EM_BOOL isFullscreen;
+    EM_BOOL fullscreenEnabled;
+    EM_UTF8 nodeName;
+    EM_UTF8 id;
+    int elementWidth;
+    int elementHeight;
+    int screenWidth;
+    int screenHeight;
+} EmscriptenFullscreenChangeEvent;
+int emscripten_get_fullscreen_status(EmscriptenFullscreenChangeEvent *isFullscreen);
 int main(void)
 {
     const char *projectDir = "./";
@@ -32,6 +46,7 @@ int main(void)
         "        e.preventDefault();"
         "    }"
         "}, false);");
+
 #else
 int main(int argc, char* argv[])
 {
@@ -71,7 +86,7 @@ int main(int argc, char* argv[])
     memset(drawTimes, 0, sizeof(drawTimes));
     memset(updateTimes, 0, sizeof(updateTimes));
 
-    Font font = LoadFont("assets/myfont.png");
+    Font font = ResourceManager_loadFont(&_runtimeContext.resourceManager, "assets/myfont.png");
 
     const char *errorState = Host_InitializeGameCode(&_runtimeContext, projectDir);
 
@@ -83,6 +98,7 @@ int main(int argc, char* argv[])
     int isPaused = 0;
     int isSlowmo = 0;
     int step = 0;
+    double currentScreenWidth = 0, currentScreenHeight = 0;
     // Main game loop
     while (!WindowShouldClose()) {
         // Update
@@ -93,6 +109,21 @@ int main(int argc, char* argv[])
             BeginDrawing();
             EndDrawing();
             continue;
+        }
+        #elif PLATFORM_WEB
+        EmscriptenFullscreenChangeEvent fsce;
+        emscripten_get_fullscreen_status(&fsce);
+        if (!fsce.isFullscreen)
+        {
+            double newScreenWidth, newScreenHeight;
+            emscripten_get_element_css_size("canvas", &newScreenWidth, &newScreenHeight);
+            if (newScreenWidth != currentScreenWidth || newScreenHeight != currentScreenHeight)
+            {
+                currentScreenWidth = newScreenWidth;
+                currentScreenHeight = newScreenHeight;
+                emscripten_set_canvas_element_size("canvas", screenWidth, screenHeight);
+                SetWindowSize((int)currentScreenWidth, (int)currentScreenHeight);
+            }
         }
         #endif
         float t = GetTime();
