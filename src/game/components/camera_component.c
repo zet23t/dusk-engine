@@ -3,7 +3,7 @@
 Camera3D CameraComponent_getCamera3D(SceneGraph* sceneGraph, SceneObjectId nodeId)
 {
     CameraComponent* cameraComponent;
-    if (!SceneGraph_getComponentByType(sceneGraph, nodeId, psg.cameraComponentId, (void**)&cameraComponent, 0))
+    if (!SceneGraph_getComponentByType(sceneGraph, nodeId, psg.CameraComponentId, (void**)&cameraComponent, 0))
     {
         return (Camera3D) {0};
     }
@@ -15,16 +15,8 @@ Camera3D CameraComponent_getCamera3D(SceneGraph* sceneGraph, SceneObjectId nodeI
         .position = position,
         .target = Vector3Add(position, forward),
         .up = up,
-        .fovy = cameraComponent->fov,
-        .far = cameraComponent->farPlane,
-        .near = cameraComponent->nearPlane,
+        .fovy = cameraComponent->camera.fovy,
+        .far = cameraComponent->camera.far,
+        .near = cameraComponent->camera.near,
     };
-}
-
-void CameraComponentRegister()
-{
-    psg.cameraComponentId = SceneGraph_registerComponentType(psg.sceneGraph, "Camera", sizeof(CameraComponent),
-        (SceneComponentTypeMethods) {
-            0,
-        });
 }

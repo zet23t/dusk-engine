@@ -10,11 +10,11 @@
 PLATFORM_OS          ?= WINDOWS
 PLATFORM             ?= PLATFORM_DESKTOP
 BUILD                ?= release
-PROJECTDIR           ?= ./
+PROJECTDIR           ?= 
 
 # Compiler and flags
 CC := gcc
-CFLAGS := -Wall -Isubmodules/raylib/src -D$(PLATFORM) -I$(PROJECTDIR)/src -Isrc -MMD -MP
+CFLAGS := -Wall -Isubmodules/raylib/src -D$(PLATFORM) -I$(PROJECTDIR)src -Isrc -MMD -MP
 
 # Directories
 SRCDIR := src
@@ -28,7 +28,7 @@ BUILDDIR := $(shell echo $(BUILDDIR) | tr A-Z a-z)
 # SRCS := $(shell find $(SRCDIR) -name '*.c')
 # SRCS := $(filter-out src/stu.c, $(SRCS))
 SRCS := src/stu.c src/dll_win.c
-SRCS_DLL := $(PROJECTDIR)/src/stu_dll.c
+SRCS_DLL := $(PROJECTDIR)src/stu_dll.c
 RAYLIB_LIB := raylibdll
 
 # Output file
@@ -127,7 +127,7 @@ endif
 
 ifeq ($(BUILD),release)
     ifeq ($(PLATFORM),PLATFORM_WEB)
-        CFLAGS += -Os --preload-file $(PROJECTDIR)/Assets/ -s USE_GLFW=3 -s ASSERTIONS=1 -s WASM=1 -s ASYNCIFY
+        CFLAGS += -Os --preload-file $(PROJECTDIR)Assets/ -s USE_GLFW=3 -s ASSERTIONS=1 -s WASM=1 -s ASYNCIFY
     endif
     ifeq ($(PLATFORM),PLATFORM_DESKTOP)
         CFLAGS += -O1

@@ -12,13 +12,13 @@
 #include "game/util/prefab.c"
 #include "game/util/mapped_variables.c"
 #include "game/components/bullet_component.c"
-#include "game/components/camera_component.c"
 #include "game/components/auto_destroy_component.c"
 #include "game/components/update_callback_component.c"
 #include "game/components/movement_pattern_component.c"
 #include "game/components/target_handler_component.c"
 #include "game/components/text_component.c"
 #include "game/components/trail_renderer_component.c"
+#include "shared/util/arena.c"
 
 #define COMPONENT_IMPLEMENTATION
 #include "game/component_list.h"

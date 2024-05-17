@@ -190,7 +190,6 @@ void AutoDestroyComponentRegister();
 void BulletComponentRegister();
 void UpdateCallbackComponentRegister();
 void MovementPatternComponentRegister();
-void CameraComponentRegister();
 void TargetHandlerComponentRegister();
 void TextComponentRegister();
 void TrailRendererComponentRegister();
@@ -233,7 +232,6 @@ int game_init()
     BulletComponentRegister();
     UpdateCallbackComponentRegister();
     MovementPatternComponentRegister();
-    CameraComponentRegister();
     TextComponentRegister();
     TrailRendererComponentRegister();
 

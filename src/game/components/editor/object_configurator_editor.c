@@ -13,10 +13,10 @@ void ObjectConfiguratorEditorComponent_init(SceneObject* sceneObject, SceneCompo
 
     SceneObjectId camera = SceneGraph_createObject(psg.sceneGraph, "Camera");
     psg.camera = camera;
-    SceneGraph_addComponent(psg.sceneGraph, camera, psg.cameraComponentId, &(CameraComponent) {
-                                                                               .fov = 45,
-                                                                               .nearPlane = 0.1f,
-                                                                               .farPlane = 1000,
+    SceneGraph_addComponent(psg.sceneGraph, camera, psg.CameraComponentId, &(CameraComponent) {
+                                                                               .camera.fovy = 45,
+                                                                               .camera.near = 0.1f,
+                                                                               .camera.far = 1000,
                                                                            });
     SceneGraph_setLocalPosition(psg.sceneGraph, camera, (Vector3) { 0, 0, -10 });
     SceneObjectId cameraPivotYaw = SceneGraph_createObject(psg.sceneGraph, "CameraPivotYaw");
@@ -229,7 +229,6 @@ void DrawSerializeData_float(const char* key, float* data, GUIDrawState* state)
     float min = -FLT_MAX;
     float max = FLT_MAX;
     int showSlider = 0;
-    int showNumber = 1;
     Vector2 range;
     if (GUIDrawState_getAnnotation(state, "Range", "Vector2", sizeof(Vector2), &range)) {
         min = range.x;

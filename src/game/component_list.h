@@ -12,3 +12,4 @@
 #include "components/enemybehavior_component.h"
 #include "components/linear_velocity_component.h"
 #include "components/editor/object_configurator_editor.h"
+#include "components/camera_component.h"

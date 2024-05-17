@@ -25,7 +25,7 @@ static RuntimeContext _runtimeContext;
 #if PLATFORM_WEB
 int main(void)
 {
-    const char *projectDir = ".";
+    const char *projectDir = "./";
     emscripten_run_script(
         "window.addEventListener('keydown', function(e) {"
         "    if([32, 37, 38, 39, 40].indexOf(e.keyCode) > -1) {"
@@ -35,7 +35,7 @@ int main(void)
 #else
 int main(int argc, char* argv[])
 {
-    const char *projectDir = argc > 1 ? argv[1] : ".";
+    const char *projectDir = argc > 1 ? argv[1] : "./";
     printf("Project dir: %s\n", projectDir);
 #endif
 #ifndef DEBUG

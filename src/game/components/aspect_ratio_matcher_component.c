@@ -21,7 +21,7 @@ static void AspectRatioMatcher(SceneObject* sceneObject, SceneComponentId sceneC
 {
     AspectRatioMatcherComponent* aspectRatioMatcher = (AspectRatioMatcherComponent*)componentData;
     CameraComponent* camera;
-    SceneComponent* cameraComponent = SceneGraph_getComponentOrFindByType(psg.sceneGraph, (SceneObjectId) { 0 }, &aspectRatioMatcher->cameraComponentId, psg.cameraComponentId, (void**)&camera);
+    SceneComponent* cameraComponent = SceneGraph_getComponentOrFindByType(psg.sceneGraph, (SceneObjectId) { 0 }, &aspectRatioMatcher->cameraComponentId, psg.CameraComponentId, (void**)&camera);
 
     if (camera == NULL) {
         return;
@@ -54,7 +54,7 @@ static void AspectRatioMatcher(SceneObject* sceneObject, SceneComponentId sceneC
 
     // Convert FOV to degrees
     fov = fov * 180.0f / PI;
-    camera->fov = fov;
+    camera->camera.fovy = fov;
 }
 
 #include "../util/component_macros.h"

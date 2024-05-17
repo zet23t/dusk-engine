@@ -46,12 +46,14 @@ static DuskGuiStyle DuskGuiStyle_lerp(DuskGuiStyle* a, DuskGuiStyle* b, float t)
     style.paddingBottom = IntLerp(a->paddingBottom, b->paddingBottom, t);
     style.textColor = ColorLerp(a->textColor, b->textColor, t);
     style.backgroundColor = ColorLerp(a->backgroundColor, b->backgroundColor, t);
-    style.iconColor = ColorLerp(a->iconColor, b->iconColor, t);
-    style.iconSize = Vector2Lerp(a->iconSize, b->iconSize, t);
-    style.iconPivot = Vector2Lerp(a->iconPivot, b->iconPivot, t);
-    style.iconOffset = Vector2Lerp(a->iconOffset, b->iconOffset, t);
-    style.iconAlignment = Vector2Lerp(a->iconAlignment, b->iconAlignment, t);
-    style.iconRotationDegrees = Lerp(a->iconRotationDegrees, b->iconRotationDegrees, t);
+    style.icon.color = ColorLerp(a->icon.color, b->icon.color, t);
+    style.icon.dst.x = IntLerp(a->icon.dst.x, b->icon.dst.x, t);
+    style.icon.dst.y = IntLerp(a->icon.dst.y, b->icon.dst.y, t);
+    style.icon.dst.width = IntLerp(a->icon.dst.width, b->icon.dst.width, t);
+    style.icon.dst.height = IntLerp(a->icon.dst.height, b->icon.dst.height, t);
+    style.icon.pivot = Vector2Lerp(a->icon.pivot, b->icon.pivot, t);
+    style.icon.alignment = Vector2Lerp(a->icon.alignment, b->icon.alignment, t);
+    style.icon.rotationDegrees = Lerp(a->icon.rotationDegrees, b->icon.rotationDegrees, t);
     return style;
 }
 
@@ -113,6 +115,10 @@ const char* DuskGui_getText(DuskGuiParamsEntry* entry)
 
 static void DuskGui_defaultDrawStyle(DuskGuiParamsEntry* entry, DuskGuiState* state, DuskGuiStyleGroup* styleGroup)
 {
+    if (entry->params.styleGroup != NULL)
+    {
+        styleGroup = entry->params.styleGroup;
+    }
     DuskGuiStyle* style = DuskGuiStyleGroup_selectStyle(entry, styleGroup);
     DuskGuiStyle lerpedStyle = *style;
     float t = entry->transitionTime / entry->transitionDuration;
@@ -136,30 +142,31 @@ static void DuskGui_defaultDrawStyle(DuskGuiParamsEntry* entry, DuskGuiState* st
         }
     }
 
-    if (lerpedStyle.iconColor.a > 0 && lerpedStyle.iconTexture.id != 0) {
-        Vector2 iconSize = lerpedStyle.iconSize;
-        Vector2 iconPivot = lerpedStyle.iconPivot;
-        Vector2 iconOffset = lerpedStyle.iconOffset;
-        Vector2 iconAlignment = lerpedStyle.iconAlignment;
-        float iconRotation = lerpedStyle.iconRotationDegrees;
+    if (lerpedStyle.icon.color.a > 0 && lerpedStyle.icon.texture.id != 0) {
+        Vector2 iconSize = (Vector2) {lerpedStyle.icon.dst.width, lerpedStyle.icon.dst.height};
+        Vector2 iconPivot = lerpedStyle.icon.pivot;
+        Vector2 iconOffset = (Vector2) {lerpedStyle.icon.dst.x, lerpedStyle.icon.dst.y};
+        Vector2 iconAlignment = lerpedStyle.icon.alignment;
+        float iconRotation = lerpedStyle.icon.rotationDegrees;
         Vector2 iconPosition = (Vector2) {
             (entry->params.bounds.width - iconSize.x) * iconAlignment.x + entry->params.bounds.x + iconOffset.x,
             (entry->params.bounds.height - iconSize.y) * iconAlignment.y + entry->params.bounds.y + iconOffset.y
         };
         // printf("iconPosition: %f, %f\n", iconPosition.x, iconPosition.y);
-        DrawTexturePro(lerpedStyle.iconTexture, (Rectangle) { 0, 0, lerpedStyle.iconTexture.width, lerpedStyle.iconTexture.height },
+        DrawTexturePro(lerpedStyle.icon.texture, (Rectangle) { 0, 0, lerpedStyle.icon.texture.width, lerpedStyle.icon.texture.height },
             (Rectangle) { iconPosition.x + iconPivot.x, iconPosition.y + iconPivot.y, iconSize.x, iconSize.y },
-            iconPivot, iconRotation, lerpedStyle.iconColor);
+            iconPivot, iconRotation, lerpedStyle.icon.color);
     }
 
-    if (entry->iconTexture.id != 0 && entry->iconColor.a > 0) {
-        Vector2 iconSize = entry->iconDst.width != 0 && entry->iconDst.height != 0 ? (Vector2) { entry->iconDst.width, entry->iconDst.height } : (Vector2) { entry->params.bounds.width, entry->params.bounds.height };
-        Vector2 iconOffset = (Vector2) { entry->iconDst.x + entry->params.bounds.x, entry->iconDst.y + entry->params.bounds.y };
-        float iconRotation = entry->iconRotationDegrees;
-        Rectangle dest = (Rectangle) { iconOffset.x + entry->iconPivot.x, iconOffset.y + entry->iconPivot.y, iconSize.x, iconSize.y };
-        DrawTexturePro(entry->iconTexture, entry->iconSrc,
+    DuskGuiIconSprite* icon = &entry->params.icon;
+    if (icon->texture.id != 0 && icon->color.a > 0) {
+        Vector2 iconSize = icon->dst.width != 0 && icon->dst.height != 0 ? (Vector2) { icon->dst.width, icon->dst.height } : (Vector2) { entry->params.bounds.width, entry->params.bounds.height };
+        Vector2 iconOffset = (Vector2) { icon->dst.x + entry->params.bounds.x, icon->dst.y + entry->params.bounds.y };
+        float iconRotation = icon->rotationDegrees;
+        Rectangle dest = (Rectangle) { iconOffset.x + icon->pivot.x, iconOffset.y + icon->pivot.y, iconSize.x, iconSize.y };
+        DrawTexturePro(icon->texture, icon->src,
             dest,
-            entry->iconPivot, iconRotation, entry->iconColor);
+            icon->pivot, iconRotation, icon->color);
     }
 
     const char* origText = DuskGui_getText(entry);
@@ -538,33 +545,36 @@ void DuskGui_init()
         .textAlignment = (Vector2) { 0.0f, 0.5f },
         .paddingLeft = 10,
         .textColor = BLACK,
-        .iconTexture = foldoutIcon,
-        .iconColor = BLACK,
-        .iconSize = (Vector2) { 16, 16 },
-        .iconPivot = (Vector2) { 5, 8 },
-        .iconOffset = (Vector2) { -2, -1 },
-        .iconAlignment = (Vector2) { 0, 0.5f },
-        .iconRotationDegrees = 90,
+        .icon.texture = foldoutIcon,
+        .icon.color = BLACK,
+        .icon.dst.x = -2.0f,
+        .icon.dst.y = -1.0f,
+        .icon.dst.width = 16.0f,
+        .icon.dst.height = 16.0f,
+        .icon.pivot = (Vector2) { 5, 8 },
+        .icon.alignment = (Vector2) { 0, 0.5f },
+        .icon.src = (Rectangle) { 0, 0, 16, 16 },
+        .icon.rotationDegrees = 90,
         .transitionLingerTime = 0.033f,
     };
     foldoutOpen->normal = &foldoutOpen->fallbackStyle;
     foldoutOpen->hover = DuskGui_createGuiStyle(&foldoutOpen->fallbackStyle);
-    foldoutOpen->hover->iconRotationDegrees = 70.0f;
+    foldoutOpen->hover->icon.rotationDegrees = 70.0f;
     foldoutOpen->hover->textColor = (Color) { 80, 80, 128, 255 };
     foldoutOpen->pressed = DuskGui_createGuiStyle(&foldoutOpen->fallbackStyle);
     foldoutOpen->pressed->textColor = (Color) { 100, 100, 255, 255 };
-    foldoutOpen->pressed->iconRotationDegrees = 45;
+    foldoutOpen->pressed->icon.rotationDegrees = 45;
 
     DuskGuiStyleGroup* foldoutClosed = &_defaultStyles.groups[DUSKGUI_STYLE_FOLDOUT_CLOSED];
     foldoutClosed->fallbackStyle = foldoutOpen->fallbackStyle;
-    foldoutClosed->fallbackStyle.iconRotationDegrees = 0;
+    foldoutClosed->fallbackStyle.icon.rotationDegrees = 0;
     foldoutClosed->normal = &foldoutClosed->fallbackStyle;
     foldoutClosed->hover = DuskGui_createGuiStyle(&foldoutClosed->fallbackStyle);
-    foldoutClosed->hover->iconRotationDegrees = 20.0f;
+    foldoutClosed->hover->icon.rotationDegrees = 20.0f;
     foldoutClosed->hover->textColor = (Color) { 80, 80, 128, 255 };
     foldoutClosed->pressed = DuskGui_createGuiStyle(&foldoutClosed->fallbackStyle);
     foldoutClosed->pressed->textColor = (Color) { 100, 100, 255, 255 };
-    foldoutClosed->pressed->iconRotationDegrees = 45;
+    foldoutClosed->pressed->icon.rotationDegrees = 45;
 
     Image textFieldPatch9 = GenImageColor(16, 16, (Color) { 255, 255, 255, 255 });
     Color* textFieldPixels = (Color*)textFieldPatch9.data;
@@ -599,20 +609,21 @@ void DuskGui_init()
         .backgroundTexture = textFieldTexture,
         .backgroundPatchInfo = GenNPatchInfo(0, 0, 16, 16, 4, 4, 4, 4),
         .transitionLingerTime = 0.033f,
-        .iconTexture = cursorTexture,
-        .iconColor = (Color) { 0, 0, 0, 0 },
-        .iconSize = (Vector2) { 2, 16 },
+        .icon.texture = cursorTexture,
+        .icon.color = (Color) { 0, 0, 0, 0 },
+        .icon.dst = (Rectangle) { 0, 0, 2, 16 },
+        .icon.src = (Rectangle) { 0, 0, 2, 16 },
     };
     textFieldGroup->normal = &textFieldGroup->fallbackStyle;
     textFieldGroup->hover = DuskGui_createGuiStyle(&textFieldGroup->fallbackStyle);
     textFieldGroup->hover->backgroundColor = (Color) { 240, 240, 240, 255 };
-    textFieldGroup->hover->iconColor = BLACK;
+    textFieldGroup->hover->icon.color = BLACK;
     textFieldGroup->pressed = DuskGui_createGuiStyle(&textFieldGroup->fallbackStyle);
     textFieldGroup->pressed->backgroundColor = (Color) { 220, 220, 220, 255 };
-    textFieldGroup->pressed->iconColor = BLACK;
+    textFieldGroup->pressed->icon.color = BLACK;
     textFieldGroup->focused = DuskGui_createGuiStyle(&textFieldGroup->fallbackStyle);
     textFieldGroup->focused->backgroundColor = (Color) { 250, 200, 200, 255 };
-    textFieldGroup->focused->iconColor = BLACK;
+    textFieldGroup->focused->icon.color = BLACK;
 
     Image numberHArrows = GenImageColor(16, 16, (Color) { 255, 255, 255, 0 });
     Color* numberHArrowsPixels = (Color*)numberHArrows.data;
@@ -632,23 +643,22 @@ void DuskGui_init()
     numberInputField->fallbackStyle = textFieldGroup->fallbackStyle;
     numberInputField->fallbackStyle.paddingLeft = 16;
     numberInputField->fallbackStyle.paddingTop = 6;
-    numberInputField->fallbackStyle.iconTexture = numberHArrowsTexture;
-    numberInputField->fallbackStyle.iconSize = (Vector2) { 16, 16 };
-    numberInputField->fallbackStyle.iconPivot = (Vector2) { 8, 8 };
-    numberInputField->fallbackStyle.iconOffset = (Vector2) { 0, 0 };
-    numberInputField->fallbackStyle.iconAlignment = (Vector2) { 0, 0.5f };
-    numberInputField->fallbackStyle.iconColor = BLACK;
+    numberInputField->fallbackStyle.icon.texture = numberHArrowsTexture;
+    numberInputField->fallbackStyle.icon.dst = (Rectangle) { 0, 0, 16, 16 };
+    numberInputField->fallbackStyle.icon.pivot = (Vector2) { 8, 8 };
+    numberInputField->fallbackStyle.icon.alignment = (Vector2) { 0, 0.5f };
+    numberInputField->fallbackStyle.icon.color = BLACK;
 
     numberInputField->normal = &numberInputField->fallbackStyle;
     numberInputField->hover = DuskGui_createGuiStyle(&numberInputField->fallbackStyle);
     numberInputField->hover->backgroundColor = (Color) { 240, 240, 240, 255 };
-    numberInputField->hover->iconColor = (Color) { 80, 80, 120, 255 };
+    numberInputField->hover->icon.color = (Color) { 80, 80, 120, 255 };
     numberInputField->pressed = DuskGui_createGuiStyle(&numberInputField->fallbackStyle);
     numberInputField->pressed->backgroundColor = (Color) { 220, 220, 220, 255 };
-    numberInputField->pressed->iconColor = (Color) { 200, 100, 100, 255 };
+    numberInputField->pressed->icon.color = (Color) { 200, 100, 100, 255 };
     numberInputField->focused = DuskGui_createGuiStyle(&numberInputField->fallbackStyle);
     numberInputField->focused->backgroundColor = (Color) { 250, 200, 200, 255 };
-    numberInputField->focused->iconColor = (Color) { 200, 100, 100, 255 };
+    numberInputField->focused->icon.color = (Color) { 200, 100, 100, 255 };
 
     DuskGuiStyleGroup* horizontalSliderBackgroundGroup = &_defaultStyles.groups[DUSKGUI_STYLE_HORIZONTAL_SLIDER_BACKGROUND];
     horizontalSliderBackgroundGroup->fallbackStyle = (DuskGuiStyle) {
@@ -948,6 +958,9 @@ static DuskGuiParamsEntry* DuskGui_getCurrentPanel()
 
 static DuskGuiParamsEntry* DuskGui_makeEntry(DuskGuiParams params, DuskGuiStyleGroup* initStyleGroup)
 {
+    if (params.styleGroup != NULL) {
+        initStyleGroup = params.styleGroup;
+    }
     DuskGuiParamsEntry* parent = DuskGui_getCurrentPanel();
     Rectangle origBounds = params.bounds;
     params.bounds.x += parent->params.bounds.x;
@@ -1465,11 +1478,11 @@ int DuskGui_textInputField(DuskGuiParams params, char** buffer)
         copy[cursorIndex] = '\0';
         DuskGuiStyle* style = DuskGuiStyleGroup_selectStyle(entry, group);
         Vector2 cursorPos = MeasureTextEx(style->fontStyle->font, copy, style->fontStyle->fontSize, style->fontStyle->fontSpacing);
-        Rectangle dst = (Rectangle) { textBounds.x + cursorPos.x + style->iconOffset.x, textBounds.y + style->iconOffset.y, style->iconSize.x, style->iconSize.y };
-        DrawTexturePro(style->iconTexture, (Rectangle) { 0, 0, style->iconTexture.width, style->iconTexture.height },
+        Rectangle dst = (Rectangle) { textBounds.x + cursorPos.x + style->icon.dst.x, textBounds.y + style->icon.dst.y, style->icon.dst.width, style->icon.dst.height };
+        DrawTexturePro(style->icon.texture, (Rectangle) { 0, 0, style->icon.texture.width, style->icon.texture.height },
             dst,
             (Vector2) { 0, 0 },
-            0, style->iconColor);
+            0, style->icon.color);
     }
     if (entry->isFocused) {
         int key = GetCharPressed();
@@ -1530,12 +1543,15 @@ DuskGuiParamsEntry* DuskGui_icon(const char *id, Rectangle dst, Texture2D icon, 
 {
     DuskGuiParamsEntry* entry = DuskGui_makeEntry((DuskGuiParams) { 
         .text = id, 
-        .bounds = dst, .rayCastTarget = raycastTarget }, &_defaultStyles.groups[DUSKGUI_STYLE_ICON]);
-    entry->iconTexture = icon;
-    entry->iconSrc = src;
-    entry->iconDst = (Rectangle){0};
-    entry->iconColor = WHITE;
-
+        .bounds = dst, .rayCastTarget = raycastTarget,
+        .icon = (DuskGuiIconSprite) {
+            .texture = icon,
+            .src = src,
+            .dst = {0,0,dst.width,dst.height},
+            .color = WHITE
+        }
+    }, &_defaultStyles.groups[DUSKGUI_STYLE_ICON]);
+    
     DuskGui_drawStyle(entry, &_duskGuiState, &_defaultStyles.groups[DUSKGUI_STYLE_ICON]);
     return entry;
 }

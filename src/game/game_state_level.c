@@ -345,11 +345,11 @@ int GameStateLevel_Init()
     psg.camera = SceneGraph_createObject(psg.sceneGraph, "camera");
     SceneGraph_setLocalPosition(psg.sceneGraph, psg.camera, (Vector3) { 0, 100, -25 });
     SceneGraph_setLocalRotation(psg.sceneGraph, psg.camera, (Vector3) { 74.5, 0, 0 });
-    SceneGraph_addComponent(psg.sceneGraph, psg.camera, psg.cameraComponentId,
+    SceneGraph_addComponent(psg.sceneGraph, psg.camera, psg.CameraComponentId,
         &(CameraComponent) {
-            .fov = 10,
-            .nearPlane = 64.0f,
-            .farPlane = 256.0f,
+            .camera.fovy = 10,
+            .camera.near = 64.0f,
+            .camera.far = 256.0f,
         });
 
     psg.playerPlane = plane_instantiate((Vector3) { 0, 0, 0 });

@@ -65,7 +65,6 @@ typedef struct PSG {
     SceneComponentTypeId bulletComponentId;
     SceneComponentTypeId updateCallbackComponentId;
     SceneComponentTypeId movementPatternComponentId;
-    SceneComponentTypeId cameraComponentId;
     SceneComponentTypeId targetHandlerComponentId;
     SceneComponentTypeId textComponentId;
     SceneComponentTypeId timerComponentTypeId;

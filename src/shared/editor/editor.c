@@ -5,15 +5,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-
-static DuskGuiStyleGroup _editor_titleStyleGroup = {0};
-static DuskGuiStyleGroup _editor_closeButtonStyleGroup = {0};
-static DuskGuiStyleGroup _editor_resizeAreaStyleGroup = {0};
-static DuskGuiStyleGroup _editor_invisibleStyleGroup = {0};
+#include "editor_styles.h"
 
 void Editor_drawHierarchy(EditorState* state, SceneGraph *graph);
 void Editor_drawInspector(EditorState* state, SceneGraph *graph);
-
 
 typedef struct AnnotationData {
     const char* key;
@@ -449,31 +444,7 @@ void Editor_draw(EditorState* state, SceneGraph *graph)
 {
     if (_editor_titleStyleGroup.normal == NULL)
     {
-        _editor_titleStyleGroup.fallbackStyle = DuskGui_getStyleGroup(DUSKGUI_STYLE_PANEL)->fallbackStyle;
-        _editor_titleStyleGroup.fallbackStyle.backgroundColor = (Color){100,120,180,255};
-        _editor_titleStyleGroup.fallbackStyle.backgroundPatchInfo.source.height -=4;
-        _editor_titleStyleGroup.fallbackStyle.backgroundPatchInfo.bottom = 0;
-        _editor_titleStyleGroup.fallbackStyle.textColor = WHITE;
-        _editor_titleStyleGroup.normal = DuskGui_createGuiStyle(&_editor_titleStyleGroup.fallbackStyle);
-        _editor_titleStyleGroup.hover = DuskGui_createGuiStyle(&_editor_titleStyleGroup.fallbackStyle);
-        _editor_titleStyleGroup.hover->backgroundColor = (Color){120,140,200,255};
-        _editor_titleStyleGroup.pressed = DuskGui_createGuiStyle(&_editor_titleStyleGroup.fallbackStyle);
-        _editor_titleStyleGroup.pressed->backgroundColor = (Color){80,100,160,255};
-
-        _editor_closeButtonStyleGroup = *DuskGui_getStyleGroup(DUSKGUI_STYLE_BUTTON);
-        _editor_closeButtonStyleGroup.fallbackStyle.backgroundColor = (Color){200,0,0,255};
-        _editor_closeButtonStyleGroup.fallbackStyle.textColor = WHITE;
-        _editor_closeButtonStyleGroup.fallbackStyle.paddingBottom = 6;
-        _editor_closeButtonStyleGroup.normal = DuskGui_createGuiStyle(&_editor_closeButtonStyleGroup.fallbackStyle);
-        _editor_closeButtonStyleGroup.hover = DuskGui_createGuiStyle(&_editor_closeButtonStyleGroup.fallbackStyle);
-        _editor_closeButtonStyleGroup.hover->backgroundColor = (Color){255,0,0,255};
-        _editor_closeButtonStyleGroup.pressed = DuskGui_createGuiStyle(&_editor_closeButtonStyleGroup.fallbackStyle);
-        _editor_closeButtonStyleGroup.pressed->backgroundColor = (Color){150,0,0,255};
-        _editor_closeButtonStyleGroup.active = DuskGui_createGuiStyle(&_editor_closeButtonStyleGroup.fallbackStyle);
-
-        _editor_resizeAreaStyleGroup.fallbackStyle = (DuskGuiStyle){
-            .backgroundColor = {0,0,0,128},
-        };
+        EditorStyles_init();
     }
 
     _drawFunctionOverrides._SceneComponentId = DrawSerializeData_SceneComponentIdOverride;
@@ -552,9 +523,9 @@ void Editor_drawHierarchy(EditorState* state, SceneGraph *graph)
     {
         state->hierarchyPanelBounds = (Rectangle) {
             .x = 0,
-            .y = 0,
-            .width = 380,
-            .height = GetScreenHeight()
+            .y = 50,
+            .width = 200,
+            .height = 300
         };
     }
 
@@ -598,9 +569,9 @@ void Editor_drawInspector(EditorState* state, SceneGraph *graph)
     {
         state->inspectorPanelBounds = (Rectangle) {
             .x = GetScreenWidth() - 380,
-            .y = 0,
+            .y = 50,
             .width = 380,
-            .height = GetScreenHeight()
+            .height = GetScreenHeight()-100
         };
     }
 
@@ -632,4 +603,115 @@ void Editor_drawInspector(EditorState* state, SceneGraph *graph)
 
     DuskGui_endScrollArea(scrollArea);
     Editor_endPanelWindow(panel, &state->inspectorPanelBounds);
+}
+
+void Editor_drawControls(EditorState* state, SceneGraph *graph)
+{
+    float w = GetScreenWidth();
+    int btnCnt = 4;
+    float padding = 5.0f;
+    float btnS = 20.0f;
+    float spacing = 4.0f;
+    float textWidth = 180.0f;
+    float cw = btnS * btnCnt + spacing * (btnCnt) + padding * 2.0f + textWidth;
+    DuskGuiParamsEntry* panel = DuskGui_beginPanel((DuskGuiParams){
+        .bounds = (Rectangle){(w-cw)*.5f,-5.0f,cw, 35.0f},
+        .rayCastTarget = 1,
+        .text = "##editor_controls_panel"
+    });
+
+    float x = padding;
+    float y = padding + 5;
+    if (DuskGui_button((DuskGuiParams){
+        .text = "##ctrl-Hierarchy",
+        .bounds = (Rectangle){x,y,btnS,btnS},
+        .rayCastTarget = 1,
+        .icon = {
+            .texture = _editor_iconHierarchy,
+            .src.width = 16,
+            .src.height = 16,
+            .dst.x = 2,
+            .dst.y = 2,
+            .dst.width = 16,
+            .dst.height = 16,
+            .color = WHITE
+        }
+    }))
+    {
+        state->displayHierarchy = !state->displayHierarchy;
+    }
+
+    x += btnS + spacing;
+    if (DuskGui_button((DuskGuiParams){
+        .text = "##ctrl-Inspector",
+        .bounds = (Rectangle){x,y,btnS,btnS},
+        .rayCastTarget = 1,
+        .icon = {
+            .texture = _editor_iconInspector,
+            .src.width = 16,
+            .src.height = 16,
+            .dst.x = 2,
+            .dst.y = 2,
+            .dst.width = 16,
+            .dst.height = 16,
+            .color = WHITE
+        }
+    }))
+    {
+        state->displayInspector = !state->displayInspector;
+    }
+
+    x += btnS + spacing;
+
+    char buffer[64];
+    sprintf(buffer, "%4d | %.3f", state->frameCount, state->gameTime);
+    DuskGui_label((DuskGuiParams){
+        .text = buffer,
+        .bounds = (Rectangle){x,y,textWidth,btnS},
+        .rayCastTarget = 1,
+        .styleGroup = &_editor_labelCenteredStyleGroup
+    });
+
+    x += textWidth + spacing;
+    if (DuskGui_button((DuskGuiParams){
+        .text = "##ctrl-Pause",
+        .bounds = (Rectangle){x,y,btnS,btnS},
+        .rayCastTarget = 1,
+        .icon = {
+            .texture = state->paused ? _editor_iconPlay : _editor_iconPause,
+            .src.width = 16,
+            .src.height = 16,
+            .dst.x = 2,
+            .dst.y = 2,
+            .dst.width = 16,
+            .dst.height = 16,
+            .color = WHITE
+        }
+    }))
+    {
+        state->paused = !state->paused;
+    }
+
+    x += btnS + spacing;
+    if (DuskGui_button((DuskGuiParams){
+        .text = "##ctrl-Step",
+        .bounds = (Rectangle){x,y,btnS,btnS},
+        .rayCastTarget = 1,
+        .icon = {
+            .texture = _editor_iconStep,
+            .src.width = 16,
+            .src.height = 16,
+            .dst.x = 2,
+            .dst.y = 2,
+            .dst.width = 16,
+            .dst.height = 16,
+            .color = WHITE
+        }
+    }))
+    {
+        state->paused = true;
+        state->stepped = true;
+    }
+
+    DuskGui_endPanel(panel);
 }

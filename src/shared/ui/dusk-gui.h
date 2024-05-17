@@ -27,6 +27,17 @@ typedef struct DuskGuiFontStyle {
     int fontSpacing;
 } DuskGuiFontStyle;
 
+typedef struct DuskGuiIconSprite
+{
+    Texture2D texture;
+    Color color;
+    Vector2 pivot;
+    Vector2 alignment;
+    Rectangle src;
+    Rectangle dst;
+    float rotationDegrees;
+} DuskGuiIconSprite;
+
 typedef struct DuskGuiStyle
 {
     DuskGuiFontStyle *fontStyle;
@@ -46,13 +57,7 @@ typedef struct DuskGuiStyle
     Color textColor;
     Color backgroundColor;
     
-    Texture2D iconTexture;
-    Color iconColor;
-    Vector2 iconSize;
-    Vector2 iconPivot;
-    Vector2 iconOffset;
-    Vector2 iconAlignment;
-    float iconRotationDegrees;
+    DuskGuiIconSprite icon;
 
     Texture2D backgroundTexture;
     NPatchInfo backgroundPatchInfo;
@@ -82,6 +87,7 @@ typedef struct DuskGuiParams
     unsigned char rayCastTarget:1;
     unsigned char isFocusable:1;
     DuskGuiStyleGroup *styleGroup;
+    DuskGuiIconSprite icon;
 } DuskGuiParams;
 
 typedef struct DuskGuiTextBuffer
@@ -131,11 +137,6 @@ typedef struct DuskGuiParamsEntry
 
     DuskGuiDrawFn drawFn;
     DuskGuiStyleGroup *drawStyleGroup;
-    Texture2D iconTexture;
-    Rectangle iconDst;
-    Rectangle iconSrc;
-    Vector2 iconPivot;
-    Color iconColor;
     float iconRotationDegrees;
     void *drawUserData;
 } DuskGuiParamsEntry;
