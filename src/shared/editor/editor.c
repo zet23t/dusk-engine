@@ -4,6 +4,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <float.h>
 
 #include "editor_styles.h"
 
@@ -197,6 +198,71 @@ int DrawSerializeData_Vector3(const char* key, Vector3* data, GUIDrawState* stat
 
     return modX || modY || modZ;
 }
+
+int DrawSerializeData_Vector4(const char* key, Vector4* data, GUIDrawState* state)
+{
+    DuskGui_label((DuskGuiParams) { .text = key, .bounds = (Rectangle) { 10 + state->indention * 10, state->y, state->labelWidth, 18 }, .rayCastTarget = 1 });
+    char buffer[120];
+    Vector2 space = DuskGui_getAvailableSpace();
+    int totalSpace = space.x - 10 - state->labelWidth;
+    int spacing = 2;
+    int cellWidth = (totalSpace - spacing * 4) / 4;
+    int offsetX = 10 + state->labelWidth;
+    int y = state->y;
+    int h = 18;
+
+    sprintf(buffer, "%.2f##%s:%d-x", data->x, key, state->selectedObjectId.id);
+    int modX = DuskGui_floatInputField((DuskGuiParams) { .text = buffer, .bounds = (Rectangle) { offsetX, y, cellWidth, h }, .rayCastTarget = 1 }, &data->x, -FLT_MAX, FLT_MAX);
+    offsetX += cellWidth + spacing;
+
+    sprintf(buffer, "%.2f##%s:%d-y", data->y, key, state->selectedObjectId.id);
+    int modY = DuskGui_floatInputField((DuskGuiParams) { .text = buffer, .bounds = (Rectangle) { offsetX, y, cellWidth, h }, .rayCastTarget = 1 }, &data->y, -FLT_MAX, FLT_MAX);
+    offsetX += cellWidth + spacing;
+
+    sprintf(buffer, "%.2f##%s:%d-z", data->z, key, state->selectedObjectId.id);
+    int modZ = DuskGui_floatInputField((DuskGuiParams) { .text = buffer, .bounds = (Rectangle) { offsetX, y, cellWidth, h }, .rayCastTarget = 1 }, &data->z, -FLT_MAX, FLT_MAX);
+    offsetX += cellWidth + spacing;
+
+    sprintf(buffer, "%.2f##%s:%d-w", data->w, key, state->selectedObjectId.id);
+    int modW = DuskGui_floatInputField((DuskGuiParams) { .text = buffer, .bounds = (Rectangle) { offsetX, y, cellWidth, h }, .rayCastTarget = 1 }, &data->w, -FLT_MAX, FLT_MAX);
+
+    state->y += 18;
+
+    return modX || modY || modZ || modW;
+}
+
+int DrawSerializeData_Rectangle(const char* key, Rectangle* data, GUIDrawState* state)
+{
+    DuskGui_label((DuskGuiParams) { .text = key, .bounds = (Rectangle) { 10 + state->indention * 10, state->y, state->labelWidth, 18 }, .rayCastTarget = 1 });
+    char buffer[120];
+    Vector2 space = DuskGui_getAvailableSpace();
+    int totalSpace = space.x - 10 - state->labelWidth;
+    int spacing = 2;
+    int cellWidth = (totalSpace - spacing * 4) / 4;
+    int offsetX = 10 + state->labelWidth;
+    int y = state->y;
+    int h = 18;
+
+    sprintf(buffer, "%.2f##%s:%d-x", data->x, key, state->selectedObjectId.id);
+    int modX = DuskGui_floatInputField((DuskGuiParams) { .text = buffer, .bounds = (Rectangle) { offsetX, y, cellWidth, h }, .rayCastTarget = 1 }, &data->x, -FLT_MAX, FLT_MAX);
+    offsetX += cellWidth + spacing;
+
+    sprintf(buffer, "%.2f##%s:%d-y", data->y, key, state->selectedObjectId.id);
+    int modY = DuskGui_floatInputField((DuskGuiParams) { .text = buffer, .bounds = (Rectangle) { offsetX, y, cellWidth, h }, .rayCastTarget = 1 }, &data->y, -FLT_MAX, FLT_MAX);
+    offsetX += cellWidth + spacing;
+
+    sprintf(buffer, "%.2f##%s:%d-width", data->width, key, state->selectedObjectId.id);
+    int modZ = DuskGui_floatInputField((DuskGuiParams) { .text = buffer, .bounds = (Rectangle) { offsetX, y, cellWidth, h }, .rayCastTarget = 1 }, &data->width, -FLT_MAX, FLT_MAX);
+    offsetX += cellWidth + spacing;
+
+    sprintf(buffer, "%.2f##%s:%d-height", data->height, key, state->selectedObjectId.id);
+    int modW = DuskGui_floatInputField((DuskGuiParams) { .text = buffer, .bounds = (Rectangle) { offsetX, y, cellWidth, h }, .rayCastTarget = 1 }, &data->height, -FLT_MAX, FLT_MAX);
+
+    state->y += 18;
+
+    return modX || modY || modZ || modW;
+}
+
 void DrawSerializeData_Vector2(const char* key, Vector2* data, GUIDrawState* state)
 {
     DuskGui_label((DuskGuiParams) { .text = key, .bounds = (Rectangle) { 10 + state->indention * 10, state->y, state->labelWidth, 18 }, .rayCastTarget = 1 });
@@ -301,6 +367,8 @@ typedef struct DrawFunctionOverrides {
     void (*_float)(const char* key, float* data, GUIDrawState* userData);
     void (*_int)(const char* key, int* data, GUIDrawState* userData);
     void (*_bool)(const char* key, bool* data, GUIDrawState* userData);
+    void (*_Rectangle)(const char* key, Rectangle* data, GUIDrawState* userData);
+    void (*_Vector4)(const char* key, Vector4* data, GUIDrawState* userData);
     void (*_Vector3)(const char* key, Vector3* data, GUIDrawState* userData);
     void (*_Vector2)(const char* key, Vector2* data, GUIDrawState* userData);
     void (*_Color)(const char* key, Color* data, GUIDrawState* userData);
@@ -459,11 +527,11 @@ void Editor_draw(EditorState* state, SceneGraph *graph)
         Editor_drawInspector(state, graph);
 }
 
-static DuskGuiParamsEntry* Editor_beginPanelWindow(const char *title, Rectangle* bounds, bool *display)
+static DuskGuiParamsEntryId Editor_beginPanelWindow(const char *title, Rectangle* bounds, bool *display)
 {
     char textId[128];
     sprintf(textId, "##editor_%s_panel", title);
-    DuskGuiParamsEntry* panel = DuskGui_beginPanel((DuskGuiParams){
+    DuskGuiParamsEntryId panelId = DuskGui_beginPanel((DuskGuiParams){
         .bounds = *bounds,
         .rayCastTarget = 1,
         .text = textId
@@ -494,11 +562,12 @@ static DuskGuiParamsEntry* Editor_beginPanelWindow(const char *title, Rectangle*
     {
         *display = false;
     }
-    return panel;
+    return panelId;
 }
 
-void Editor_endPanelWindow(DuskGuiParamsEntry* panel, Rectangle *bounds)
+void Editor_endPanelWindow(DuskGuiParamsEntryId panelId, Rectangle *bounds)
 {
+    DuskGuiParamsEntry* panel = DuskGui_getEntryById(panelId);
     char textId[128];
     sprintf(textId, "##editor_%s_resize_area", panel->txId);
     DuskGui_label((DuskGuiParams){
@@ -514,7 +583,7 @@ void Editor_endPanelWindow(DuskGuiParamsEntry* panel, Rectangle *bounds)
         bounds->height += delta.y;
     }
 
-    DuskGui_endPanel(panel);
+    DuskGui_endPanel(panelId);
 }
 
 void Editor_drawHierarchy(EditorState* state, SceneGraph *graph)
@@ -529,9 +598,9 @@ void Editor_drawHierarchy(EditorState* state, SceneGraph *graph)
         };
     }
 
-    DuskGuiParamsEntry* panel = Editor_beginPanelWindow("Hierarchy", &state->hierarchyPanelBounds, &state->displayHierarchy);
+    DuskGuiParamsEntryId panelId = Editor_beginPanelWindow("Hierarchy", &state->hierarchyPanelBounds, &state->displayHierarchy);
 
-    DuskGuiParamsEntry* scrollArea = DuskGui_beginScrollArea((DuskGuiParams){
+    DuskGuiParamsEntryId scrollAreaId = DuskGui_beginScrollArea((DuskGuiParams){
         .bounds = (Rectangle){.x = 5,
                               .y = 25,
                               .width = state->hierarchyPanelBounds.width - 10,
@@ -555,11 +624,13 @@ void Editor_drawHierarchy(EditorState* state, SceneGraph *graph)
 
         Editor_drawHierarchyNode(state, graph, objId, 0, &y);
     }
+
+    DuskGuiParamsEntry* scrollArea = DuskGui_getEntryById(scrollAreaId);
     scrollArea->contentSize = (Vector2) { 300, y };
 
-    DuskGui_endScrollArea(scrollArea);
+    DuskGui_endScrollArea(scrollAreaId);
 
-    Editor_endPanelWindow(panel, &state->hierarchyPanelBounds);
+    Editor_endPanelWindow(panelId, &state->hierarchyPanelBounds);
 }
 
 
@@ -577,7 +648,7 @@ void Editor_drawInspector(EditorState* state, SceneGraph *graph)
 
     DuskGuiParamsEntry* panel = Editor_beginPanelWindow("Inspector", &state->inspectorPanelBounds, &state->displayInspector);
 
-    DuskGuiParamsEntry* scrollArea = DuskGui_beginScrollArea((DuskGuiParams){
+    DuskGuiParamsEntryId scrollAreaId = DuskGui_beginScrollArea((DuskGuiParams){
         .bounds = (Rectangle){.x = 5,
                               .y = 25,
                               .width = state->inspectorPanelBounds.width - 10,
@@ -587,21 +658,25 @@ void Editor_drawInspector(EditorState* state, SceneGraph *graph)
         .text = "##editor_inspector_scroll_area"
     });
 
+    DuskGuiParamsEntry* scrollArea;
     SceneObject* selectedObj = SceneGraph_getObject(graph, state->selectedObjectId);
     if (selectedObj != NULL) {
         GUIDrawState guiState = { .labelWidth = 140, .sceneGraph = graph, .selectedObjectId = state->selectedObjectId };
         guiState.y = 0;
         DrawSerializedData_SceneObject(NULL, selectedObj, &guiState);
+
+        scrollArea = DuskGui_getEntryById(scrollAreaId);
         scrollArea->contentSize = (Vector2) { 300, guiState.y };
         if (state->selectedObjectId.id != guiState.selectedObjectId.id) {
             state->selectedObjectId = guiState.selectedObjectId;
             scrollArea->contentOffset = (Vector2) { 0, 0 };
         }
     } else {
+        scrollArea = DuskGui_getEntryById(scrollAreaId);
         scrollArea->contentOffset = (Vector2) { 0, 0 };
     }
 
-    DuskGui_endScrollArea(scrollArea);
+    DuskGui_endScrollArea(scrollAreaId);
     Editor_endPanelWindow(panel, &state->inspectorPanelBounds);
 }
 
@@ -614,7 +689,7 @@ void Editor_drawControls(EditorState* state, SceneGraph *graph)
     float spacing = 4.0f;
     float textWidth = 180.0f;
     float cw = btnS * btnCnt + spacing * (btnCnt) + padding * 2.0f + textWidth;
-    DuskGuiParamsEntry* panel = DuskGui_beginPanel((DuskGuiParams){
+    DuskGuiParamsEntryId panel = DuskGui_beginPanel((DuskGuiParams){
         .bounds = (Rectangle){(w-cw)*.5f,-5.0f,cw, 35.0f},
         .rayCastTarget = 1,
         .text = "##editor_controls_panel"

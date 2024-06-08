@@ -7,6 +7,7 @@
 #define DUSKGUI_OVERFLOW_ELLIPSIS 0
 #define DUSKGUI_OVERFLOW_CLIP 1
 
+typedef int DuskGuiParamsEntryId;
 typedef struct DuskGuiParamsEntry DuskGuiParamsEntry;
 typedef struct DuskGuiParams DuskGuiParams;
 typedef struct DuskGuiStyle DuskGuiStyle;
@@ -133,7 +134,7 @@ typedef struct DuskGuiParamsEntry
     DuskGuiTextBuffer *textBuffer;
     
     DuskGuiParams params;
-    int parentIndex;
+    DuskGuiParamsEntryId parentIndex;
 
     DuskGuiDrawFn drawFn;
     DuskGuiStyleGroup *drawStyleGroup;
@@ -197,6 +198,7 @@ void DuskGui_init();
 void DuskGui_finalize();
 
 DuskGuiParamsEntry* DuskGui_getLastEntry();
+DuskGuiParamsEntry* DuskGui_getEntry(const char *txId);
 
 // style management
 void DuskGui_setDefaultFont(Font font, float fontSize, int fontSpacing);
@@ -228,14 +230,16 @@ int DuskGui_floatInputField(DuskGuiParams params, float *value, float min, float
 int DuskGui_menuItem(int opensSubmenu, DuskGuiParams params);
 
 // containers
-DuskGuiParamsEntry* DuskGui_beginScrollArea(DuskGuiParams params);
-void DuskGui_endScrollArea(DuskGuiParamsEntry* entry);
+DuskGuiParamsEntryId DuskGui_beginScrollArea(DuskGuiParams params);
+void DuskGui_endScrollArea(DuskGuiParamsEntryId entry);
 
-DuskGuiParamsEntry* DuskGui_beginPanel(DuskGuiParams params);
-void DuskGui_endPanel(DuskGuiParamsEntry* entry);
+DuskGuiParamsEntryId DuskGui_beginPanel(DuskGuiParams params);
+void DuskGui_endPanel(DuskGuiParamsEntryId entry);
 
 DuskGuiParamsEntry* DuskGui_beginMenu(DuskGuiParams params);
 void DuskGui_endMenu();
+
+DuskGuiParamsEntry* DuskGui_getEntryById(DuskGuiParamsEntryId entryId);
 
 #ifdef DUSK_GUI_IMPLEMENTATION
 

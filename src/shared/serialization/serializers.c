@@ -10,6 +10,13 @@ void SerializeData_Vector3(const char *key, Vector3* data, cJSON *obj, void *use
     cJSON_AddItemToArray(element, cJSON_CreateNumber(data->y));
     cJSON_AddItemToArray(element, cJSON_CreateNumber(data->z));
 }
+void SerializeData_Vector4(const char *key, Vector4* data, cJSON *obj, void *userData) {
+    cJSON *element = cJSON_AddArrayToObject(obj, key);
+    cJSON_AddItemToArray(element, cJSON_CreateNumber(data->x));
+    cJSON_AddItemToArray(element, cJSON_CreateNumber(data->y));
+    cJSON_AddItemToArray(element, cJSON_CreateNumber(data->z));
+    cJSON_AddItemToArray(element, cJSON_CreateNumber(data->w));
+}
 void SerializeData_Vector2(const char *key, Vector2* data, cJSON *obj, void *userData) {
     cJSON *element = cJSON_AddArrayToObject(obj, key);
     cJSON_AddItemToArray(element, cJSON_CreateNumber(data->x));

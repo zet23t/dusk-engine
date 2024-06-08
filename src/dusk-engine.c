@@ -98,7 +98,6 @@ int main(int argc, char* argv[])
     int isPaused = 0;
     int isSlowmo = 0;
     int step = 0;
-    double currentScreenWidth = 0, currentScreenHeight = 0;
     // Main game loop
     while (!WindowShouldClose()) {
         // Update
@@ -179,6 +178,10 @@ int main(int argc, char* argv[])
             float unloadTime = GetTime();
             TraceLog(LOG_WARNING, "Reloading game code\n");
             errorState = Host_InitializeGameCode(&_runtimeContext, projectDir);
+            if (errorState)
+            {
+                printf("Error reloading game code: %s\n", errorState);
+            }
             float loadedTime = GetTime();
 
             TraceLog(LOG_WARNING, "Reloaded game code in %.2fms (unloaded in %.2fms)\n", (loadedTime - reloadStart) * 1000.0f, (unloadTime - reloadStart) * 1000.0f);

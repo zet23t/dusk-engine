@@ -993,6 +993,16 @@ static DuskGuiParamsEntry* DuskGui_makeEntry(DuskGuiParams params, DuskGuiStyleG
     return added;
 }
 
+DuskGuiParamsEntry* DuskGui_getEntry(const char *txId)
+{
+    for (int i = 0; i < _duskGuiState.currentParams.count; i++) {
+        if (_duskGuiState.currentParams.params[i].txId && strcmp(_duskGuiState.currentParams.params[i].txId, txId) == 0) {
+            return &_duskGuiState.currentParams.params[i];
+        }
+    }
+    return NULL;
+}
+
 DuskGuiParamsEntry* DuskGui_getLastEntry()
 {
     return _duskGuiState.lastEntry;
@@ -1085,7 +1095,7 @@ static int DuskGui_toParentIndex(DuskGuiParamsEntry* entry)
     return entry->id + 2;
 }
 
-DuskGuiParamsEntry* DuskGui_beginScrollArea(DuskGuiParams params)
+DuskGuiParamsEntryId DuskGui_beginScrollArea(DuskGuiParams params)
 {
     DuskGuiParamsEntry* entry = DuskGui_makeEntry(params, &_defaultStyles.groups[DUSKGUI_STYLE_PANEL]);
     _duskGuiState.currentPanelIndex = DuskGui_toParentIndex(entry);
@@ -1105,10 +1115,16 @@ DuskGuiParamsEntry* DuskGui_beginScrollArea(DuskGuiParams params)
 
     // printf("beg sci: %f %f %f %f %d %d\n", entry.params.bounds.x, entry.params.bounds.y, entry.params.bounds.width, entry.params.bounds.height, GetScreenWidth(), GetScreenHeight());
     BeginScissorMode((int)entry->params.bounds.x, (int)entry->params.bounds.y, (int)entry->params.bounds.width, (int)entry->params.bounds.height);
-    return entry;
+    return (DuskGuiParamsEntryId) entry->id;
 }
-void DuskGui_endScrollArea(DuskGuiParamsEntry* entry)
+DuskGuiParamsEntry* DuskGui_getEntryById(DuskGuiParamsEntryId entryId)
 {
+    return &_duskGuiState.currentParams.params[(int)entryId];
+}
+
+void DuskGui_endScrollArea(DuskGuiParamsEntryId entryId)
+{
+    DuskGuiParamsEntry* entry = DuskGui_getEntryById(entryId);
     EndScissorMode();
     _duskGuiState.currentPanelIndex = entry->parentIndex;
     DuskGuiParamsEntry* currentPanel = DuskGui_getParent(entry, 1);
@@ -1119,7 +1135,7 @@ void DuskGui_endScrollArea(DuskGuiParamsEntry* entry)
     }
 }
 
-DuskGuiParamsEntry* DuskGui_beginPanel(DuskGuiParams params)
+DuskGuiParamsEntryId DuskGui_beginPanel(DuskGuiParams params)
 {
     DuskGuiParamsEntry* entry = DuskGui_makeEntry(params, &_defaultStyles.groups[DUSKGUI_STYLE_PANEL]);
     _duskGuiState.currentPanelIndex = DuskGui_toParentIndex(entry);
@@ -1127,11 +1143,12 @@ DuskGuiParamsEntry* DuskGui_beginPanel(DuskGuiParams params)
     DuskGui_drawStyle(entry, &_duskGuiState, &_defaultStyles.groups[DUSKGUI_STYLE_PANEL]);
 
     BeginScissorMode((int)entry->params.bounds.x, (int)entry->params.bounds.y, (int)entry->params.bounds.width, (int)entry->params.bounds.height);
-    return entry;
+    return entry->id;
 }
 
-void DuskGui_endPanel(DuskGuiParamsEntry* entry)
+void DuskGui_endPanel(DuskGuiParamsEntryId entryId)
 {
+    DuskGuiParamsEntry* entry = DuskGui_getEntryById(entryId);
     EndScissorMode();
     _duskGuiState.currentPanelIndex = entry->parentIndex;
     DuskGuiParamsEntry* currentPanel = DuskGui_getParent(entry, 1);
