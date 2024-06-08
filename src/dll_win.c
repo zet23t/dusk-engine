@@ -94,7 +94,8 @@ const char* Host_InitializeGameCode(void* storedState, const char *projectPath)
     printf("Compiled DLL in %.2fms\n", compileDt * 1000.0f);
 
     if (compileResult != 0) {
-        printf("Failed to compile DLL: %d\n", compileResult);
+        printf("Failed to compile DLL: %d\n%s", compileResult, commandResult);
+
         return commandResult;
     }
 
