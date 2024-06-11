@@ -739,7 +739,7 @@ void Editor_drawControls(EditorState* state, SceneGraph *graph)
     x += btnS + spacing;
 
     char buffer[64];
-    sprintf(buffer, "%4d | %.3f", state->frameCount, state->gameTime);
+    sprintf(buffer, "%4d | %.3fs | %d FPS", state->frameCount, state->gameTime, GetFPS());
     DuskGui_label((DuskGuiParams){
         .text = buffer,
         .bounds = (Rectangle){x,y,textWidth,btnS},
