@@ -67,6 +67,9 @@ void ResourceManager_unload(ResourceManager *resourceManager, Resource *resource
     case RESOURCE_TYPE_TEXTURE:
         freeTexture(resource->data);
         break;
+    case RESOURCE_TYPE_TEXT:
+        free(resource->data);
+        break;
     case RESOURCE_TYPE_FONT:
         freeFont(resource->data);
         break;
@@ -173,6 +176,26 @@ Model ResourceManager_loadModel(ResourceManager *resourceManager, const char* pa
     return *(Model*)resource->data;
 }
 
+char* ResourceManager_loadText(ResourceManager *resourceManager, const char *path)
+{
+    Resource *resource = findEntry(resourceManager, path);
+    if (resource == NULL)
+    {
+        printf("Loading text: %s\n", path);
+        resource = addEntry(resourceManager, path);
+        resource->resourceType = RESOURCE_TYPE_FONT;
+        char *text = LoadFileText(resource->filePath);
+        resource->data = text;
+    }
+    else if (resource->data == NULL)
+    {
+        char *text = LoadFileText(resource->filePath);
+        resource->data = text;
+    }
+
+    return (char*)resource->data;
+}
+
 Texture2D ResourceManager_loadTexture(ResourceManager *resourceManager, const char* path, int filter)
 {
     Resource *resource = findEntry(resourceManager, path);
@@ -239,7 +262,10 @@ void ResourceManager_reloadAll(ResourceManager *resourceManager)
             ResourceManager_unload(resourceManager, resource);
             ResourceManager_loadFont(resourceManager, resource->path);
             break;
-        
+        case RESOURCE_TYPE_TEXT:
+            ResourceManager_unload(resourceManager, resource);
+            ResourceManager_loadText(resourceManager, resource->path);
+            break;
         default:
             break;
         }

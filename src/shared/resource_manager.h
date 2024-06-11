@@ -9,6 +9,7 @@ extern const char* ResourceAssetPath;
 #define RESOURCE_TYPE_MODEL 0
 #define RESOURCE_TYPE_TEXTURE 1
 #define RESOURCE_TYPE_FONT 2
+#define RESOURCE_TYPE_TEXT 3
 
 typedef struct Resource {
     int32_t resourceType;
@@ -28,7 +29,8 @@ typedef struct ResourceManager{
 void ResourceManager_init(ResourceManager *resourceManager, const char* projectPath);
 Model ResourceManager_loadModel(ResourceManager *resourceManager, const char* path);
 Texture2D ResourceManager_loadTexture(ResourceManager *resourceManager, const char* path, int filter);
-Font ResourceManager_loadFont(ResourceManager *ResourceManager, const char *path);
+Font ResourceManager_loadFont(ResourceManager *resourceManager, const char *path);
+char* ResourceManager_loadText(ResourceManager *resourceManager, const char *path);
 void ResourceManager_reloadAll(ResourceManager *resourceManager);
 
 #endif
