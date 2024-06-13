@@ -180,6 +180,11 @@ raylib-all:
 run: main $(TARGET)
 	./$(TARGET) $(PROJECTDIR)
 
+test:
+	$(CC) $(CFLAGS) -o test_program src/tests.c -L$(LIBDIR) -l$(RAYLIB_LIB) $(LDLIBS)
+	./test_program
+	rm -f test_program test_program.d
+
 # Run target
 run-node: $(OUTPUT)
 	@which http-server >/dev/null || npm install -g http-server

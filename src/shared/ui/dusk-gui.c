@@ -932,6 +932,7 @@ void DuskGui_finalize()
     // free entries
     for (int i = 0; i < _duskGuiState.currentParams.count; i++) {
         if (_duskGuiState.currentParams.params[i].txId) {
+            // printf5("%d %p\n",i,_duskGuiState.currentParams.params[i].txId);
             free(_duskGuiState.currentParams.params[i].txId);
         }
         if (_duskGuiState.currentParams.params[i].textBuffer) {

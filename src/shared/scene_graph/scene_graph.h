@@ -20,7 +20,7 @@
             master->name##_capacity = master->name##_capacity == 0         \
                 ? 4                                                        \
                 : master->name##_capacity * 2;                             \
-            master->name = realloc(                                        \
+            master->name = RL_REALLOC(                                        \
                 master->name, master->name##_capacity * sizeof(listType)); \
         }                                                                  \
         listType* entry = &master->name[master->name##_count++];           \
@@ -50,6 +50,16 @@ SceneComponentTypeId SceneGraph_registerComponentType(SceneGraph* graph, const c
 SceneComponentType* SceneGraph_getComponentType(SceneGraph* graph, SceneComponentTypeId componentType);
 SceneComponentTypeId SceneGraph_getComponentTypeId(SceneGraph* graph, const char* name);
 int SceneGraph_countLiveObjects(SceneGraph* graph);
+
+// path syntax is a forward slash separated list of object names with # separating the component type to be searched.
+// an optional corner bracketed number can be added to the end to specify the index of the component of that type to be returned.
+// e.g. "object1/object2#ComponentType" or "object1/object2#ComponentType[2]"
+// If object id is {0}, the search starts from the root of the scene graph, otherwise it starts from the object with the given id.
+// If the object id is valid but not found (due to deletion), no search is done and the function returns {0}.
+SceneComponentId SceneGraph_getSceneComponentIdByPath(SceneGraph* graph, SceneObjectId objectId, const char *path);
+// similar to SceneGraph_getSceneComponentIdByPath, but searches for a component of a specific type, ignoring anything after the # symbol.
+// this function is used by SceneGraph_getSceneComponentIdByPath to find the component type id.
+SceneComponentId SceneGraph_getSceneComponentIdByTypeAndPath(SceneGraph* graph, SceneObjectId objectId, const char *path, SceneComponentTypeId typeId, int componentIndex);
 
 SceneObjectId SceneGraph_createObject(SceneGraph* graph, const char* name);
 void SceneGraph_destroyObject(SceneGraph* graph, SceneObjectId id);

@@ -646,7 +646,7 @@ void Editor_drawInspector(EditorState* state, SceneGraph *graph)
         };
     }
 
-    DuskGuiParamsEntry* panel = Editor_beginPanelWindow("Inspector", &state->inspectorPanelBounds, &state->displayInspector);
+    DuskGuiParamsEntryId panel = Editor_beginPanelWindow("Inspector", &state->inspectorPanelBounds, &state->displayInspector);
 
     DuskGuiParamsEntryId scrollAreaId = DuskGui_beginScrollArea((DuskGuiParams){
         .bounds = (Rectangle){.x = 5,

@@ -5,11 +5,15 @@
 #include <stdlib.h>
 #include <string.h>
 
+#ifndef RL_STRDUP
+#define RL_STRDUP(str) strdup(str)
+#endif
+
 SceneObject* SceneGraph_getObject(SceneGraph* graph, SceneObjectId id);
 
 SceneGraph* SceneGraph_create()
 {
-    SceneGraph* graph = malloc(sizeof(SceneGraph));
+    SceneGraph* graph = RL_MALLOC(sizeof(SceneGraph));
     memset(graph, 0, sizeof(SceneGraph));
     return graph;
 }
@@ -32,12 +36,12 @@ void SceneGraph_destroy(SceneGraph* graph)
     }
     for (int i = 0; i < graph->componentTypes_count; i++) {
         SceneComponentType* type = &graph->componentTypes[i];
-        free(type->name);
-        free(type->componentData);
+        RL_FREE(type->name);
+        RL_FREE(type->componentData);
     }
-    free(graph->componentTypes);
-    free(graph->objects);
-    free(graph);
+    RL_FREE(graph->componentTypes);
+    RL_FREE(graph->objects);
+    RL_FREE(graph);
 }
 
 void SceneGraph_clear(SceneGraph* graph)
@@ -66,7 +70,7 @@ SceneComponentTypeId SceneGraph_registerComponentType(SceneGraph* graph, const c
                     component->id.version = 0;
                 }
                 graph->componentTypes[i].dataSize = dataSize;
-                free(graph->componentTypes[i].componentData);
+                RL_FREE(graph->componentTypes[i].componentData);
                 graph->componentTypes[i].componentData = NULL;
                 graph->componentTypes[i].componentData_capacity = 0;
                 graph->componentTypes[i].componentData_count = 0;
@@ -79,7 +83,7 @@ SceneComponentTypeId SceneGraph_registerComponentType(SceneGraph* graph, const c
     SceneComponentType* type = SceneGraph_acquire_componentTypes(graph);
     type->id.id = graph->componentTypes_count - 1;
     type->id.version = ++graph->versionCounter;
-    type->name = strdup(name);
+    type->name = RL_STRDUP(name);
     type->dataSize = dataSize;
     type->methods = methods;
     type->componentData = NULL;
@@ -393,7 +397,7 @@ void SceneGraph_sequentialDraw(SceneGraph* graph, Camera3D camera, void* userdat
                 continue;
             }
 
-            // iterate all children, recursion free
+            // iterate all children, recursion RL_FREE
             int depth = 0;
             objectStack[depth] = object;
             iterationStack[depth] = 0;
@@ -511,7 +515,7 @@ SceneObjectId SceneGraph_createObject(SceneGraph* graph, const char* name)
     }
 
     object->id.version = ++graph->versionCounter;
-    object->name = strdup(name);
+    object->name = RL_STRDUP(name);
     object->flags = SCENE_OBJECT_FLAG_ENABLED | SCENE_OBJECT_FLAG_LOCAL_MATRIX_DIRTY | SCENE_OBJECT_FLAG_WORLD_MATRIX_DIRTY;
     object->parent = (SceneObjectId) { 0 };
     object->transform.position = (Vector3) { 0, 0, 0 };
@@ -559,13 +563,13 @@ void SceneGraph_destroyObject(SceneGraph* graph, SceneObjectId id)
         SceneGraph_destroyObject(graph, object->children[i]);
     }
 
-    free(object->children);
+    RL_FREE(object->children);
     object->children = NULL;
 
-    free(object->components);
+    RL_FREE(object->components);
     object->components = NULL;
 
-    free(object->name);
+    RL_FREE(object->name);
     object->name = NULL;
     object->id.version = 0;
     object->children_count = 0;
@@ -610,7 +614,7 @@ SceneComponentId SceneGraph_addComponent(SceneGraph* graph, SceneObjectId id, Sc
     int dataIndex = component->id.id;
     if (dataIndex >= type->componentData_capacity && type->dataSize > 0) {
         type->componentData_capacity = type->componentData_capacity == 0 ? 1 : type->componentData_capacity * 2;
-        type->componentData = realloc(type->componentData, type->componentData_capacity * type->dataSize);
+        type->componentData = RL_REALLOC(type->componentData, type->componentData_capacity * type->dataSize);
     }
 
     if (type->methods.onInitialize != NULL) {
@@ -652,12 +656,16 @@ SceneComponentType* SceneGraph_getComponentType(SceneGraph* graph, SceneComponen
 
 SceneComponentTypeId SceneGraph_getComponentTypeId(SceneGraph* graph, const char* name)
 {
+    int namelength = 0;
+    while (name[namelength] != 0 && name[namelength] != '[') {
+        namelength++;
+    }
     for (int i = 0; i < graph->componentTypes_count; i++) {
         SceneComponentType* type = &graph->componentTypes[i];
         if (type->id.version == 0) {
             continue;
         }
-        if (strcmp(type->name, name) == 0) {
+        if (strncmp(type->name, name, namelength) == 0) {
             return type->id;
         }
     }
@@ -862,7 +870,7 @@ void SceneGraph_destroyComponent(SceneGraph* graph, SceneComponentId id)
     }
     component->id.version = 0;
     if (component->name) {
-        free(component->name);
+        RL_FREE(component->name);
         component->name = NULL;
     }
 }
@@ -874,9 +882,9 @@ int SceneGraph_setComponentName(SceneGraph* graph, SceneComponentId id, const ch
         return 0;
     }
     if (component->name) {
-        free(component->name);
+        RL_FREE(component->name);
     }
-    component->name = strdup(name);
+    component->name = RL_STRDUP(name);
     return 1;
 }
 
@@ -1062,6 +1070,116 @@ int SceneGraph_setComponentValue(SceneGraph* graph, char* name, SceneComponentId
 int SceneComponentIdEquals(SceneComponentId a, SceneComponentId b)
 {
     return memcmp(&a, &b, sizeof(a)) == 0;
+}
+
+SceneComponentId SceneGraph_getSceneComponentIdByTypeAndPath(SceneGraph* graph, SceneObjectId objectId, const char *path, SceneComponentTypeId typeId, int componentIndex)
+{
+    SceneObject* object = SceneGraph_getObject(graph, objectId);
+    int firstNameLength = 0;
+    while (path[firstNameLength] && path[firstNameLength] != '/' && path[firstNameLength] != '#')
+    {
+        firstNameLength++;
+    }
+
+    if (object == NULL) {
+        if (objectId.id != 0 || objectId.version != 0) {
+            return (SceneComponentId){0};
+        }
+        
+        if (firstNameLength == 0)
+        {
+            // search for any root object that has a component of the given type
+            for (int i = 0; i < graph->objects_count; i++) {
+                SceneObject *object = &graph->objects[i];
+                if (object->id.version == 0 || object->parent.version != 0) {
+                    continue;
+                }
+                SceneComponent *component = SceneGraph_getComponentByType(graph, object->id, typeId, NULL, 0);
+                if (component != NULL)
+                {
+                    component = SceneGraph_getComponentByType(graph, object->id, typeId, NULL, componentIndex);
+                    if (component != NULL)
+                    {
+                        return component->id;
+                    }
+
+                    break;
+                }
+            }
+            return (SceneComponentId){0};
+        }
+
+        for (int i = 0; i < graph->objects_count; i++) {
+            SceneObject *object = &graph->objects[i];
+            if (object->id.version == 0 || object->parent.version != 0) {
+                continue;
+            }
+            if (strncmp(object->name, path, firstNameLength) == 0) {
+                return SceneGraph_getSceneComponentIdByTypeAndPath(graph, object->id, path + firstNameLength + 1, typeId, componentIndex);
+            }
+        }
+    }
+
+    if (firstNameLength == 0)
+    {
+        SceneComponent *component = SceneGraph_getComponentByType(graph, object->id, typeId, NULL, componentIndex);
+        if (component != NULL)
+        {
+            return component->id;
+        }
+        return (SceneComponentId){0};
+    }
+
+    for (int i = 0; i < object->children_count; i++) {
+        SceneObject *child = SceneGraph_getObject(graph, object->children[i]);
+        if (child == NULL) {
+            continue;
+        }
+        if (strncmp(child->name, path, firstNameLength) == 0) {
+            return SceneGraph_getSceneComponentIdByTypeAndPath(graph, child->id, path + firstNameLength + 1, typeId, componentIndex);
+        }
+    }
+
+    return (SceneComponentId){0};
+}
+
+SceneComponentId SceneGraph_getSceneComponentIdByPath(SceneGraph* graph, SceneObjectId objectId, const char *path)
+{
+    for (int i = 0; path[i]; i++)
+    {
+        if (path[i] == '#')
+        {
+            int indexStart = 0;
+            while (path[indexStart] && path[indexStart] != '[')
+            {
+                indexStart++;
+            }
+            SceneComponentTypeId typeId = SceneGraph_getComponentTypeId(graph, path + i + 1);
+            if (typeId.id == 0 && typeId.version == 0)
+            {
+                TraceLog(LOG_WARNING, "SceneGraph_getSceneComponentIdByPath: invalid component type: %s", path + i + 1);
+                return (SceneComponentId){0};
+            }
+
+            if (path[indexStart] == '[')
+            {
+                indexStart++;
+                int indexEnd = indexStart;
+                while (path[indexEnd] && path[indexEnd] != ']')
+                {
+                    indexEnd++;
+                }
+                if (path[indexEnd] == ']')
+                {
+                    int index = atoi(path + indexStart);
+                    return SceneGraph_getSceneComponentIdByTypeAndPath(graph, objectId, path, typeId, index);
+                }
+            }
+            return SceneGraph_getSceneComponentIdByTypeAndPath(graph, objectId, path, typeId, 0);
+        }
+    }
+
+    return (SceneComponentId){0};
 }
 
 #include "external/cJSON.h"
