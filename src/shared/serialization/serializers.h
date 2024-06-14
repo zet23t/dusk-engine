@@ -14,7 +14,7 @@ void SerializeData_int32_t(const char *key, int32_t *data, cJSON *obj, void *use
 void SerializeData_size_t(const char *key, size_t *data, cJSON *obj, void *userData);
 
 #define SERIALIZABLE_STRUCT_START(name) void SerializeData_##name(const char *key, name* data, cJSON *obj, void *userData);
-#define POST_DESERIALIAZE_CALLBACK(type, name) void name(const char *key, type* data, cJSON *obj, void *userData);
+#define POST_DESERIALIZE_CALLBACK(type, name) void name(const char *key, type* data, cJSON *obj, void *userData);
 #define POST_SERIALIZE_CALLBACK(type, name) void name(const char *key, type* data, cJSON *obj, void *userData);
 #include "serializable_file_headers.h"
 

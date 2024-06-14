@@ -34,10 +34,12 @@ void SceneGraph_destroy(SceneGraph* graph)
     for (int i = 0; i < graph->objects_count; i++) {
         SceneGraph_destroyObject(graph, graph->objects[i].id);
     }
+
     for (int i = 0; i < graph->componentTypes_count; i++) {
         SceneComponentType* type = &graph->componentTypes[i];
         RL_FREE(type->name);
         RL_FREE(type->componentData);
+        RL_FREE(type->components);
     }
     RL_FREE(graph->componentTypes);
     RL_FREE(graph->objects);
@@ -1120,7 +1122,7 @@ SceneComponentId SceneGraph_getSceneComponentIdByTypeAndPath(SceneGraph* graph, 
         }
     }
 
-    if (firstNameLength == 0)
+    if (firstNameLength == 0)        
     {
         SceneComponent *component = SceneGraph_getComponentByType(graph, object->id, typeId, NULL, componentIndex);
         if (component != NULL)
@@ -1136,6 +1138,15 @@ SceneComponentId SceneGraph_getSceneComponentIdByTypeAndPath(SceneGraph* graph, 
             continue;
         }
         if (strncmp(child->name, path, firstNameLength) == 0) {
+            if (path[firstNameLength] == '#')
+            {
+                SceneComponent* component = SceneGraph_getComponentByType(graph, child->id, typeId, NULL, componentIndex);
+                if (component != NULL)
+                {
+                    return component->id;
+                }
+                break;
+            }
             return SceneGraph_getSceneComponentIdByTypeAndPath(graph, child->id, path + firstNameLength + 1, typeId, componentIndex);
         }
     }
@@ -1160,7 +1171,9 @@ SceneComponentId SceneGraph_getSceneComponentIdByPath(SceneGraph* graph, SceneOb
                 TraceLog(LOG_WARNING, "SceneGraph_getSceneComponentIdByPath: invalid component type: %s", path + i + 1);
                 return (SceneComponentId){0};
             }
-
+            
+            // SceneComponentType* type = SceneGraph_getComponentType(graph, typeId);
+                    
             if (path[indexStart] == '[')
             {
                 indexStart++;
@@ -1172,9 +1185,12 @@ SceneComponentId SceneGraph_getSceneComponentIdByPath(SceneGraph* graph, SceneOb
                 if (path[indexEnd] == ']')
                 {
                     int index = atoi(path + indexStart);
+                    // printf("Searching for component %s[%d]\n", type->name, index);
                     return SceneGraph_getSceneComponentIdByTypeAndPath(graph, objectId, path, typeId, index);
                 }
             }
+
+            // printf("Searching for component %s\n", type->name);
             return SceneGraph_getSceneComponentIdByTypeAndPath(graph, objectId, path, typeId, 0);
         }
     }

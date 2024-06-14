@@ -181,7 +181,7 @@ run: main $(TARGET)
 	./$(TARGET) $(PROJECTDIR)
 
 test:
-	$(CC) $(CFLAGS) -o test_program src/tests.c -L$(LIBDIR) -l$(RAYLIB_LIB) $(LDLIBS)
+	$(CC) $(filter-out -DNDEBUG,$(CFLAGS)) -g -o test_program src/tests.c -L$(LIBDIR) -l$(RAYLIB_LIB) $(LDLIBS)
 	./test_program
 	rm -f test_program test_program.d
 

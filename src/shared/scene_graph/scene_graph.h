@@ -1,7 +1,7 @@
 // Scene graph library
 // This library provides a scene graph implementation with support for components and objects.
 // It takes inspiration from ECS systems but focuses on components being managed as dense arrays.
-// Iteration over component functions is done in the order of component type registration, 
+// Iteration over component functions is done in the order of component type registration,
 // however the fast iteration over components is done without any respective order of the object
 // hierarchy. This is done to allow for efficient iteration over all components of a type. A separate
 // function is provided for iterating over components in the order of object hierarchy which is
@@ -20,7 +20,7 @@
             master->name##_capacity = master->name##_capacity == 0         \
                 ? 4                                                        \
                 : master->name##_capacity * 2;                             \
-            master->name = RL_REALLOC(                                        \
+            master->name = RL_REALLOC(                                     \
                 master->name, master->name##_capacity * sizeof(listType)); \
         }                                                                  \
         listType* entry = &master->name[master->name##_count++];           \
@@ -56,10 +56,10 @@ int SceneGraph_countLiveObjects(SceneGraph* graph);
 // e.g. "object1/object2#ComponentType" or "object1/object2#ComponentType[2]"
 // If object id is {0}, the search starts from the root of the scene graph, otherwise it starts from the object with the given id.
 // If the object id is valid but not found (due to deletion), no search is done and the function returns {0}.
-SceneComponentId SceneGraph_getSceneComponentIdByPath(SceneGraph* graph, SceneObjectId objectId, const char *path);
+SceneComponentId SceneGraph_getSceneComponentIdByPath(SceneGraph* graph, SceneObjectId objectId, const char* path);
 // similar to SceneGraph_getSceneComponentIdByPath, but searches for a component of a specific type, ignoring anything after the # symbol.
 // this function is used by SceneGraph_getSceneComponentIdByPath to find the component type id.
-SceneComponentId SceneGraph_getSceneComponentIdByTypeAndPath(SceneGraph* graph, SceneObjectId objectId, const char *path, SceneComponentTypeId typeId, int componentIndex);
+SceneComponentId SceneGraph_getSceneComponentIdByTypeAndPath(SceneGraph* graph, SceneObjectId objectId, const char* path, SceneComponentTypeId typeId, int componentIndex);
 
 SceneObjectId SceneGraph_createObject(SceneGraph* graph, const char* name);
 void SceneGraph_destroyObject(SceneGraph* graph, SceneObjectId id);

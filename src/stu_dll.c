@@ -35,6 +35,7 @@
 #include "game/editor.c"
 #include "game/game_state_level.c"
 #include "shared/serialization/serializers.c"
+#include "shared/serialization/reflection.c"
 
 #if PLATFORM_WEB
 #define DLL_EXPORT
