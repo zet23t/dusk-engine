@@ -21,6 +21,18 @@ static const char* readArrayIndex(const char* path, int* index)
     return path + i;
 }
 
+int Reflect_bool_retrieve(const char* path, bool* data, void** result, size_t* resultSize, const char** resultType)
+{
+    if (path[0] == '\0') {
+        *result = data;
+        *resultSize = sizeof(*data);
+        *resultType = "bool";
+        return REFLECT_OK;
+    }
+    return REFLECT_INVALID_PATH;
+}
+
+
 #define SERIALIZABLE_STRUCT_START(name)                                                                                     \
     int Reflect_##name##_retrieve(const char* path, name* data, void** result, size_t* resultSize, const char** resultType) \
     {
@@ -89,7 +101,7 @@ static const char* readArrayIndex(const char* path, int* index)
                 if (next[0] == '.') {                                                                               \
                     return Reflect_##type##_retrieve(next + 1, &data->name[index], result, resultSize, resultType); \
                 }                                                                                                   \
-                return REFLECT_INVALID_PATH;                                                                                  \
+                return REFLECT_INVALID_PATH;                                                                        \
             }                                                                                                       \
             return REFLECT_INDEX_OUT_OF_BOUNDS;                                                                     \
         }                                                                                                           \
@@ -100,18 +112,14 @@ static const char* readArrayIndex(const char* path, int* index)
 #include "builtin_type_declarations.h"
 #include "serializable_file_headers.h"
 
-// int Reflect_Position_retrieve(const char *path, Position *position, void **data, size_t *size, const char **type) {
-//     if (strcmp(path, "x") == 0) {
-//         *(float **)data = &position->x;
-//         return 1;
-//     }
-//     if (strcmp(path, "y") == 0) {
-//         *(float **)data = &position->y;
-//         return 1;
-//     }
-//     if (strcmp(path, "z") == 0) {
-//         *(float **)data = &position->z;
-//         return 1;
-//     }
-//     return 0;
-// }
+int Reflect_retrieve(const char* path, void* data, const char* type, void** result, size_t* resultSize, const char** resultType)
+{
+#define SERIALIZABLE_STRUCT_START(name) \
+    if (strcmp(type, #name) == 0)       {\
+        return Reflect_##name##_retrieve(path, (name*)data, result, resultSize, resultType);\
+    }
+#include "builtin_type_declarations.h"
+#include "serializable_file_headers.h"
+
+    return REFLECT_INVALID_TYPE;
+}

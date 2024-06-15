@@ -472,7 +472,7 @@ void ObjectConfiguratorEditorComponent_draw2D(Camera2D camera, SceneObject* scen
         SceneGraph_setLocalRotation(psg.sceneGraph, data->cameraPivotPitchId, rotationPitch);
     }
 
-    DuskGuiParamsEntry* panel = DuskGui_beginPanel((DuskGuiParams) {
+    DuskGuiParamsEntryId panel = DuskGui_beginPanel((DuskGuiParams) {
         .text = "##hierarchy_view",
         .bounds = (Rectangle) { -1, -2, 200, GetScreenHeight() + 4 },
         .rayCastTarget = 1 });
@@ -558,21 +558,21 @@ void ObjectConfiguratorEditorComponent_draw2D(Camera2D camera, SceneObject* scen
 
     const int inspectorHeight = 400;
     const int inspectorWidth = 350;
-    DuskGuiParamsEntry* inspector_panel = DuskGui_beginPanel((DuskGuiParams) { .text = "##object_view", .bounds = (Rectangle) { GetScreenWidth() - inspectorWidth, GetScreenHeight() - inspectorHeight, inspectorWidth, inspectorHeight }, .rayCastTarget = 1 });
-    DuskGuiParamsEntry* inspector_scroll = DuskGui_beginScrollArea((DuskGuiParams) { .text = "##object_scroll", .bounds = (Rectangle) { 0, 0, inspectorWidth, inspectorHeight }, .rayCastTarget = 1 });
+    DuskGuiParamsEntryId inspector_panel = DuskGui_beginPanel((DuskGuiParams) { .text = "##object_view", .bounds = (Rectangle) { GetScreenWidth() - inspectorWidth, GetScreenHeight() - inspectorHeight, inspectorWidth, inspectorHeight }, .rayCastTarget = 1 });
+    DuskGuiParamsEntryId inspector_scroll = DuskGui_beginScrollArea((DuskGuiParams) { .text = "##object_scroll", .bounds = (Rectangle) { 0, 0, inspectorWidth, inspectorHeight }, .rayCastTarget = 1 });
     SceneObject* selectedObj = SceneGraph_getObject(psg.sceneGraph, data->selectedObjectId);
-    if (selectedObj != NULL) {
-        GUIDrawState state = { .labelWidth = 140, .sceneGraph = psg.sceneGraph, .selectedObjectId = data->selectedObjectId };
-        state.y = 0;
-        DrawSerializedData_SceneObject(NULL, selectedObj, &state);
-        inspector_scroll->contentSize = (Vector2) { 300, state.y };
-        if (data->selectedObjectId.id != state.selectedObjectId.id) {
-            data->selectedObjectId = state.selectedObjectId;
-            inspector_scroll->contentOffset = (Vector2) { 0, 0 };
-        }
-    } else {
-        inspector_scroll->contentOffset = (Vector2) { 0, 0 };
-    }
+    // if (selectedObj != NULL) {
+    //     GUIDrawState state = { .labelWidth = 140, .sceneGraph = psg.sceneGraph, .selectedObjectId = data->selectedObjectId };
+    //     state.y = 0;
+    //     DrawSerializedData_SceneObject(NULL, selectedObj, &state);
+    //     inspector_scroll->contentSize = (Vector2) { 300, state.y };
+    //     if (data->selectedObjectId.id != state.selectedObjectId.id) {
+    //         data->selectedObjectId = state.selectedObjectId;
+    //         inspector_scroll->contentOffset = (Vector2) { 0, 0 };
+    //     }
+    // } else {
+    //     inspector_scroll->contentOffset = (Vector2) { 0, 0 };
+    // }
     DuskGui_endScrollArea(inspector_scroll);
     DuskGui_endPanel(inspector_panel);
 

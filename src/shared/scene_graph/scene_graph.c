@@ -659,7 +659,7 @@ SceneComponentType* SceneGraph_getComponentType(SceneGraph* graph, SceneComponen
 SceneComponentTypeId SceneGraph_getComponentTypeId(SceneGraph* graph, const char* name)
 {
     int namelength = 0;
-    while (name[namelength] != 0 && name[namelength] != '[') {
+    while (name[namelength] != 0 && name[namelength] != '[' && name[namelength] != '.') {
         namelength++;
     }
     for (int i = 0; i < graph->componentTypes_count; i++) {
@@ -1190,12 +1190,53 @@ SceneComponentId SceneGraph_getSceneComponentIdByPath(SceneGraph* graph, SceneOb
                 }
             }
 
-            // printf("Searching for component %s\n", type->name);
             return SceneGraph_getSceneComponentIdByTypeAndPath(graph, objectId, path, typeId, 0);
         }
     }
 
     return (SceneComponentId){0};
+}
+
+#include "shared/serialization/reflection.h"
+
+int SceneGraph_retrieve(SceneGraph* graph, SceneObjectId objectId, const char *path, void **result, size_t *size, const char **typeName)
+{
+    SceneComponentId componentId = SceneGraph_getSceneComponentIdByPath(graph, objectId, path);
+    if (componentId.version == 0)
+    {
+        return REFLECT_NULL_POINTER;
+    }
+
+    void *componentData;
+    SceneComponent* component = SceneGraph_getComponent(graph, componentId, (void**) &componentData);
+    if (component == NULL)
+    {
+        return REFLECT_NULL_POINTER;
+    }
+
+    SceneComponentType* type = SceneGraph_getComponentType(graph, component->typeId);
+    if (type == NULL)
+    {
+        return REFLECT_NULL_POINTER;
+    }
+
+
+    const char *reflectPart = path;
+    while (*reflectPart && *reflectPart != '.')
+    {
+        reflectPart++;
+    }
+
+    if (*reflectPart != '.')
+    {
+        // just get the component data :)
+        *result = componentData;
+        *size = type->dataSize;
+        *typeName = type->name;
+        return REFLECT_OK;
+    }
+    
+    return Reflect_retrieve(reflectPart + 1, componentData, type->name, result, size, typeName);
 }
 
 #include "external/cJSON.h"

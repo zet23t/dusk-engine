@@ -61,6 +61,13 @@ SceneComponentId SceneGraph_getSceneComponentIdByPath(SceneGraph* graph, SceneOb
 // this function is used by SceneGraph_getSceneComponentIdByPath to find the component type id.
 SceneComponentId SceneGraph_getSceneComponentIdByTypeAndPath(SceneGraph* graph, SceneObjectId objectId, const char* path, SceneComponentTypeId typeId, int componentIndex);
 
+// SceneGraph_retrieve extends the getByPath functionality by using reflection to obtain a pointer to the struct's inner content. 
+// The size of the struct is also returned. Important! The returned pointer is only valid until new components are created. When 
+// the array is resized, the pointer may become invalid. Do not store the pointer for later use. 
+// Example path for a struct with a field "int x":
+//   object1/object2#ComponentType.x
+int SceneGraph_retrieve(SceneGraph* graph, SceneObjectId objectId, const char *path, void **result, size_t *size, const char **typeName);
+
 SceneObjectId SceneGraph_createObject(SceneGraph* graph, const char* name);
 void SceneGraph_destroyObject(SceneGraph* graph, SceneObjectId id);
 SceneComponentId SceneGraph_addComponent(SceneGraph* graph, SceneObjectId id, SceneComponentTypeId componentType,

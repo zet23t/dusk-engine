@@ -19,6 +19,8 @@
 #include "game/components/text_component.c"
 #include "game/components/trail_renderer_component.c"
 #include "shared/util/arena.c"
+#include "shared/serialization/serializers.c"
+#include "shared/serialization/reflection.c"
 
 #define COMPONENT_IMPLEMENTATION
 #include "game/component_list.h"
@@ -34,8 +36,6 @@
 #include "game/game.c"
 #include "game/editor.c"
 #include "game/game_state_level.c"
-#include "shared/serialization/serializers.c"
-#include "shared/serialization/reflection.c"
 
 #if PLATFORM_WEB
 #define DLL_EXPORT
