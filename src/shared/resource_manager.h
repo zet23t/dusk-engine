@@ -32,5 +32,6 @@ Texture2D ResourceManager_loadTexture(ResourceManager *resourceManager, const ch
 Font ResourceManager_loadFont(ResourceManager *resourceManager, const char *path);
 char* ResourceManager_loadText(ResourceManager *resourceManager, const char *path);
 void ResourceManager_reloadAll(ResourceManager *resourceManager);
+int ResourceManager_getModHash(ResourceManager *resourceManager, const char *path);
 
 #endif

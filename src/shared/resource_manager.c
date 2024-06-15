@@ -68,7 +68,7 @@ void ResourceManager_unload(ResourceManager *resourceManager, Resource *resource
         freeTexture(resource->data);
         break;
     case RESOURCE_TYPE_TEXT:
-        free(resource->data);
+        UnloadFileText(resource->data);
         break;
     case RESOURCE_TYPE_FONT:
         freeFont(resource->data);
@@ -97,7 +97,7 @@ static Resource* findEntry(ResourceManager *resourceManager, const char* path)
                 continue;
             }
 
-            printf("Resource found: %s (%8x)\n", path, hash);
+            // printf("Resource found: %s (%8x)\n", path, hash);
 
             return &resourceManager->resources[i];
         }
@@ -153,6 +153,16 @@ static Resource* addEntry(ResourceManager *resourceManager, const char* path)
     return resource;
 }
 
+int ResourceManager_getModHash(ResourceManager *resourceManager, const char *path)
+{
+    Resource *resource = findEntry(resourceManager, path);
+    if (resource == NULL)
+    {
+        return 0;
+    }
+
+    return fileModHash(resource->filePath, resourceManager->projectPath);
+}
 
 Model ResourceManager_loadModel(ResourceManager *resourceManager, const char* path)
 {
@@ -183,7 +193,7 @@ char* ResourceManager_loadText(ResourceManager *resourceManager, const char *pat
     {
         printf("Loading text: %s\n", path);
         resource = addEntry(resourceManager, path);
-        resource->resourceType = RESOURCE_TYPE_FONT;
+        resource->resourceType = RESOURCE_TYPE_TEXT;
         char *text = LoadFileText(resource->filePath);
         resource->data = text;
     }
