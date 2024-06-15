@@ -216,11 +216,11 @@ int main() {
     }
 
     M44 m44 = {{1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f, 8.0f, 9.0f, 10.0f, 11.0f, 12.0f, 13.0f, 14.0f, 15.0f, 16.0f}};
-    float *m44_5;
-    reflectError = Reflect_M44_retrieve("m[5]", &m44, (void **)&m44_5, &resultSize, &resultType);
+    float *floatV;
+    reflectError = Reflect_M44_retrieve("m[5]", &m44, (void **)&floatV, &resultSize, &resultType);
     if (reflectError == REFLECT_OK)
     {
-        printf("  result: %f\n", *m44_5);
+        printf("  result: %f\n", *floatV);
         printf("  resultSize: %lld\n", resultSize);
         printf("  resultType: %s\n", resultType);
     }
@@ -229,7 +229,7 @@ int main() {
         printf("Failed to retrieve m[5]: %d\n", reflectError);
         exit(1);
     }
-    reflectError = Reflect_M44_retrieve("m[16]", &m44, (void **)&m44_5, &resultSize, &resultType);
+    reflectError = Reflect_M44_retrieve("m[16]", &m44, (void **)&floatV, &resultSize, &resultType);
     assert(reflectError == REFLECT_INDEX_OUT_OF_BOUNDS);
 
     FixedArrayTest fixedArrayTest = {{{1.0f, 2.0f, 3.0f}, {4.0f, 5.0f, 6.0f}, {7.0f, 8.0f, 9.0f}}};
@@ -247,6 +247,22 @@ int main() {
             exit(1);
         }
     }
+
+    DynamicArrayTest dynamicArrayTest = {0};
+    M44 m44_1 = {{1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f, 8.0f, 9.0f, 10.0f, 11.0f, 12.0f, 13.0f, 14.0f, 15.0f, 16.0f}};
+    M44 *m44List;
+    reflectError = Reflect_DynamicArrayTest_retrieve("matrices", &dynamicArrayTest, (void **)&m44List, &resultSize, &resultType);
+    assert(reflectError == REFLECT_OK);
+    reflectError = Reflect_DynamicArrayTest_retrieve("matrices[0]", &dynamicArrayTest, (void **)&m44List, &resultSize, &resultType);
+    assert(reflectError == REFLECT_INDEX_OUT_OF_BOUNDS);
+    dynamicArrayTest.matrices = &m44_1;
+    dynamicArrayTest.matrices_count = 1;
+    reflectError = Reflect_DynamicArrayTest_retrieve("matrices[0]", &dynamicArrayTest, (void **)&m44List, &resultSize, &resultType);
+    assert(reflectError == REFLECT_OK);
+    assert(m44List == &m44_1);
+    reflectError = Reflect_DynamicArrayTest_retrieve("matrices[0].m[5]", &dynamicArrayTest, (void **)&floatV, &resultSize, &resultType);
+    assert(reflectError == REFLECT_OK);
+    assert(*floatV == 6.0f);
 
     printf("All tests passed\n");
 

@@ -60,29 +60,39 @@ static const char* readArrayIndex(const char* path, int* index)
                 if (next[0] == '.') {                                                                               \
                     return Reflect_##type##_retrieve(next + 1, &data->name[index], result, resultSize, resultType); \
                 }                                                                                                   \
-                return REFLECT_OK;                                                                                  \
+                return REFLECT_INVALID_PATH;                                                                        \
             }                                                                                                       \
             return REFLECT_INDEX_OUT_OF_BOUNDS;                                                                     \
         }                                                                                                           \
     }
-#define SERIALIZABLE_STRUCT_LIST_ELEMENT(type, name)        \
-    if (strncmp(path, #name, sizeof(#name) - 1) == 0) {     \
-        if (path[sizeof(#name) - 1] == '\0') {              \
-            *result = &data->name;                          \
-            *resultSize = sizeof(data->name);               \
-            *resultType = #type;                            \
-            return REFLECT_OK;                              \
-        }                                                   \
-        if (path[sizeof(#name) - 1] == '[') {               \
-            int index = atoi(path + sizeof(#name));         \
-            if (index >= 0 && index < data->name##_count) { \
-                *result = &data->name[index];               \
-                *resultSize = sizeof(data->name[index]);    \
-                *resultType = #type;                        \
-                return REFLECT_OK;                          \
-            }                                               \
-            return REFLECT_INDEX_OUT_OF_BOUNDS;             \
-        }                                                   \
+#define SERIALIZABLE_STRUCT_LIST_ELEMENT(type, name)                                                                \
+    if (strncmp(path, #name, sizeof(#name) - 1) == 0) {                                                             \
+        if (path[sizeof(#name) - 1] == '\0') {                                                                      \
+            *result = &data->name;                                                                                  \
+            *resultSize = sizeof(data->name);                                                                       \
+            *resultType = #type;                                                                                    \
+            return REFLECT_OK;                                                                                      \
+        }                                                                                                           \
+        if (path[sizeof(#name) - 1] == '[') {                                                                       \
+            int index;                                                                                              \
+            const char* next = readArrayIndex(path + sizeof(#name) - 1, &index);                                    \
+            if (next == NULL) {                                                                                     \
+                return REFLECT_SYNTAX_ERROR;                                                                        \
+            }                                                                                                       \
+            if (index >= 0 && index < data->name##_count) {                                                         \
+                if (next[0] == '\0') {                                                                              \
+                    *result = &data->name[index];                                                                   \
+                    *resultSize = sizeof(data->name[index]);                                                        \
+                    *resultType = #type;                                                                            \
+                    return REFLECT_OK;                                                                              \
+                }                                                                                                   \
+                if (next[0] == '.') {                                                                               \
+                    return Reflect_##type##_retrieve(next + 1, &data->name[index], result, resultSize, resultType); \
+                }                                                                                                   \
+                return REFLECT_INVALID_PATH;                                                                                  \
+            }                                                                                                       \
+            return REFLECT_INDEX_OUT_OF_BOUNDS;                                                                     \
+        }                                                                                                           \
     }
 #define SERIALIZABLE_STRUCT_END(name) \
     return REFLECT_INVALID_PATH;      \
