@@ -13,6 +13,7 @@ typedef struct RuntimeContext {
     ResourceManager resourceManager;
     EditorState editorState;
     void* gameData;
+    int runInBackground;
 } RuntimeContext;
 
 #endif

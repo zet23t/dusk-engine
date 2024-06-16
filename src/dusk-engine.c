@@ -102,13 +102,14 @@ int main(int argc, char* argv[])
     while (!WindowShouldClose()) {
         // Update
         #if !PLATFORM_WEB
-        if (!IsWindowFocused())
+        if (!IsWindowFocused() && !_runtimeContext.runInBackground)
         {
             OSSleep(100);
             BeginDrawing();
             EndDrawing();
             continue;
         }
+
         #elif PLATFORM_WEB
         EmscriptenFullscreenChangeEvent fsce;
         emscripten_get_fullscreen_status(&fsce);
@@ -167,6 +168,12 @@ int main(int argc, char* argv[])
         // {
         //     ResourceManager_reloadAll(&_runtimeContext.resourceManager);
         // }
+
+        if (IsKeyReleased(KEY_F11))
+        {
+            _runtimeContext.runInBackground = !_runtimeContext.runInBackground;
+            printf("Running in background state: %d\n", _runtimeContext.runInBackground);
+        }
 
         if (/*IsKeyPressed(KEY_F7) ||*/ IsKeyPressed(KEY_F8)) {
             float reloadStart = GetTime();

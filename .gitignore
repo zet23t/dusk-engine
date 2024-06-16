@@ -2,3 +2,4 @@ _build/**
 *.exe
 .vscode/**
 *.dll
+screenshot???.png
