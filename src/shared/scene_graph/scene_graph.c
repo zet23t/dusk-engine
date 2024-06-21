@@ -471,6 +471,12 @@ void SceneGraph_draw(SceneGraph* graph, Camera3D camera, void* userdata)
 {
     for (int i = 0; i < graph->componentTypes_count; i++) {
         SceneComponentType type = graph->componentTypes[i];
+
+        if (type.methods.drawSystem)
+        {
+            type.methods.drawSystem(camera, graph, type, userdata);
+        }
+
         if (type.methods.draw == NULL) {
             continue;
         }
@@ -654,6 +660,22 @@ SceneComponentType* SceneGraph_getComponentType(SceneGraph* graph, SceneComponen
         return NULL;
     }
     return type;
+}
+
+int SceneGraph_getComponentTypeCount(SceneGraph* graph, SceneComponentTypeId componentType)
+{
+    SceneComponentType* type = SceneGraph_getComponentType(graph, componentType);
+    if (type == NULL) {
+        return 0;
+    }
+    int count = 0;
+    for (int i = 0; i < type->components_count; i++) {
+        SceneComponent* component = &type->components[i];
+        if (component->id.version != 0 && SceneGraph_getObject(graph, component->objectId) != NULL) {
+            count++;
+        }
+    }
+    return count;
 }
 
 SceneComponentTypeId SceneGraph_getComponentTypeId(SceneGraph* graph, const char* name)

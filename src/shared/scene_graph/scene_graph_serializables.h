@@ -32,6 +32,7 @@ SERIALIZABLE_STRUCT_START(SceneComponentTypeMethods)
     NONSERIALIZED_FIELD(void, (*onInitialize)(SceneObject* sceneObject, SceneComponentId SceneComponent, void* componentData, void* initArg))
     NONSERIALIZED_FIELD(void, (*updateTick)(SceneObject* sceneObject, SceneComponentId SceneComponent,
         float delta, void* componentData))
+    NONSERIALIZED_FIELD(void, (*drawSystem)(Camera3D camera, SceneGraph* graph, SceneComponentType type, void* userdata))
     NONSERIALIZED_FIELD(void, (*draw)(Camera3D camera, SceneObject* sceneObject, SceneComponentId sceneComponent,
         void* componentData, void* userdata))
     NONSERIALIZED_FIELD(void, (*draw2D)(Camera2D camera, SceneObject* sceneObject, SceneComponentId sceneComponent,

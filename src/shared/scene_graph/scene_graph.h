@@ -48,6 +48,7 @@ void SceneGraph_clear(SceneGraph* graph);
 SceneComponentTypeId SceneGraph_registerComponentType(SceneGraph* graph, const char* name,
     size_t dataSize, SceneComponentTypeMethods methods);
 SceneComponentType* SceneGraph_getComponentType(SceneGraph* graph, SceneComponentTypeId componentType);
+int SceneGraph_getComponentTypeCount(SceneGraph* graph, SceneComponentTypeId componentType);
 SceneComponentTypeId SceneGraph_getComponentTypeId(SceneGraph* graph, const char* name);
 int SceneGraph_countLiveObjects(SceneGraph* graph);
 
