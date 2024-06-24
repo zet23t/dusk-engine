@@ -98,6 +98,7 @@ const char* Host_InitializeGameCode(void* storedState, const char *projectPath)
 
         return commandResult;
     }
+    printf("Successfully compiled DLL: %d\n%s", compileResult, commandResult);
 
     float copyStart = GetTime();
     if (!CopyFileA(dllPath, "game_copy.dll", FALSE)) {

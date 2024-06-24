@@ -94,6 +94,7 @@ void SceneGraph_setLocalTransform(SceneGraph* graph, SceneObjectId id, Vector3 p
     Vector3 rotation, Vector3 scale);
 Matrix SceneObject_getLocalMatrix(SceneObject* object);
 Matrix SceneObject_getWorldMatrix(SceneObject* object);
+Matrix SceneObject_getToLocalMatrix(SceneObject* object);
 void SceneGraph_setParent(SceneGraph* graph, SceneObjectId id, SceneObjectId parentId);
 
 // calls update methods of all components in order of type registration. No particular order of objects is followed

@@ -110,6 +110,13 @@ Matrix SceneObject_getLocalMatrix(SceneObject* object)
     return object->transform.localMatrix;
 }
 
+Matrix SceneObject_getToLocalMatrix(SceneObject* object)
+{
+    // TODO: Optimize this later
+    Matrix m = SceneObject_getLocalMatrix(object);
+    return MatrixInvert(m);
+}
+
 Matrix SceneObject_getWorldMatrix(SceneObject* object)
 {
     SceneObject* parent = SceneGraph_getObject(object->graph, object->parent);
