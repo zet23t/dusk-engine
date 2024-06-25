@@ -110,21 +110,21 @@ int main(int argc, char* argv[])
             continue;
         }
 
-        #elif PLATFORM_WEB
-        EmscriptenFullscreenChangeEvent fsce;
-        emscripten_get_fullscreen_status(&fsce);
-        if (!fsce.isFullscreen)
-        {
-            double newScreenWidth, newScreenHeight;
-            emscripten_get_element_css_size("canvas", &newScreenWidth, &newScreenHeight);
-            if (newScreenWidth != currentScreenWidth || newScreenHeight != currentScreenHeight)
-            {
-                currentScreenWidth = newScreenWidth;
-                currentScreenHeight = newScreenHeight;
-                emscripten_set_canvas_element_size("canvas", screenWidth, screenHeight);
-                SetWindowSize((int)currentScreenWidth, (int)currentScreenHeight);
-            }
-        }
+        // #elif PLATFORM_WEB
+        // EmscriptenFullscreenChangeEvent fsce;
+        // emscripten_get_fullscreen_status(&fsce);
+        // if (!fsce.isFullscreen)
+        // {
+        //     double newScreenWidth, newScreenHeight;
+        //     emscripten_get_element_css_size("canvas", &newScreenWidth, &newScreenHeight);
+        //     if (newScreenWidth != currentScreenWidth || newScreenHeight != currentScreenHeight)
+        //     {
+        //         currentScreenWidth = newScreenWidth;
+        //         currentScreenHeight = newScreenHeight;
+        //         emscripten_set_canvas_element_size("canvas", screenWidth, screenHeight);
+        //         SetWindowSize((int)currentScreenWidth, (int)currentScreenHeight);
+        //     }
+        // }
         #endif
         float t = GetTime();
         float dt = GetFrameTime();

@@ -202,6 +202,20 @@ void testReflect()
     assert(*floatV == 6.0f);
 }
 
+typedef struct BehaviorState {
+    void *stateData;
+    void (*update)(struct BehaviorMachine *stateMachinemake);
+} BehaviorState;
+
+typedef struct BehaviorMachine {
+    BehaviorState* state;
+} BehaviorMachine;
+
+void testBehavior()
+{
+
+}
+
 int main()
 {
     printf("================= Running tests =================\n");
@@ -271,6 +285,9 @@ int main()
 
     SceneGraph_destroy(sceneGraph);
     printf("Scene graph test passed\n");
+    checkMemLeaks();
+
+    testBehavior();
     checkMemLeaks();
 
     printf("All tests passed\n");
