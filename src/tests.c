@@ -6,19 +6,74 @@
 #include <stdlib.h>
 #include <string.h>
 
-static int _activeAllocationCount = 0;
-static int _activeAllocationSize = 0;
-static int _totalAllocationCount = 0;
-static int _totalAllocationSize = 0;
-
+#define SENTINEL_SIZE 32
 typedef struct Allocation {
     size_t size;
     const char* file;
     int line;
     int allocationIndex;
 } Allocation;
+
+static int _activeAllocationCount = 0;
+static int _activeAllocationSize = 0;
+static int _totalAllocationCount = 0;
+static int _totalAllocationSize = 0;
+static Allocation** _allocationTable = NULL;
+static int _allocationTableCount = 0;
+static int _allocationTableCapacity = 0;
+
 static int _allocationCapacity = 0;
 static Allocation** _allocations = NULL;
+
+
+void tracked_sentinelCheck(void* ptr, const char* file, int line)
+{
+    Allocation* allocation = ((Allocation*)ptr) - 1;
+    unsigned char *sentinel = (unsigned char*)ptr + allocation->size;
+    for (int i = 0; i < SENTINEL_SIZE; i++) {
+        if (sentinel[i] != 0b10101010) {
+            printf("Memory corruption detected at %p (%s:%d), checked at %s:%d\n", ptr, 
+                allocation->file, allocation->line, file, line);
+            exit(1);
+        }
+    }
+}
+
+void tracked_sentinelCheckAll(const char *file, int line)
+{
+    for (int i = 0; i < _allocationTableCount; i++) {
+        tracked_sentinelCheck(_allocationTable[i] + 1, file, line);
+    }
+}
+
+void tracked_addAllocation(Allocation* allocation)
+{
+    if (_allocationTableCount == _allocationTableCapacity) {
+        _allocationTableCapacity = _allocationTableCapacity == 0 ? 256 : _allocationTableCapacity * 2;
+        _allocationTable = realloc(_allocationTable, _allocationTableCapacity * sizeof(Allocation));
+    }
+    _allocationTable[_allocationTableCount++] = allocation;
+}
+
+void tracked_removeAllocation(Allocation* allocation)
+{
+    for (int i = 0; i < _allocationTableCount; i++) {
+        if (_allocationTable[i] == allocation) {
+            _allocationTable[i] = _allocationTable[--_allocationTableCount];
+            return;
+        }
+    }
+}
+
+int tracked_getAllocationIndex(Allocation* allocation)
+{
+    for (int i = 0; i < _allocationTableCount; i++) {
+        if (_allocationTable[i] == allocation) {
+            return i;
+        }
+    }
+    return -1;
+}
 
 void* tracked_malloc(size_t size, const char* file, int line)
 {
@@ -27,7 +82,9 @@ void* tracked_malloc(size_t size, const char* file, int line)
     _totalAllocationSize += size;
     _activeAllocationCount++;
     _activeAllocationSize += size;
-    Allocation* allocation = malloc(size + sizeof(Allocation));
+    Allocation* allocation = malloc(size + sizeof(Allocation) + SENTINEL_SIZE);
+    tracked_addAllocation(allocation);
+    memset(allocation + 1, 0b10101010, size + SENTINEL_SIZE);
     allocation->size = size;
     allocation->file = file;
     allocation->line = line;
@@ -57,8 +114,10 @@ void tracked_free(void* ptr, const char* file, int line)
     if (ptr == NULL) {
         return;
     }
+    tracked_sentinelCheck(ptr, file, line);
     // printf("  Freeing %p from %s:%d\n", ptr, file, line);
     Allocation* allocation = ((Allocation*)ptr) - 1;
+    tracked_removeAllocation(allocation);
     _allocations[allocation->allocationIndex] = NULL;
     _activeAllocationCount--;
     _activeAllocationSize -= allocation->size;
@@ -70,15 +129,28 @@ void* tracked_realloc(void* ptr, size_t size, const char* file, int line)
     if (ptr == NULL) {
         return tracked_malloc(size, file, line);
     }
+    tracked_sentinelCheck(ptr, file, line);
+
     // printf("  Reallocating %p to %lld bytes from %s:%d\n", ptr, size, file, line);
     Allocation* allocation = ((Allocation*)ptr) - 1;
-
+    int allocationIndex = tracked_getAllocationIndex(allocation);
+    if (allocationIndex == -1) {
+        printf("Failed to find allocation index for allocation %s:%d\n", allocation->file, allocation->line);
+        exit(1);
+    }
     _activeAllocationSize -= allocation->size;
     _activeAllocationSize += size;
     _totalAllocationSize += size - allocation->size;
-    allocation = realloc(allocation, size + sizeof(Allocation));
+    allocation = realloc(allocation, size + sizeof(Allocation) + SENTINEL_SIZE);
+    _allocationTable[allocationIndex] = allocation;
     allocation->size = size;
-    return (void*)(allocation + 1);
+    allocation->file = file;
+    allocation->line = line;
+    ptr = (void*)(allocation + 1);
+    for (int i = 0; i < SENTINEL_SIZE; i++) {
+        ((unsigned char*)ptr)[size + i] = 0b10101010;
+    }
+    return ptr;
 }
 
 char* tracked_strdup(const char* str, const char* file, int line)
@@ -93,6 +165,8 @@ char* tracked_strdup(const char* str, const char* file, int line)
 #define RL_REALLOC(ptr, sz) tracked_realloc(ptr, sz, __FILE__, __LINE__)
 #define RL_FREE(ptr) tracked_free(ptr, __FILE__, __LINE__)
 #define RL_STRDUP(str) tracked_strdup(str, __FILE__, __LINE__)
+#define STRUCT_MALLOC(type, count) (type*)tracked_malloc(sizeof(type) * (count), __FILE__, __LINE__)
+#define STRUCT_REALLOC(ptr, type, count) (type*)tracked_realloc(ptr, sizeof(type) * (count), __FILE__, __LINE__)
 
 #include "raylib.h"
 #include "shared/serialization/serializable_structs.h"
@@ -202,23 +276,115 @@ void testReflect()
     assert(*floatV == 6.0f);
 }
 
-typedef struct BehaviorState {
-    void *stateData;
-    void (*update)(struct BehaviorMachine *stateMachinemake);
-} BehaviorState;
+// model a behavior of an animal:
+// States: idle, eating, sleeping, playing, hunting, mating, breeding, dying, fleeing
+// State: eating; Substates: find food, move to food, eat food
+// Variables: position, energy, health, age, gender, target, speed, direction
+typedef struct Animal {
+    Vector2 position;
+    Vector2 target;
+    Vector2 speed;
+    float direction;
+    float energy;
+    float health;
+    float age;
+    int gender;
+} Animal;
 
-typedef struct BehaviorMachine {
-    BehaviorState* state;
-} BehaviorMachine;
+typedef struct BehaviorMachineClass BehaviorMachineClass;
+typedef struct BehaviorStateClass BehaviorStateClass;
+
+typedef struct BehaviorStateClass {
+    char name[32];
+    struct BehaviorStateClass* states;
+    int stateCount;
+    int (*update)(BehaviorMachineClass *stateMachine, BehaviorStateClass* self, void *data);
+} BehaviorStateClass;
+
+typedef struct BehaviorMachineClass {
+    BehaviorStateClass* master;
+} BehaviorMachineClass;
+
+void BehaviorStateClass_addState(BehaviorStateClass* self, const char *name, int (*update)(BehaviorMachineClass *stateMachine, BehaviorStateClass* self, void* data))
+{
+    printf("Adding state %s\n", name);
+    self->states = STRUCT_REALLOC(self->states, BehaviorStateClass, self->stateCount + 1);
+    tracked_sentinelCheckAll(__FILE__, __LINE__);
+    BehaviorStateClass* child = &self->states[self->stateCount];
+    child->name[10] = '\0';
+    tracked_sentinelCheckAll(__FILE__, __LINE__);
+    strncpy(child->name, name, sizeof(child->name) - 1);
+    child->states = NULL;
+    child->stateCount = 0;
+    child->update = update;
+    self->stateCount++;
+    tracked_sentinelCheckAll(__FILE__, __LINE__);
+
+    printf("Added state %s\n", name);
+}
+
+void BehaviorStateClass_free(BehaviorStateClass* self)
+{
+    printf("Freeing state %s\n", self->name);
+    for (int i = 0; i < self->stateCount; i++) {
+        printf("Freeing child state %s\n", self->states[i].name);
+        BehaviorStateClass_free(&self->states[i]);
+    }
+    if (self->states != NULL)
+        RL_FREE(self->states);
+}
+
+void BehaviorMachineClass_free(BehaviorMachineClass* self)
+{
+    BehaviorStateClass_free(self->master);
+    RL_FREE(self->master);
+}
 
 void testBehavior()
 {
+    BehaviorMachineClass* behaviorMachine = STRUCT_MALLOC(BehaviorMachineClass, 1);
+    behaviorMachine->master = STRUCT_MALLOC(BehaviorStateClass, 1);
+    BehaviorStateClass* master = behaviorMachine->master;
+    strncpy(master->name, "master", sizeof(master->name) - 1);
+    master->stateCount = 0;
+    master->states = NULL;
+    master->update = NULL;
 
+    BehaviorStateClass_addState(master, "idle", NULL);
+    BehaviorStateClass_addState(master, "eating", NULL);
+    BehaviorStateClass_addState(master, "sleeping", NULL);
+    BehaviorStateClass_addState(master, "playing", NULL);
+    BehaviorStateClass_addState(master, "hunting", NULL);
+    BehaviorStateClass_addState(master, "mating", NULL);
+    BehaviorStateClass_addState(master, "breeding", NULL);
+    BehaviorStateClass_addState(master, "dying", NULL);
+    BehaviorStateClass_addState(master, "fleeing", NULL);
+
+
+    BehaviorMachineClass_free(behaviorMachine);
+    RL_FREE(behaviorMachine);
+}
+
+void testTrackedMalloc()
+{
+    int* intPtr = RL_MALLOC(sizeof(int));
+    *intPtr = 42;
+    RL_FREE(intPtr);
+
+    intPtr = STRUCT_MALLOC(int, 1);
+    *intPtr = 42;
+    intPtr = STRUCT_REALLOC(intPtr, int, 2);
+    intPtr[1] = 43;
+    assert(intPtr[0] == 42);
+    assert(intPtr[1] == 43);
+    RL_FREE(intPtr);
 }
 
 int main()
 {
     printf("================= Running tests =================\n");
+    printf("Testing tracked malloc...\n");
+    testTrackedMalloc();
     printf("Testing reflection...\n");
     testReflect();
 

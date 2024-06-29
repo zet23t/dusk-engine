@@ -143,6 +143,7 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
 
     OBJS := $(addprefix $(OBJDIR)/, $(patsubst %.c,%.o,$(notdir $(SRCS))))
     SRCS_DLL =
+    CFLAGS += -sSTACK_SIZE=5242880
 else
     OBJS := $(patsubst $(SRCDIR)/%.c,$(OBJDIR)/%.o,$(SRCS))
 endif
@@ -183,7 +184,6 @@ run: main $(TARGET)
 test:
 	$(CC) $(filter-out -DNDEBUG,$(CFLAGS)) -g -o test_program src/tests.c -L$(LIBDIR) -l$(RAYLIB_LIB) $(LDLIBS)
 	./test_program
-	rm -f test_program test_program.d
 
 # Run target
 run-node: $(OUTPUT)
