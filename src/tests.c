@@ -291,50 +291,104 @@ typedef struct Animal {
     int gender;
 } Animal;
 
-typedef struct BehaviorMachineClass BehaviorMachineClass;
-typedef struct BehaviorStateClass BehaviorStateClass;
+typedef struct BehaviorMachine BehaviorMachine;
+typedef struct BehaviorNode BehaviorNode;
 
-typedef struct BehaviorStateClass {
+#define BEHAVIOR_RETURN_NONE -1
+#define BEHAVIOR_RETURN_SUCCESS 0
+#define BEHAVIOR_RETURN_FAILURE 1
+#define BEHAVIOR_RETURN_RUNNING 2
+
+#define BEHAVIOR_NODE_TYPE_SEQUENCE 0
+#define BEHAVIOR_NODE_TYPE_SELECTOR 1
+#define BEHAVIOR_NODE_TYPE_PARALLEL 2
+#define BEHAVIOR_NODE_TYPE_INVERTER 3
+
+typedef struct BehaviorRuntime {
+    BehaviorMachine* machine;
+    BehaviorNode* currentNode;
+    int8_t* behaviorReturnValues;
+    void *userData;
+} BehaviorRuntime;
+
+typedef int8_t (*BehaviorUpdate)(BehaviorRuntime *runtime, int previousReturnValue);
+
+typedef struct BehaviorNode {
+    struct BehaviorMachine* machine;
+    struct BehaviorNode* parent;
     char name[32];
-    struct BehaviorStateClass* states;
-    int stateCount;
-    int (*update)(BehaviorMachineClass *stateMachine, BehaviorStateClass* self, void *data);
-} BehaviorStateClass;
+    int id;
+    struct BehaviorNode* nodes;
+    int nodeCount;
+    int nodeType;
+    BehaviorUpdate update;
+} BehaviorNode;
 
-typedef struct BehaviorMachineClass {
-    BehaviorStateClass* master;
-} BehaviorMachineClass;
+typedef struct BehaviorMachine {
+    BehaviorNode* master;
+    int idCounter;
+} BehaviorMachine;
 
-void BehaviorStateClass_addState(BehaviorStateClass* self, const char *name, int (*update)(BehaviorMachineClass *stateMachine, BehaviorStateClass* self, void* data))
+BehaviorRuntime* BehaviorRuntime_create(BehaviorMachine* machine)
 {
-    printf("Adding state %s\n", name);
-    self->states = STRUCT_REALLOC(self->states, BehaviorStateClass, self->stateCount + 1);
-    tracked_sentinelCheckAll(__FILE__, __LINE__);
-    BehaviorStateClass* child = &self->states[self->stateCount];
-    child->name[10] = '\0';
-    tracked_sentinelCheckAll(__FILE__, __LINE__);
-    strncpy(child->name, name, sizeof(child->name) - 1);
-    child->states = NULL;
-    child->stateCount = 0;
-    child->update = update;
-    self->stateCount++;
-    tracked_sentinelCheckAll(__FILE__, __LINE__);
-
-    printf("Added state %s\n", name);
+    BehaviorRuntime* runtime = STRUCT_MALLOC(BehaviorRuntime, 1);
+    runtime->machine = machine;
+    runtime->currentNode = machine->master;
+    runtime->behaviorReturnValues = STRUCT_MALLOC(int8_t, machine->idCounter);
+    memset(runtime->behaviorReturnValues, BEHAVIOR_RETURN_NONE, machine->idCounter * sizeof(int));
+    runtime->userData = NULL;
+    return runtime;
 }
 
-void BehaviorStateClass_free(BehaviorStateClass* self)
+void BehaviorRuntime_free(BehaviorRuntime* self)
+{
+    RL_FREE(self->behaviorReturnValues);
+    RL_FREE(self);
+}
+
+void BehaviorRuntime_update(BehaviorRuntime* self)
+{
+    int returnValue = BEHAVIOR_RETURN_NONE;
+    while (returnValue != BEHAVIOR_RETURN_RUNNING) {
+        if (self->currentNode == NULL) {
+            self->currentNode = self->machine->master;
+            memset(self->behaviorReturnValues, BEHAVIOR_RETURN_NONE, self->machine->idCounter * sizeof(int));
+        }
+        returnValue = self->currentNode->update(self, returnValue);
+    }
+}
+
+static int8_t BehaviorNode_defaultUpdate(BehaviorRuntime* runtime, int previousReturnValue)
+{
+    return BEHAVIOR_RETURN_SUCCESS;
+}
+
+void BehaviorStateClass_addState(BehaviorNode* self, const char *name, BehaviorUpdate update)
+{
+    self->nodes = STRUCT_REALLOC(self->nodes, BehaviorNode, self->nodeCount + 1);
+    BehaviorNode* child = &self->nodes[self->nodeCount];
+    strncpy(child->name, name, sizeof(child->name) - 1);
+    child->parent = self;
+    child->machine = self->machine;
+    child->nodes = NULL;
+    child->nodeCount = 0;
+    child->update = update != NULL ? update : BehaviorNode_defaultUpdate;
+    child->id = self->machine->idCounter++;
+    self->nodeCount++;
+}
+
+void BehaviorStateClass_free(BehaviorNode* self)
 {
     printf("Freeing state %s\n", self->name);
-    for (int i = 0; i < self->stateCount; i++) {
-        printf("Freeing child state %s\n", self->states[i].name);
-        BehaviorStateClass_free(&self->states[i]);
+    for (int i = 0; i < self->nodeCount; i++) {
+        printf("Freeing child state %s\n", self->nodes[i].name);
+        BehaviorStateClass_free(&self->nodes[i]);
     }
-    if (self->states != NULL)
-        RL_FREE(self->states);
+    if (self->nodes != NULL)
+        RL_FREE(self->nodes);
 }
 
-void BehaviorMachineClass_free(BehaviorMachineClass* self)
+void BehaviorMachineClass_free(BehaviorMachine* self)
 {
     BehaviorStateClass_free(self->master);
     RL_FREE(self->master);
@@ -342,12 +396,14 @@ void BehaviorMachineClass_free(BehaviorMachineClass* self)
 
 void testBehavior()
 {
-    BehaviorMachineClass* behaviorMachine = STRUCT_MALLOC(BehaviorMachineClass, 1);
-    behaviorMachine->master = STRUCT_MALLOC(BehaviorStateClass, 1);
-    BehaviorStateClass* master = behaviorMachine->master;
+    BehaviorMachine* behaviorMachine = STRUCT_MALLOC(BehaviorMachine, 1);
+    behaviorMachine->idCounter = 0;
+    behaviorMachine->master = STRUCT_MALLOC(BehaviorNode, 1);
+    BehaviorNode* master = behaviorMachine->master;
+    master->machine = behaviorMachine;
     strncpy(master->name, "master", sizeof(master->name) - 1);
-    master->stateCount = 0;
-    master->states = NULL;
+    master->nodeCount = 0;
+    master->nodes = NULL;
     master->update = NULL;
 
     BehaviorStateClass_addState(master, "idle", NULL);

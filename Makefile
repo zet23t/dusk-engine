@@ -64,6 +64,12 @@ OBJDIR := $(BUILDDIR)
 ifeq ($(PLATFORM), PLATFORM_WEB)
     # NOTE: When using multi-threading in the user code, it requires -pthread enabled
     CFLAGS += -std=gnu99
+    ifeq ($(PROFILING), TRUE)
+        CFLAGS += --profiling-funcs --tracing 
+    endif
+    ifeq ($(CLEAR_CACHE), TRUE)
+        CFLAGS += --clear-cache
+    endif
 else
     CFLAGS += -std=c99
 endif

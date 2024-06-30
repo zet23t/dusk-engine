@@ -110,7 +110,8 @@ int main(int argc, char* argv[])
             continue;
         }
 
-        // #elif PLATFORM_WEB
+        #elif PLATFORM_WEB
+        emscripten_trace_record_frame_start();
         // EmscriptenFullscreenChangeEvent fsce;
         // emscripten_get_fullscreen_status(&fsce);
         // if (!fsce.isFullscreen)
@@ -244,6 +245,10 @@ int main(int argc, char* argv[])
         }
 
         EndDrawing();
+
+        #if PLATFORM_WEB
+        emscripten_trace_record_frame_end();
+        #endif
     }
 
     // Cleanup
