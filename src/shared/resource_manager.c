@@ -108,6 +108,7 @@ static Resource* findEntry(ResourceManager *resourceManager, const char* path)
 
 void ResourceManager_init(ResourceManager *resourceManager, const char* projectPath)
 {
+    TraceLog(LOG_INFO, "Initializing resource manager - project path: %s", projectPath ? projectPath : "NULL");
     resourceManager->resources = NULL;
     resourceManager->count = 0;
     resourceManager->capacity = 0;
@@ -132,6 +133,7 @@ static Resource* addEntry(ResourceManager *resourceManager, const char* path)
         strcat(filePath, "/");
     }
     strcat(filePath, path);
+    TraceLog(LOG_INFO, "check resource: %s or %s", filePath, path);
     if (FileExists(filePath))
     {
         resource->filePath = strdup(filePath);
