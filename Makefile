@@ -11,22 +11,16 @@ PLATFORM_OS          ?= WINDOWS
 PLATFORM             ?= PLATFORM_DESKTOP
 BUILD                ?= release
 PROJECTDIR           ?= 
-# vpath %.c $(SRCDIR) $(PROJECTDIR)src
 
-# Check if PROJECTDIR is set and does not end with a slash (/), then append it
-ifneq ($(PROJECTDIR),)
-	ifneq ($(lastword $(PROJECTDIR)),/)
-		PROJECTDIR := $(PROJECTDIR)/
-	endif
-endif
+# vpath %.c $(SRCDIR) $(PROJECTDIR)src
 
 # Compiler and flags
 CC := gcc
-CFLAGS := -Wall -Isubmodules/raylib/src -D$(PLATFORM) -I$(PROJECTDIR)src -Isrc -MMD -MP
+CFLAGS := -Wall -Isubmodules/raylib/src -D$(PLATFORM) -I$(PROJECTDIR)/src -Isrc -MMD -MP
 
 # Directories
 SRCDIR := src
-BUILDDIR := $(PROJECTDIR)_build/$(BUILD)/$(PLATFORM)
+BUILDDIR := $(PROJECTDIR)/_build/$(BUILD)/$(PLATFORM)
 LIBDIR := submodules/raylib/$(BUILD)/$(PLATFORM)
 
 LIBDIR := $(shell echo $(LIBDIR) | tr A-Z a-z)
@@ -36,7 +30,7 @@ BUILDDIR := $(shell echo $(BUILDDIR) | tr A-Z a-z)
 # SRCS := $(shell find $(SRCDIR) -name '*.c')
 # SRCS := $(filter-out src/stu.c, $(SRCS))
 SRCS := src/stu.c src/dll_win.c
-SRCS_DLL := $(PROJECTDIR)src/stu_dll.c
+SRCS_DLL := $(PROJECTDIR)/src/stu_dll.c
 RAYLIB_LIB := raylibdll
 
 # Output file
@@ -132,7 +126,7 @@ endif
 
 ifeq ($(BUILD),release)
     ifeq ($(PLATFORM),PLATFORM_WEB)
-        CFLAGS += -Os --preload-file $(PROJECTDIR)assets/@/assets --preload-file assets/@/engine/assets -s USE_GLFW=3 -s ASSERTIONS=1 -s WASM=1 -s ASYNCIFY
+        CFLAGS += -Os --preload-file $(PROJECTDIR)/assets/@/assets --preload-file assets/@/engine/assets -s USE_GLFW=3 -s ASSERTIONS=1 -s WASM=1 -s ASYNCIFY
     endif
     ifeq ($(PLATFORM),PLATFORM_DESKTOP)
         CFLAGS += -O1
@@ -143,7 +137,7 @@ ifeq ($(BUILD),release)
 endif
 
 
-$(info Building for $(PLATFORM) on $(PLATFORM_OS) in $(BUILD) mode)
+$(info Building for $(PLATFORM) on $(PLATFORM_OS) in $(BUILD) mode with project directory $(PROJECTDIR))
 ifeq ($(PLATFORM),PLATFORM_WEB)
     # HTML5 emscripten compiler
     CC = emcc
@@ -176,15 +170,15 @@ all: main
 main: $(TARGET)
 
 init-project:
-	@if [ ! -d "$(PROJECTDIR)src" ]; then \
-		echo "Initializing project structure in $(PROJECTDIR)..."; \
-		mkdir -p $(PROJECTDIR)assets; \
-		mkdir -p $(PROJECTDIR)src/game; \
-		cp -r src/game $(PROJECTDIR)src/; \
-		cp src/stu_dll.c $(PROJECTDIR)src/; \
+	@if [ ! -d "$(PROJECTDIR)/src" ]; then \
+		echo "Initializing project structure in $(PROJECTDIR)/..."; \
+		mkdir -p $(PROJECTDIR)/assets; \
+		mkdir -p $(PROJECTDIR)/src/game; \
+		cp -r src/game $(PROJECTDIR)/src/; \
+		cp src/stu_dll.c $(PROJECTDIR)/src/; \
+		cp run_game.sh $(PROJECTDIR)/; \
+		cp build_web.sh $(PROJECTDIR)/; \
 		echo "Project initialized."; \
-	else \
-		echo "Project src directory already exists."; \
 	fi
 
 dll: $(SRCS_DLL)
@@ -203,7 +197,7 @@ raylib-all:
 	cp submodules/raylib/release/platform_desktop/raylib.dll .
 
 run: main $(TARGET) init-project
-	./$(TARGET) $(PROJECTDIR)
+	$(TARGET) $(PROJECTDIR)
 
 test:
 	$(CC) $(filter-out -DNDEBUG,$(CFLAGS)) -g -o test_program src/tests.c -L$(LIBDIR) -l$(RAYLIB_LIB) $(LDLIBS)
@@ -233,12 +227,12 @@ $(OBJDIR)/dll_win.o: src/dll_win.c
 	mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) -c -o $@ $<
 
-$(PROJECTDIR)_build/release/platform_web/stu_dll.o: $(PROJECTDIR)src/stu_dll.c
+$(PROJECTDIR)/_build/release/platform_web/stu_dll.o: $(PROJECTDIR)/src/stu_dll.c
 	mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 # Clean rule
 clean:
-	rm -rf $(PROJECTDIR)_build $(TARGET)
+	rm -rf $(PROJECTDIR)/_build $(TARGET)
 
 .PHONY: all clean
