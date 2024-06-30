@@ -13,6 +13,12 @@ BUILD                ?= release
 PROJECTDIR           ?= 
 # vpath %.c $(SRCDIR) $(PROJECTDIR)src
 
+# Check if PROJECTDIR is set and does not end with a slash (/), then append it
+ifneq ($(PROJECTDIR),)
+	ifneq ($(lastword $(PROJECTDIR)),/)
+		PROJECTDIR := $(PROJECTDIR)/
+	endif
+endif
 
 # Compiler and flags
 CC := gcc
@@ -169,6 +175,18 @@ all: main
 
 main: $(TARGET)
 
+init-project:
+	@if [ ! -d "$(PROJECTDIR)src" ]; then \
+		echo "Initializing project structure in $(PROJECTDIR)..."; \
+		mkdir -p $(PROJECTDIR)assets; \
+		mkdir -p $(PROJECTDIR)src/game; \
+		cp -r src/game $(PROJECTDIR)src/; \
+		cp src/stu_dll.c $(PROJECTDIR)src/; \
+		echo "Project initialized."; \
+	else \
+		echo "Project src directory already exists."; \
+	fi
+
 dll: $(SRCS_DLL)
 ifeq ($(PLATFORM),PLATFORM_WEB)
 	@echo "Skipping dll target for PLATFORM_WEB"
@@ -184,7 +202,7 @@ raylib-all:
 	$(MAKE) -C $(dir $(RAYLIB_MAKEFILE)) PLATFORM=PLATFORM_WEB RAYLIB_BUILD_MODE=RELEASE
 	cp submodules/raylib/release/platform_desktop/raylib.dll .
 
-run: main $(TARGET)
+run: main $(TARGET) init-project
 	./$(TARGET) $(PROJECTDIR)
 
 test:
