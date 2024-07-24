@@ -1,0 +1,40 @@
+// this template provides a basic implementation of a component
+#ifdef COMPONENT
+COMPONENT(${COMPONENT_NAME})
+#elif defined(SERIALIZABLE_STRUCT_START)
+
+// any struct declared using the SERIALIZABLE_ macros can be inspected, serialized and deserialized
+SERIALIZABLE_STRUCT_START(${COMPONENT_NAME})
+    // A C string is a null terminated character sequence. Note: Managing the memory is at the moment
+    // left to the component implementation. Also note: this pointer may be modified via editor UI (which tells
+    // me that this should be auto managed...)
+    // SERIALIZABLE_CSTR(dummyName)
+    
+    // a simple field. Basic types like int / Vector3 etc. are serialized and any struct described using
+    // the SERIALIZABLE_ macros can be referenced here as well. Unsupported types will trigger A LOT of 
+    // compiler errors.
+    // SERIALIZABLE_FIELD(int, dummy)
+
+    // Annotations can be used to provide additional meta information. Currently used for some editor UIs
+    // SERIALIZABLE_ANNOTATION(Range, Vector2, (&(Vector2){0.0f, 1.0f}))
+    
+    // An array of fixed size
+    // SERIALIZABLE_FIXED_ARRAY(int,dummyArray,8)
+
+    // A dynamic list pointer. Creates three struct members: A pointer named "dynamicListDummy" and 
+    // two ints with the provided name suffixed with "Capacity" and "Count".
+    // SERIALIZABLE_STRUCT_LIST_ELEMENT(int,dynmicListDummy)
+    
+    // Same as the SERIALIZABLE_STRUCT_LIST_ELEMENT but not subject for serialization. Any type can be used
+    // (usually pointers or file handles or such)
+    // NONSERIALIZABLE_STRUCT_LIST_ELEMENT(int,nonSerializedDynamicListDummy)
+
+    // Same as SERIALIZED_FIELD but not subject for serialization. Any type can be used.
+    // NONSERIALIZED_FIELD(int,nonSerializedDummy)
+SERIALIZABLE_STRUCT_END(${COMPONENT_NAME})
+
+#elif defined(COMPONENT_IMPLEMENTATION)
+
+#include "${COMPONENT_NAME}.c"
+
+#endif

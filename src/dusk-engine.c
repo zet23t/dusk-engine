@@ -50,7 +50,12 @@ int main(void)
 #else
 int main(int argc, char* argv[])
 {
-    const char *projectDir = argc > 1 ? argv[1] : "./";
+    char *projectDir = argc > 1 ? argv[1] : "./";
+    for (int i = 0; projectDir[i]; i++) {
+        if (projectDir[i] == '\\') {
+            projectDir[i] = '/';
+        }
+    }
     printf("Project dir: %s\n", projectDir);
 #endif
 #ifndef DEBUG
@@ -64,7 +69,13 @@ int main(int argc, char* argv[])
     ResourceManager_init(&_runtimeContext.resourceManager, projectDir);
 
     SetConfigFlags(FLAG_VSYNC_HINT | FLAG_WINDOW_RESIZABLE);
-    InitWindow(screenWidth, screenHeight, "Scene graph testing");
+    int slashIndex = -1;
+    for (int i = 0; projectDir[i]; i++) {
+        if (projectDir[i] == '/') {
+            slashIndex = i;
+        }
+    }
+    InitWindow(screenWidth, screenHeight, &projectDir[slashIndex + 1]);
     SetTargetFPS(1000);
 
     // init();

@@ -1,0 +1,66 @@
+#include "game/game.h"
+
+// This template provides provides basic examples for each function that can be registered for a component.
+
+// called when a new component is created. initArg may be NULL. Typically it is a pointer to a struct that contains
+// the initial values for the component (so it's of the same type). Custom initialization data can be passed as
+// initArg parameter as well.
+// static void ${COMPONENT_NAME}_onInitialize(SceneObject* sceneObject, SceneComponentId SceneComponent, void* componentData, void* initArg)
+// {
+// }
+
+// called every for every active component per frame. delta is the time in seconds since the last frame. All updates of a component type are called
+// in sequence, but the sequence order is not guaranteed. The order of updates is the same as the order of registration.
+// static void ${COMPONENT_NAME}_updateTick(SceneObject* sceneObject, SceneComponentId SceneComponent,
+//     float delta, void* componentData)
+// {
+// }
+
+// Called a single time per frame. Can be used to efficiently process all components of a certain type in a single pass. 
+// Useful when a specific component order is required or the components are preprocessed in a specific way.
+// static void ${COMPONENT_NAME}_updateSystem(SceneGraph* graph, SceneComponentType type, float delta)
+// {
+// }
+
+// Called a single time per frame. Can be used to efficiently draw all components of a certain type in a single pass.
+// Same as updateSystem, but for drawing.
+// static void ${COMPONENT_NAME}_drawSystem(Camera3D camera, SceneGraph* graph, SceneComponentType type, void* userdata)
+// {
+// }
+
+// called every frame per component. Can be used to draw the component's data.
+// static void ${COMPONENT_NAME}_draw(Camera3D camera, SceneObject* sceneObject, SceneComponentId sceneComponent,
+//     void* componentData, void* userdata)
+// {
+// }
+
+// called every frame per component. Can be used during the 2d drawing pass (which happens after the 3d drawing pass)
+// static void ${COMPONENT_NAME}_draw2D(Camera2D camera, SceneObject* sceneObject, SceneComponentId sceneComponent,
+//     void* componentData, void* userdata)
+// {
+// }
+
+// called every frame per component. The order in which the components are drawn corresponds with the scene object hierarchy
+// static void ${COMPONENT_NAME}_sequentialDraw(Camera3D camera, SceneObject* sceneObject, SceneComponentId sceneComponent,
+//     void* componentData, void* userdata)
+// {
+// }
+
+// called when a component is destroyed. Can be used to free resources or do other cleanup.
+// static void ${COMPONENT_NAME}_onDestroy(SceneObject* sceneObject, SceneComponentId sceneComponent, void* componentData)
+// {
+// }
+
+
+BEGIN_COMPONENT_REGISTRATION(${COMPONENT_NAME})
+{
+    // .onInitialize = ${COMPONENT_NAME}_onInitialize,
+    // .updateTick = ${COMPONENT_NAME}_updateTick,
+    // .updateSystem = ${COMPONENT_NAME}_updateSystem,
+    // .drawSystem = ${COMPONENT_NAME}_drawSystem,
+    // .draw = ${COMPONENT_NAME}_draw,
+    // .draw2D = ${COMPONENT_NAME}_draw2D,
+    // .sequentialDraw = ${COMPONENT_NAME}_sequentialDraw,
+    // .onDestroy = ${COMPONENT_NAME}_onDestroy,
+}
+END_COMPONENT_REGISTRATION

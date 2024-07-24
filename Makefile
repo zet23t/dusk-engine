@@ -10,7 +10,7 @@
 PLATFORM_OS          ?= WINDOWS
 PLATFORM             ?= PLATFORM_DESKTOP
 BUILD                ?= release
-PROJECTDIR           ?= 
+PROJECTDIR           ?= .
 
 # vpath %.c $(SRCDIR) $(PROJECTDIR)src
 

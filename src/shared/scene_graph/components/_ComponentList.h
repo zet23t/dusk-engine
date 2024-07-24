@@ -1,0 +1,6 @@
+#include "PrimitiveRendererComponent.h"
+#include "CameraComponent.h"
+#include "MeshRendererComponent.h"
+// #include "AnimationManager.h"
+// #include "AnimatorComponent.h"
+// #include "SpriteRendererComponent.h"

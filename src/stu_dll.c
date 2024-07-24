@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#include "game/game.h"
 #include "RuntimeContext.h"
 #include "external/cjson.c"
 #include "shared/scene_graph/scene_graph.c"
@@ -13,7 +14,6 @@
 #include "shared/editor/editor_styles.c"
 #include "shared/editor/editor.c"
 #include "shared/util/arena.c"
-
 
 #define COMPONENT_IMPLEMENTATION
 #include "game/component_list.h"

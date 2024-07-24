@@ -100,7 +100,7 @@ Matrix SceneObject_getLocalMatrix(SceneObject* object)
         // optimize this later
         object->transform.localMatrix = MatrixIdentity();
         object->transform.localMatrix = MatrixMultiply(object->transform.localMatrix, MatrixScale(object->transform.scale.x, object->transform.scale.y, object->transform.scale.z));
-        object->transform.localMatrix = MatrixMultiply(object->transform.localMatrix, MatrixRotateXYZ((Vector3) { DEG2RAD * object->transform.eulerRotationDegrees.x, DEG2RAD * object->transform.eulerRotationDegrees.y, DEG2RAD * object->transform.eulerRotationDegrees.z }));
+        object->transform.localMatrix = MatrixMultiply(object->transform.localMatrix, MatrixRotateZYX((Vector3) { DEG2RAD * object->transform.eulerRotationDegrees.x, DEG2RAD * object->transform.eulerRotationDegrees.y, DEG2RAD * object->transform.eulerRotationDegrees.z }));
         object->transform.localMatrix = MatrixMultiply(object->transform.localMatrix, MatrixTranslate(object->transform.position.x, object->transform.position.y, object->transform.position.z));
         object->flags &= ~SCENE_OBJECT_FLAG_LOCAL_MATRIX_DIRTY;
         object->flags |= SCENE_OBJECT_FLAG_WORLD_MATRIX_DIRTY;
@@ -113,7 +113,7 @@ Matrix SceneObject_getLocalMatrix(SceneObject* object)
 Matrix SceneObject_getToLocalMatrix(SceneObject* object)
 {
     // TODO: Optimize this later
-    Matrix m = SceneObject_getLocalMatrix(object);
+    Matrix m = SceneObject_getWorldMatrix(object);
     return MatrixInvert(m);
 }
 
@@ -301,6 +301,10 @@ void SceneGraph_updateTick(SceneGraph* graph, float delta)
 {
     for (int i = 0; i < graph->componentTypes_count; i++) {
         SceneComponentType type = graph->componentTypes[i];
+        if (type.methods.updateSystem)
+        {
+            type.methods.updateSystem(graph, type, delta);
+        }
         if (type.methods.updateTick == NULL) {
             continue;
         }
