@@ -1,12 +1,16 @@
 # Dusk Engine
 
-Dusk Engine aims to be a simple 3D engine for games based on raylib. Vision goals:
+This project is in early development. Things change a lot and the code isn't consistent in many parts.
 
-* Similar architectural pillars as original Unity engine: Gameobjects and components - not ECS
-* Pure C codebase
+Dusk Engine aims to be a simple 3D engine for games based on raylib using plain C. Vision goals:
+
+* Similar architectural pillars as original Unity engine: Gameobjects and components - not ECS.
+* Pure C codebase.
 * Simple rendering pipeline, not going to compete with other 3D engines
 * Focus on workflow for making games, following Unity's footsteps
 * Target platforms: Windows, Android, Web. Linux and Mac are up to others, I don't have those platforms to develop and test on.
+* Performance is not my primary concern in this phase. Ease of use is more important to me to get right first.
+* No editor for now but debugging helpers: being able to inspect the state of the current game is more important than having an editor for now.
 
 # Overview
 
