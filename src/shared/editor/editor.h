@@ -7,6 +7,7 @@ typedef struct EditorState
 {
     float gameTime;
     int frameCount;
+    bool displayControls;
     bool displayHierarchy;
     bool displayInspector;
     bool paused;

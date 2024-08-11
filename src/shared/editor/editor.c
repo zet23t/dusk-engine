@@ -682,6 +682,14 @@ void Editor_drawInspector(EditorState* state, SceneGraph *graph)
 
 void Editor_drawControls(EditorState* state, SceneGraph *graph)
 {
+    if (IsKeyPressed(KEY_F3))
+    {
+        state->displayControls = !state->displayControls;
+    }
+    
+    if (state->displayControls == false)
+        return;
+    
     float w = GetScreenWidth();
     int btnCnt = 4;
     float padding = 5.0f;
